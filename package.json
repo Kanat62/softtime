@@ -1,0 +1,15 @@
+{
+  "name": "softtime",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "mobile",
+    "web",
+    "packages/*"
+  ],
+  "scripts": {
+    "backend": "npm run start:dev --workspace=backend",
+    "mobile": "npm start --workspace=mobile",
+    "web": "npm run dev --workspace=web"
+  }
+}
