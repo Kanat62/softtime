@@ -1,0 +1,17 @@
+node_modules
+**/node_modules
+**/dist
+**/.env
+**/*.log
+**/.git
+**/.gitignore
+
+# Mobile and web are not part of the API image
+mobile
+web
+
+# Dev/test artefacts
+**/coverage
+**/*.spec.ts
+**/*.test.ts
+**/test

@@ -1,0 +1,32 @@
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { PrismaService } from '../../prisma/prisma.service';
+
+@Injectable()
+export class CompaniesService {
+  constructor(private readonly prisma: PrismaService) {}
+
+  async getMyCompany(companyId: string) {
+    const company = await this.prisma.company.findUnique({
+      where: { id: companyId },
+      include: { subscription: true },
+    });
+    if (!company) throw new NotFoundException('Компания не найдена');
+
+    return {
+      id: company.id,
+      name: company.name,
+      companyCode: company.companyCode,
+      status: company.status,
+      createdAt: company.createdAt,
+      subscription: company.subscription
+        ? {
+            status: company.subscription.status,
+            priceUsd: company.subscription.priceUsd,
+            periodStart: company.subscription.periodStart,
+            periodEnd: company.subscription.periodEnd,
+            nextBillingAt: company.subscription.nextBillingAt,
+          }
+        : null,
+    };
+  }
+}
