@@ -134,6 +134,7 @@ export declare class ProviderController {
             createdAt: Date;
             name: string;
             companyCode: string;
+            timezone: string;
         })[];
         meta: {
             total: number;
@@ -186,6 +187,7 @@ export declare class ProviderController {
         createdAt: Date;
         name: string;
         companyCode: string;
+        timezone: string;
     }>;
 }
 export {};

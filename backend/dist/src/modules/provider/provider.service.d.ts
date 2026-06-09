@@ -64,6 +64,7 @@ export declare class ProviderService {
             createdAt: Date;
             name: string;
             companyCode: string;
+            timezone: string;
         })[];
         meta: {
             total: number;
@@ -110,6 +111,7 @@ export declare class ProviderService {
         createdAt: Date;
         name: string;
         companyCode: string;
+        timezone: string;
     }>;
     activateCompany(id: string, actorId: string): Promise<{
         ok: boolean;

@@ -7,5 +7,5 @@ export declare class AttendanceCronService {
     constructor(prisma: PrismaService, notifications: NotificationsService);
     autoCloseShifts(): Promise<void>;
     calculateAbsent(): Promise<void>;
-    private getEligibleCompanyIds;
+    private getEligibleCompanies;
 }

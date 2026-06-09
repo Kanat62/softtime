@@ -28,9 +28,8 @@ let QrService = class QrService {
         return qr;
     }
     async regenerate(dto, actorId) {
-        await this.prisma.qrToken.updateMany({
-            where: { isActive: true },
-            data: { isActive: false },
+        await this.prisma.qrToken.deleteMany({
+            where: {},
         });
         const token = crypto.randomBytes(32).toString('hex');
         const qr = await this.prisma.qrToken.create({

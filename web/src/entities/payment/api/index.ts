@@ -1,0 +1,19 @@
+import { apiClient } from "@/shared/api/client";
+import type { Payment } from "../model/types";
+
+export interface PaymentParams {
+  page?: number;
+  limit?: number;
+}
+
+export interface PaginatedPayments {
+  data: Payment[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export const paymentApi = {
+  list: (params?: PaymentParams) =>
+    apiClient.get<PaginatedPayments>("/payments", { params }).then((r) => r.data),
+};

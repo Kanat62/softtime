@@ -20,6 +20,9 @@ const shared_1 = require("@softtime/shared");
 const prisma_service_1 = require("../../prisma/prisma.service");
 const audit_service_1 = require("../audit/audit.service");
 const ip_utils_1 = require("../../common/utils/ip.utils");
+const tenant_context_1 = require("../../common/tenant/tenant.context");
+const timezone_utils_1 = require("../../common/utils/timezone.utils");
+const DEFAULT_TIMEZONE = 'Asia/Bishkek';
 const JS_DAY_TO_WEEKDAY = [
     shared_1.Weekday.SUN, shared_1.Weekday.MON, shared_1.Weekday.TUE, shared_1.Weekday.WED,
     shared_1.Weekday.THU, shared_1.Weekday.FRI, shared_1.Weekday.SAT,
@@ -78,6 +81,16 @@ let AttendanceService = class AttendanceService {
         this.prisma = prisma;
         this.audit = audit;
     }
+    async getCompanyTimezone() {
+        const ctx = (0, tenant_context_1.getTenantContext)();
+        if (!ctx?.companyId)
+            return DEFAULT_TIMEZONE;
+        const company = await this.prisma.company.findUnique({
+            where: { id: ctx.companyId },
+            select: { timezone: true },
+        });
+        return company?.timezone ?? DEFAULT_TIMEZONE;
+    }
     async validateQrAndIp(qrToken, ip) {
         const qr = await this.prisma.qrToken.findFirst({
             where: { token: qrToken, isActive: true },
@@ -94,17 +107,17 @@ let AttendanceService = class AttendanceService {
     async checkIn(userId, qrToken, ip) {
         const now = new Date();
         await this.validateQrAndIp(qrToken, ip);
-        const weekday = getWeekdayFromDate(now);
+        const timezone = await this.getCompanyTimezone();
+        const { weekday, minutesInDay } = (0, timezone_utils_1.getLocalDayInfo)(now, timezone);
         const schedule = await this.prisma.employeeSchedule.findFirst({
             where: { userId, weekday },
         });
         if (!schedule?.isWorkingDay || !schedule.startTime) {
             throw new common_1.BadRequestException('Сегодня нерабочий день');
         }
-        const nowMin = now.getUTCHours() * 60 + now.getUTCMinutes();
         const startMin = timeToMinutes(schedule.startTime);
-        const checkInStatus = calcCheckInStatus(nowMin, startMin);
-        const diffMinutes = nowMin - startMin;
+        const checkInStatus = calcCheckInStatus(minutesInDay, startMin);
+        const diffMinutes = minutesInDay - startMin;
         const today = startOfDayUtc(now);
         const existing = await this.prisma.attendance.findFirst({
             where: { userId, date: today },
@@ -154,7 +167,8 @@ let AttendanceService = class AttendanceService {
         });
         if (!attendance)
             throw new common_1.ConflictException('Нет активного прихода для выхода');
-        const weekday = getWeekdayFromDate(now);
+        const timezone = await this.getCompanyTimezone();
+        const { weekday, minutesInDay } = (0, timezone_utils_1.getLocalDayInfo)(now, timezone);
         const schedule = await this.prisma.employeeSchedule.findFirst({
             where: { userId, weekday },
         });
@@ -168,9 +182,8 @@ let AttendanceService = class AttendanceService {
                 startDate: today,
             },
         });
-        const nowMin = now.getUTCHours() * 60 + now.getUTCMinutes();
         const endMin = timeToMinutes(schedule.endTime);
-        let checkOutStatus = calcCheckOutStatus(nowMin, endMin);
+        let checkOutStatus = calcCheckOutStatus(minutesInDay, endMin);
         if (checkOutStatus === shared_1.CheckOutStatus.LEFT_EARLY && approvedEarlyLeave) {
             checkOutStatus = shared_1.CheckOutStatus.ON_TIME;
         }
@@ -180,7 +193,7 @@ let AttendanceService = class AttendanceService {
             where: { id: attendance.id },
             data: { checkOutAt: now, checkOutStatus, workedMinutes, status: dayStatus },
         });
-        const diffMin = Math.abs(nowMin - endMin);
+        const diffMin = Math.abs(minutesInDay - endMin);
         let message;
         if (checkOutStatus === shared_1.CheckOutStatus.ON_TIME)
             message = 'Вышел вовремя';

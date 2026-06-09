@@ -10,6 +10,7 @@ export declare class AttendanceService {
     private readonly prisma;
     private readonly audit;
     constructor(prisma: PrismaService, audit: AuditService);
+    private getCompanyTimezone;
     private validateQrAndIp;
     checkIn(userId: string, qrToken: string, ip: string): Promise<{
         record: any;

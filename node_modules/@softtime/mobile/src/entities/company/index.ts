@@ -1,1 +1,0 @@
-// company entity public API

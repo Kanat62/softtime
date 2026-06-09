@@ -16,7 +16,8 @@ const schedule_1 = require("@nestjs/schedule");
 const shared_1 = require("@softtime/shared");
 const prisma_service_1 = require("../../prisma/prisma.service");
 const notifications_service_1 = require("../notifications/notifications.service");
-const attendance_service_1 = require("./attendance.service");
+const timezone_utils_1 = require("../../common/utils/timezone.utils");
+const DEFAULT_TIMEZONE = 'Asia/Bishkek';
 function timeToMinutes(t) {
     const [h, m] = t.split(':').map(Number);
     return h * 60 + m;
@@ -38,9 +39,11 @@ let AttendanceCronService = AttendanceCronService_1 = class AttendanceCronServic
         const now = new Date();
         const twoDaysAgo = new Date(now);
         twoDaysAgo.setUTCDate(twoDaysAgo.getUTCDate() - 2);
-        const companyIds = await this.getEligibleCompanyIds();
-        if (!companyIds.length)
+        const companies = await this.getEligibleCompanies();
+        if (!companies.length)
             return;
+        const companyIds = companies.map((c) => c.id);
+        const timezoneMap = new Map(companies.map((c) => [c.id, c.timezone]));
         const openAttendances = await this.prisma.attendance.findMany({
             where: {
                 companyId: { in: companyIds },
@@ -66,13 +69,15 @@ let AttendanceCronService = AttendanceCronService_1 = class AttendanceCronServic
         const toClose = [];
         const closedByCompany = new Map();
         for (const att of openAttendances) {
-            const weekday = (0, attendance_service_1.getWeekdayFromDate)(new Date(att.date));
+            const timezone = timezoneMap.get(att.companyId) ?? DEFAULT_TIMEZONE;
+            const noonProxy = new Date(new Date(att.date).getTime() + 12 * 3600_000);
+            const weekday = (0, timezone_utils_1.getLocalWeekday)(noonProxy, timezone);
             const schedule = scheduleMap.get(`${att.userId}:${weekday}`);
             if (!schedule?.endTime || !schedule.isWorkingDay)
                 continue;
             const endMin = timeToMinutes(schedule.endTime);
-            const shiftEnd = (0, attendance_service_1.startOfDayUtc)(new Date(att.date));
-            shiftEnd.setUTCHours(Math.floor(endMin / 60), endMin % 60, 0, 0);
+            const { startOfLocalDay } = (0, timezone_utils_1.getLocalDayInfo)(noonProxy, timezone);
+            const shiftEnd = new Date(startOfLocalDay.getTime() + endMin * 60_000);
             const threshold = new Date(shiftEnd.getTime() + schedule.autoCheckoutBuffer * 60_000);
             if (now <= threshold)
                 continue;
@@ -108,69 +113,86 @@ let AttendanceCronService = AttendanceCronService_1 = class AttendanceCronServic
         this.logger.log(`Auto-closed ${toClose.length} shift(s) across ${closedByCompany.size} company(ies)`);
     }
     async calculateAbsent() {
-        const yesterday = (0, attendance_service_1.startOfDayUtc)(new Date());
-        yesterday.setUTCDate(yesterday.getUTCDate() - 1);
-        const weekday = (0, attendance_service_1.getWeekdayFromDate)(yesterday);
-        const companyIds = await this.getEligibleCompanyIds();
-        if (!companyIds.length)
+        const companies = await this.getEligibleCompanies();
+        if (!companies.length)
             return;
-        const users = await this.prisma.user.findMany({
-            where: {
-                companyId: { in: companyIds },
-                status: { in: [shared_1.UserStatus.ACTIVE, shared_1.UserStatus.WARNING] },
-                deletedAt: null,
-            },
-            select: { id: true, companyId: true },
-        });
-        if (!users.length)
-            return;
-        const userIds = users.map((u) => u.id);
-        const schedules = await this.prisma.employeeSchedule.findMany({
-            where: { userId: { in: userIds }, weekday, isWorkingDay: true },
-            select: { userId: true },
-        });
-        const scheduledSet = new Set(schedules.map((s) => s.userId));
-        const existing = await this.prisma.attendance.findMany({
-            where: { userId: { in: userIds }, date: yesterday },
-            select: { userId: true },
-        });
-        const presentSet = new Set(existing.map((a) => a.userId));
-        const absences = await this.prisma.absenceRequest.findMany({
-            where: {
-                userId: { in: userIds },
-                status: shared_1.RequestStatus.APPROVED,
-                type: { in: ABSENCE_TYPES },
-                startDate: { lte: yesterday },
-                OR: [{ endDate: null }, { endDate: { gte: yesterday } }],
-            },
-            select: { userId: true },
-        });
-        const absenceSet = new Set(absences.map((a) => a.userId));
-        const toMark = users.filter((u) => scheduledSet.has(u.id) &&
-            !presentSet.has(u.id) &&
-            !absenceSet.has(u.id));
-        if (!toMark.length)
-            return;
-        await this.prisma.attendance.createMany({
-            data: toMark.map((u) => ({
-                companyId: u.companyId,
-                userId: u.id,
-                date: yesterday,
-                status: shared_1.DayStatus.ABSENT,
-            })),
-            skipDuplicates: true,
-        });
-        this.logger.log(`Marked ${toMark.length} record(s) as ABSENT for ${yesterday.toISOString().slice(0, 10)}`);
+        const now = new Date();
+        const byTimezone = new Map();
+        for (const { id, timezone } of companies) {
+            const arr = byTimezone.get(timezone) ?? [];
+            arr.push(id);
+            byTimezone.set(timezone, arr);
+        }
+        let totalMarked = 0;
+        for (const [timezone, companyIds] of byTimezone) {
+            const nowMinus24h = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+            const yesterdayDateStr = (0, timezone_utils_1.getLocalDateString)(nowMinus24h, timezone);
+            const yesterday = new Date(yesterdayDateStr + 'T00:00:00.000Z');
+            const weekday = (0, timezone_utils_1.getLocalWeekday)(nowMinus24h, timezone);
+            const users = await this.prisma.user.findMany({
+                where: {
+                    companyId: { in: companyIds },
+                    status: { in: [shared_1.UserStatus.ACTIVE, shared_1.UserStatus.WARNING] },
+                    deletedAt: null,
+                },
+                select: { id: true, companyId: true },
+            });
+            if (!users.length)
+                continue;
+            const userIds = users.map((u) => u.id);
+            const schedules = await this.prisma.employeeSchedule.findMany({
+                where: { userId: { in: userIds }, weekday, isWorkingDay: true },
+                select: { userId: true },
+            });
+            const scheduledSet = new Set(schedules.map((s) => s.userId));
+            const existing = await this.prisma.attendance.findMany({
+                where: { userId: { in: userIds }, date: yesterday },
+                select: { userId: true },
+            });
+            const presentSet = new Set(existing.map((a) => a.userId));
+            const absences = await this.prisma.absenceRequest.findMany({
+                where: {
+                    userId: { in: userIds },
+                    status: shared_1.RequestStatus.APPROVED,
+                    type: { in: ABSENCE_TYPES },
+                    startDate: { lte: yesterday },
+                    OR: [{ endDate: null }, { endDate: { gte: yesterday } }],
+                },
+                select: { userId: true },
+            });
+            const absenceSet = new Set(absences.map((a) => a.userId));
+            const toMark = users.filter((u) => scheduledSet.has(u.id) &&
+                !presentSet.has(u.id) &&
+                !absenceSet.has(u.id));
+            if (!toMark.length)
+                continue;
+            await this.prisma.attendance.createMany({
+                data: toMark.map((u) => ({
+                    companyId: u.companyId,
+                    userId: u.id,
+                    date: yesterday,
+                    status: shared_1.DayStatus.ABSENT,
+                })),
+                skipDuplicates: true,
+            });
+            totalMarked += toMark.length;
+        }
+        if (totalMarked > 0) {
+            this.logger.log(`Marked ${totalMarked} record(s) as ABSENT`);
+        }
     }
-    async getEligibleCompanyIds() {
+    async getEligibleCompanies() {
         const companies = await this.prisma.company.findMany({
             where: {
                 status: { in: [shared_1.CompanyStatus.ACTIVE, shared_1.CompanyStatus.GRACE] },
                 deletedAt: null,
             },
-            select: { id: true },
+            select: { id: true, timezone: true },
         });
-        return companies.map((c) => c.id);
+        return companies.map((c) => ({
+            id: c.id,
+            timezone: (c.timezone ?? DEFAULT_TIMEZONE),
+        }));
     }
 };
 exports.AttendanceCronService = AttendanceCronService;

@@ -1,0 +1,18 @@
+export const queryKeys = {
+  me: ["me"] as const,
+  employees: (params?: unknown) => ["employees", params] as const,
+  employee: (id: string) => ["employee", id] as const,
+  attendance: (params?: unknown) => ["attendance", params] as const,
+  inOffice: ["attendance", "in-office"] as const,
+  schedules: (params?: unknown) => ["schedules", params] as const,
+  requests: (params?: unknown) => ["requests", params] as const,
+  news: ["news"] as const,
+  officeNetworks: ["office-networks"] as const,
+  qr: ["qr"] as const,
+  reports: (params?: unknown) => ["reports", params] as const,
+  subscription: ["subscription"] as const,
+  payments: (params?: unknown) => ["payments", params] as const,
+  auditLogs: (params?: unknown) => ["audit-logs", params] as const,
+  companies: (params?: unknown) => ["companies", params] as const,
+  company: (id: string) => ["company", id] as const,
+};

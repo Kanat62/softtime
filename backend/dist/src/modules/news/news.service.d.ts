@@ -1,9 +1,11 @@
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { AuditService } from '../audit/audit.service';
 export declare class NewsService {
     private readonly prisma;
     private readonly notifications;
-    constructor(prisma: PrismaService, notifications: NotificationsService);
+    private readonly audit;
+    constructor(prisma: PrismaService, notifications: NotificationsService, audit: AuditService);
     getFeed(query: {
         page: number;
         limit: number;
