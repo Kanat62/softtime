@@ -5,7 +5,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import { Check, Copy, Eye, EyeOff } from "lucide-react";
+import { normalizeError } from "@/shared/api/error";
 import { companyApi } from "@/entities/company/api";
+import { useAuth } from "@/entities/session";
 import { PageHeader } from "@/shared/ui";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
@@ -20,11 +22,8 @@ import { SubscriptionCard } from "@/widgets/subscription-card";
 // ── Settings form ─────────────────────────────────────────────────────────────
 
 const settingsSchema = z.object({
-  companyName: z.string().min(1, "Обязательно"),
-  timezone: z.string().min(1, "Обязательно"),
-  defaultStartTime: z.string().regex(/^\d{2}:\d{2}$/, "Формат HH:MM"),
-  defaultEndTime: z.string().regex(/^\d{2}:\d{2}$/, "Формат HH:MM"),
-  autoCheckoutBuffer: z.coerce.number().min(0).max(480),
+  minWorkdayHours: z.coerce.number().int().min(1).max(24),
+  defaultCheckoutBuffer: z.coerce.number().int().min(0).max(480),
 });
 
 type SettingsValues = z.infer<typeof settingsSchema>;
@@ -48,6 +47,7 @@ type PasswordValues = z.infer<typeof passwordSchema>;
 
 function GeneralTab() {
   const qc = useQueryClient();
+  const { user } = useAuth();
   const [copied, setCopied] = useState(false);
   const [showCurrentPwd, setShowCurrentPwd] = useState(false);
   const [showNewPwd, setShowNewPwd] = useState(false);
@@ -60,11 +60,8 @@ function GeneralTab() {
   const settingsForm = useForm<SettingsValues>({
     resolver: zodResolver(settingsSchema),
     defaultValues: {
-      companyName: "",
-      timezone: "",
-      defaultStartTime: "09:00",
-      defaultEndTime: "18:00",
-      autoCheckoutBuffer: 60,
+      minWorkdayHours: 6,
+      defaultCheckoutBuffer: 60,
     },
   });
 
@@ -75,9 +72,10 @@ function GeneralTab() {
 
   useEffect(() => {
     if (settingsQuery.data) {
-      const { companyCode: _, ...rest } = settingsQuery.data;
-      void _;
-      settingsForm.reset(rest);
+      settingsForm.reset({
+        minWorkdayHours: settingsQuery.data.minWorkdayHours,
+        defaultCheckoutBuffer: settingsQuery.data.defaultCheckoutBuffer,
+      });
     }
   }, [settingsQuery.data, settingsForm]);
 
@@ -91,24 +89,19 @@ function GeneralTab() {
   });
 
   const changePasswordMutation = useMutation({
-    mutationFn: ({
-      currentPassword,
-      newPassword,
-    }: {
-      currentPassword: string;
-      newPassword: string;
-    }) => companyApi.changePassword(currentPassword, newPassword),
+    mutationFn: ({ currentPassword, newPassword }: { currentPassword: string; newPassword: string }) =>
+      companyApi.changePassword(currentPassword, newPassword),
     onSuccess: () => {
       toast.success("Пароль изменён");
       passwordForm.reset();
     },
-    onError: (err: { response?: { data?: { message?: string } } }) => {
-      toast.error(err?.response?.data?.message ?? "Ошибка при смене пароля");
+    onError: (err: unknown) => {
+      toast.error(normalizeError(err).message);
     },
   });
 
   function copyCode() {
-    const code = settingsQuery.data?.companyCode;
+    const code = user?.companyCode;
     if (!code) return;
     navigator.clipboard.writeText(code).then(() => {
       setCopied(true);
@@ -122,12 +115,12 @@ function GeneralTab() {
       <div className="rounded-2xl bg-card p-6 shadow-sm">
         <h2 className="font-semibold text-foreground">Настройки компании</h2>
         <p className="mt-0.5 text-sm text-muted-foreground">
-          Рабочие часы по умолчанию и параметры автозакрытия
+          Минимальная длина рабочего дня и буфер автозакрытия
         </p>
 
         {settingsQuery.isLoading ? (
           <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
-            {Array.from({ length: 4 }).map((_, i) => (
+            {Array.from({ length: 2 }).map((_, i) => (
               <Skeleton key={i} className="h-10 w-full rounded-lg" />
             ))}
           </div>
@@ -140,12 +133,12 @@ function GeneralTab() {
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <FormField
                   control={settingsForm.control}
-                  name="companyName"
+                  name="minWorkdayHours"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Название компании</FormLabel>
+                      <FormLabel>Мин. рабочих часов в день</FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Input type="number" min={1} max={24} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -153,46 +146,7 @@ function GeneralTab() {
                 />
                 <FormField
                   control={settingsForm.control}
-                  name="timezone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Часовой пояс</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={settingsForm.control}
-                  name="defaultStartTime"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Начало рабочего дня (по умолч.)</FormLabel>
-                      <FormControl>
-                        <Input type="time" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={settingsForm.control}
-                  name="defaultEndTime"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Конец рабочего дня (по умолч.)</FormLabel>
-                      <FormControl>
-                        <Input type="time" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={settingsForm.control}
-                  name="autoCheckoutBuffer"
+                  name="defaultCheckoutBuffer"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Буфер автозакрытия (мин)</FormLabel>
@@ -205,7 +159,18 @@ function GeneralTab() {
                 />
               </div>
               <div className="flex justify-end gap-2 pt-2">
-                <Button type="button" variant="outline" onClick={() => settingsForm.reset()}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    if (settingsQuery.data) {
+                      settingsForm.reset({
+                        minWorkdayHours: settingsQuery.data.minWorkdayHours,
+                        defaultCheckoutBuffer: settingsQuery.data.defaultCheckoutBuffer,
+                      });
+                    }
+                  }}
+                >
                   Отмена
                 </Button>
                 <Button type="submit" disabled={saveSettingsMutation.isPending}>
@@ -225,25 +190,19 @@ function GeneralTab() {
           приложении.
         </p>
         <div className="mt-4 flex items-center gap-3">
-          {settingsQuery.isLoading ? (
-            <Skeleton className="h-10 w-40 rounded-lg" />
-          ) : (
-            <>
-              <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-4 py-2.5">
-                <span className="font-mono text-xl font-semibold tracking-widest text-foreground">
-                  {settingsQuery.data?.companyCode ?? "—"}
-                </span>
-              </div>
-              <Button variant="outline" size="sm" onClick={copyCode}>
-                {copied ? (
-                  <Check className="mr-2 h-4 w-4 text-success" />
-                ) : (
-                  <Copy className="mr-2 h-4 w-4" />
-                )}
-                {copied ? "Скопировано" : "Скопировать"}
-              </Button>
-            </>
-          )}
+          <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-4 py-2.5">
+            <span className="font-mono text-xl font-semibold tracking-widest text-foreground">
+              {user?.companyCode ?? "—"}
+            </span>
+          </div>
+          <Button variant="outline" size="sm" onClick={copyCode} disabled={!user?.companyCode}>
+            {copied ? (
+              <Check className="mr-2 h-4 w-4 text-success" />
+            ) : (
+              <Copy className="mr-2 h-4 w-4" />
+            )}
+            {copied ? "Скопировано" : "Скопировать"}
+          </Button>
         </div>
       </div>
 

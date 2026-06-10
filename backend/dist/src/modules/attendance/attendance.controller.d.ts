@@ -12,8 +12,8 @@ declare const CheckInOutDto_base: import("nestjs-zod").ZodDto<{
 declare class CheckInOutDto extends CheckInOutDto_base {
 }
 declare const AttendanceMeQueryDto_base: import("nestjs-zod").ZodDto<{
-    limit: number;
     page: number;
+    limit: number;
     from?: string | undefined;
     to?: string | undefined;
 }, z.ZodObjectDef<{
@@ -22,16 +22,16 @@ declare const AttendanceMeQueryDto_base: import("nestjs-zod").ZodDto<{
     page: z.ZodDefault<z.ZodNumber>;
     limit: z.ZodDefault<z.ZodNumber>;
 }, "strip", z.ZodTypeAny>, {
-    limit?: number | undefined;
-    page?: number | undefined;
     from?: string | undefined;
     to?: string | undefined;
+    page?: number | undefined;
+    limit?: number | undefined;
 }>;
 declare class AttendanceMeQueryDto extends AttendanceMeQueryDto_base {
 }
 declare const AttendanceQueryDto_base: import("nestjs-zod").ZodDto<{
-    limit: number;
     page: number;
+    limit: number;
     status?: DayStatus | undefined;
     userId?: string | undefined;
     from?: string | undefined;
@@ -46,10 +46,10 @@ declare const AttendanceQueryDto_base: import("nestjs-zod").ZodDto<{
 }, "strip", z.ZodTypeAny>, {
     status?: DayStatus | undefined;
     userId?: string | undefined;
-    limit?: number | undefined;
-    page?: number | undefined;
     from?: string | undefined;
     to?: string | undefined;
+    page?: number | undefined;
+    limit?: number | undefined;
 }>;
 declare class AttendanceQueryDto extends AttendanceQueryDto_base {
 }
@@ -83,8 +83,8 @@ declare class PatchAttendanceDto extends PatchAttendanceDto_base {
 }
 declare const ManualAttendanceDto_base: import("nestjs-zod").ZodDto<{
     status: DayStatus;
-    userId: string;
     date: string;
+    userId: string;
     checkInAt?: string | null | undefined;
     checkOutAt?: string | null | undefined;
     note?: string | undefined;
@@ -97,8 +97,8 @@ declare const ManualAttendanceDto_base: import("nestjs-zod").ZodDto<{
     note: z.ZodOptional<z.ZodString>;
 }, "strip", z.ZodTypeAny>, {
     status: DayStatus;
-    userId: string;
     date: string;
+    userId: string;
     checkInAt?: string | null | undefined;
     checkOutAt?: string | null | undefined;
     note?: string | undefined;
@@ -117,10 +117,10 @@ export declare class AttendanceController {
     checkOut(body: CheckInOutDto, user: TenantPayload, req: any): Promise<{
         record: {
             status: import(".prisma/client").$Enums.DayStatus;
+            date: Date;
             id: string;
             companyId: string;
             userId: string;
-            date: Date;
             checkInAt: Date | null;
             checkOutAt: Date | null;
             checkInStatus: import(".prisma/client").$Enums.CheckInStatus | null;
@@ -137,10 +137,10 @@ export declare class AttendanceController {
     getMyHistory(query: AttendanceMeQueryDto, user: TenantPayload): Promise<{
         data: {
             status: import(".prisma/client").$Enums.DayStatus;
+            date: Date;
             id: string;
             companyId: string;
             userId: string;
-            date: Date;
             checkInAt: Date | null;
             checkOutAt: Date | null;
             checkInStatus: import(".prisma/client").$Enums.CheckInStatus | null;
@@ -158,10 +158,10 @@ export declare class AttendanceController {
     }>;
     createManual(body: ManualAttendanceDto, user: TenantPayload): Promise<{
         status: import(".prisma/client").$Enums.DayStatus;
+        date: Date;
         id: string;
         companyId: string;
         userId: string;
-        date: Date;
         checkInAt: Date | null;
         checkOutAt: Date | null;
         checkInStatus: import(".prisma/client").$Enums.CheckInStatus | null;
@@ -172,10 +172,10 @@ export declare class AttendanceController {
     }>;
     getTodayInOffice(): Promise<{
         status: import(".prisma/client").$Enums.DayStatus;
+        date: Date;
         id: string;
         companyId: string;
         userId: string;
-        date: Date;
         checkInAt: Date | null;
         checkOutAt: Date | null;
         checkInStatus: import(".prisma/client").$Enums.CheckInStatus | null;
@@ -187,10 +187,10 @@ export declare class AttendanceController {
     getCompanyAttendance(query: AttendanceQueryDto): Promise<{
         data: {
             status: import(".prisma/client").$Enums.DayStatus;
+            date: Date;
             id: string;
             companyId: string;
             userId: string;
-            date: Date;
             checkInAt: Date | null;
             checkOutAt: Date | null;
             checkInStatus: import(".prisma/client").$Enums.CheckInStatus | null;
@@ -208,10 +208,10 @@ export declare class AttendanceController {
     }>;
     patchAttendance(id: string, body: PatchAttendanceDto, user: TenantPayload): Promise<{
         status: import(".prisma/client").$Enums.DayStatus;
+        date: Date;
         id: string;
         companyId: string;
         userId: string;
-        date: Date;
         checkInAt: Date | null;
         checkOutAt: Date | null;
         checkInStatus: import(".prisma/client").$Enums.CheckInStatus | null;

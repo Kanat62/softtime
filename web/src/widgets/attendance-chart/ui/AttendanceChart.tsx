@@ -54,12 +54,12 @@ function buildWeeklyChart(records: AttendanceRow[]) {
 // ─── AttendanceChart ──────────────────────────────────────────────────────────
 
 export function AttendanceChart() {
-  const dateFrom = weekAgoISO();
-  const dateTo = todayISO();
+  const from = weekAgoISO();
+  const to = todayISO();
 
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: queryKeys.attendance({ dateFrom, dateTo, page: 1, limit: 200 }),
-    queryFn: () => attendanceApi.list({ dateFrom, dateTo, page: 1, limit: 200 }),
+    queryKey: queryKeys.attendance({ from, to, page: 1, limit: 200 }),
+    queryFn: () => attendanceApi.list({ from, to, page: 1, limit: 200 }),
   });
 
   const chartData = data ? buildWeeklyChart(data.data) : [];

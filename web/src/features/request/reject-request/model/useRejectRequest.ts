@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { requestApi } from "@/entities/request/api";
 import { queryKeys } from "@/shared/api/query-keys";
+import { isNormalizedError } from "@/shared/api/error";
 
 export function useRejectRequest() {
   const qc = useQueryClient();
@@ -12,6 +13,9 @@ export function useRejectRequest() {
       toast.success("Заявка отклонена");
       qc.invalidateQueries({ queryKey: queryKeys.requests({}) });
     },
-    onError: () => toast.error("Ошибка при отклонении"),
+    onError: (err) => {
+      const msg = isNormalizedError(err) ? err.message : "Ошибка при отклонении заявки";
+      toast.error(msg);
+    },
   });
 }

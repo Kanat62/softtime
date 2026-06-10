@@ -1,32 +1,32 @@
 export interface News {
   id: string;
+  companyId: string;
   title: string;
   body: string;
-  publishedAt: string;
-  pinned?: boolean;
   photoUrl?: string | null;
-  readCount?: number;
-  totalEmployees?: number;
+  createdBy: string;
+  createdAt: string;
 }
 
-export interface NewsRead {
-  newsId: string;
+export interface NewsReadEntry {
   userId: string;
   fullName: string;
+  email: string;
   readAt: string;
 }
 
 export interface NewsReaders {
-  read: NewsRead[];
-  unread: { userId: string; fullName: string }[];
-  total: number;
+  stats: {
+    total: number;
+    readCount: number;
+    unreadCount: number;
+  };
+  read: NewsReadEntry[];
+  unread: { userId: string; fullName: string; email: string }[];
 }
 
 export interface CreateNewsDto {
   title: string;
   body: string;
-  pinned?: boolean;
   photoUrl?: string | null;
 }
-
-export type UpdateNewsDto = Partial<CreateNewsDto>;

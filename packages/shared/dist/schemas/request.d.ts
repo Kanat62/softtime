@@ -22,5 +22,14 @@ export declare const absenceRequestSchema: z.ZodObject<{
     desiredTime?: string | null | undefined;
     comment?: string | null | undefined;
 }>;
+/** Схема отклонения заявки — тело PATCH /requests/:id/reject */
+export declare const rejectRequestSchema: z.ZodObject<{
+    decisionNote: z.ZodOptional<z.ZodString>;
+}, "strip", z.ZodTypeAny, {
+    decisionNote?: string | undefined;
+}, {
+    decisionNote?: string | undefined;
+}>;
 export type AbsenceRequestDto = z.infer<typeof absenceRequestSchema>;
+export type RejectRequestDto = z.infer<typeof rejectRequestSchema>;
 //# sourceMappingURL=request.d.ts.map

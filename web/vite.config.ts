@@ -17,5 +17,13 @@ export default defineConfig({
   server: {
     host: true,
     port: 5173,
+    proxy: {
+      // In dev, proxy /api/* to the local NestJS backend so there are no CORS issues.
+      // In production set VITE_API_URL to the real backend origin instead.
+      "/api": {
+        target: "http://localhost:3000",
+        changeOrigin: true,
+      },
+    },
   },
 });

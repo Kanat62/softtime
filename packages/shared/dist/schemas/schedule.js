@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.scheduleSchema = exports.dayScheduleSchema = void 0;
+exports.applyAllScheduleSchema = exports.scheduleSchema = exports.dayScheduleSchema = void 0;
 const zod_1 = require("zod");
 const enums_1 = require("../enums");
 /** Парсит время "HH:mm" в минуты от полуночи */
@@ -61,4 +61,10 @@ exports.dayScheduleSchema = zod_1.z
 });
 /** Схема полного расписания на неделю (7 дней) */
 exports.scheduleSchema = zod_1.z.array(exports.dayScheduleSchema).length(7, 'Расписание должно содержать ровно 7 дней');
+/** Схема применения расписания ко всем/выбранным сотрудникам — тело POST /schedules/apply-all */
+exports.applyAllScheduleSchema = zod_1.z.object({
+    days: exports.scheduleSchema,
+    /** Если не указан — применяется ко всем сотрудникам компании */
+    userIds: zod_1.z.array(zod_1.z.string().uuid()).optional(),
+});
 //# sourceMappingURL=schedule.js.map

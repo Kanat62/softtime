@@ -1,7 +1,10 @@
 export interface AuditLog {
   id: string;
-  actorEmail: string;
+  companyId?: string;
+  actorId: string;
   action: string;
-  target?: string;
+  entityType: string;
+  entityId?: string | null;
+  meta?: Record<string, unknown> | null;
   createdAt: string;
 }

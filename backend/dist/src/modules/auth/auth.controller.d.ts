@@ -1,9 +1,9 @@
 import { z } from 'zod';
 import { AuthService } from './auth.service';
 declare const RegisterCompanyDto_base: import("nestjs-zod").ZodDto<{
-    companyName: string;
     fullName: string;
     email: string;
+    companyName: string;
     password: string;
 }, z.ZodObjectDef<{
     companyName: z.ZodString;
@@ -11,9 +11,9 @@ declare const RegisterCompanyDto_base: import("nestjs-zod").ZodDto<{
     email: z.ZodString;
     password: z.ZodString;
 }, "strip", z.ZodTypeAny>, {
-    companyName: string;
     fullName: string;
     email: string;
+    companyName: string;
     password: string;
 }>;
 declare class RegisterCompanyDto extends RegisterCompanyDto_base {

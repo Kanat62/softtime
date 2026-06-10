@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useReactTable, getCoreRowModel, flexRender, type ColumnDef } from "@tanstack/react-table";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueries, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   useForm,
   useFieldArray,
@@ -19,6 +19,7 @@ import type { ScheduleDay } from "@/entities/schedule/model/types";
 import { userApi } from "@/entities/user/api";
 import type { Employee } from "@/entities/user/model/types";
 import { queryKeys } from "@/shared/api/query-keys";
+import { isNormalizedError } from "@/shared/api/error";
 import { PageHeader, EmptyState } from "@/shared/ui";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
@@ -57,7 +58,7 @@ const WEEKDAY_LABEL: Record<Weekday, string> = {
   [Weekday.SUN]: "Вс",
 };
 
-// ─── Form schema ──────────────────────────────────────────────────────────────
+// ─── Form schema (mirrors backend rule: working day ≥ 6 hours) ───────────────
 
 const dayFormSchema = z
   .object({
@@ -65,7 +66,7 @@ const dayFormSchema = z
     isWorkingDay: z.boolean(),
     startTime: z.string(),
     endTime: z.string(),
-    autoCheckoutBuffer: z.number().int().min(0),
+    autoCheckoutBuffer: z.number().int().min(0).max(480),
   })
   .superRefine((data, ctx) => {
     if (!data.isWorkingDay) return;
@@ -231,7 +232,7 @@ function DayRow({
             )}
           </div>
 
-          {/* Buffer */}
+          {/* Checkout buffer */}
           <div className="flex items-center gap-1">
             <span className="text-xs text-muted-foreground">+</span>
             <Controller
@@ -258,7 +259,7 @@ function DayRow({
   );
 }
 
-// ─── Schedule editor ──────────────────────────────────────────────────────────
+// ─── Schedule editor (7-day grid) ─────────────────────────────────────────────
 
 function ScheduleEditor({
   control,
@@ -288,24 +289,35 @@ export function ScheduleEditorWidget() {
   const [editEmployee, setEditEmployee] = useState<Employee | null>(null);
   const [templateOpen, setTemplateOpen] = useState(false);
 
-  // ── Queries ──────────────────────────────────────────────────────────────
+  // ── Employee list ────────────────────────────────────────────────────────
   const empQuery = useQuery({
     queryKey: queryKeys.employees({ page: 1, limit: 100 }),
     queryFn: () => userApi.listEmployees({ page: 1, limit: 100 }),
     staleTime: 60_000,
   });
+  const employees = empQuery.data?.data ?? [];
 
-  const schedulesQuery = useQuery({
-    queryKey: queryKeys.schedules(),
-    queryFn: () => scheduleApi.listAll(),
-    staleTime: 30_000,
+  // ── Per-employee schedule queries (parallel) ─────────────────────────────
+  // Backend has no bulk endpoint; fetch each schedule individually.
+  const scheduleQueries = useQueries({
+    queries: employees.map((emp) => ({
+      queryKey: queryKeys.schedules({ userId: emp.id }),
+      queryFn: () => scheduleApi.getByUserId(emp.id),
+      staleTime: 30_000,
+      enabled: employees.length > 0,
+    })),
   });
+
+  const schedulesLoading = scheduleQueries.some((q) => q.isLoading);
 
   const scheduleMap = useMemo(() => {
     const m = new Map<string, ScheduleDay[]>();
-    for (const s of schedulesQuery.data ?? []) m.set(s.userId, s.days);
+    employees.forEach((emp, i) => {
+      const data = scheduleQueries[i]?.data;
+      if (data) m.set(emp.id, data);
+    });
     return m;
-  }, [schedulesQuery.data]);
+  }, [employees, scheduleQueries]);
 
   // ── Forms ─────────────────────────────────────────────────────────────────
   const individualForm = useForm<ScheduleFormValues>({
@@ -318,6 +330,7 @@ export function ScheduleEditorWidget() {
     defaultValues: { days: makeDefaultDays() },
   });
 
+  // Populate individual form when an employee is selected for editing
   useEffect(() => {
     if (!editEmployee) return;
     const existing = scheduleMap.get(editEmployee.id);
@@ -333,12 +346,16 @@ export function ScheduleEditorWidget() {
       setEditEmployee(null);
       qc.invalidateQueries({ queryKey: queryKeys.schedules() });
     },
-    onError: () => toast.error("Ошибка при сохранении"),
+    onError: (err) => {
+      // Surface the backend 422 message (e.g. "Working day must be at least 6 hours")
+      const msg = isNormalizedError(err) ? err.message : "Ошибка при сохранении расписания";
+      toast.error(msg);
+    },
   });
 
   const applyMutation = useMutation({
     mutationFn: (dto: { days: ScheduleDay[]; userIds?: string[] }) =>
-      scheduleApi.applyTemplate(dto),
+      scheduleApi.applyToAll(dto),
     onSuccess: (_, vars) => {
       const count = vars.userIds?.length ?? employees.length;
       toast.success(`Шаблон применён к ${count} сотруд.`);
@@ -346,14 +363,13 @@ export function ScheduleEditorWidget() {
       setSelectedIds(new Set());
       qc.invalidateQueries({ queryKey: queryKeys.schedules() });
     },
-    onError: () => toast.error("Ошибка при применении"),
+    onError: (err) => {
+      const msg = isNormalizedError(err) ? err.message : "Ошибка при применении шаблона";
+      toast.error(msg);
+    },
   });
 
   // ── Handlers ─────────────────────────────────────────────────────────────
-  function openEdit(emp: Employee) {
-    setEditEmployee(emp);
-  }
-
   function saveIndividual(values: ScheduleFormValues) {
     if (!editEmployee) return;
     saveMutation.mutate({ userId: editEmployee.id, days: formValuesToScheduleDays(values) });
@@ -383,8 +399,6 @@ export function ScheduleEditorWidget() {
   }
 
   // ── Table ─────────────────────────────────────────────────────────────────
-  const employees = empQuery.data?.data ?? [];
-
   const columns: ColumnDef<Employee>[] = [
     {
       id: "select",
@@ -420,7 +434,13 @@ export function ScheduleEditorWidget() {
       header: "График",
       cell: ({ row }) => {
         const days = scheduleMap.get(row.original.id) ?? [];
-        return (
+        return schedulesLoading ? (
+          <div className="flex gap-1">
+            {Array.from({ length: 7 }).map((_, j) => (
+              <Skeleton key={j} className="h-6 w-6 rounded" />
+            ))}
+          </div>
+        ) : (
           <div className="flex gap-1">
             {WEEKDAY_ORDER.map((wd) => {
               const d = days.find((x) => x.weekday === wd);
@@ -447,10 +467,9 @@ export function ScheduleEditorWidget() {
       header: "Часы",
       cell: ({ row }) => {
         const days = scheduleMap.get(row.original.id) ?? [];
+        if (schedulesLoading) return <Skeleton className="h-3.5 w-36 rounded" />;
         return (
-          <span className="text-sm text-muted-foreground">
-            {schedulesQuery.isLoading ? "…" : summaryLabel(days)}
-          </span>
+          <span className="text-sm text-muted-foreground">{summaryLabel(days)}</span>
         );
       },
     },
@@ -462,7 +481,7 @@ export function ScheduleEditorWidget() {
           variant="ghost"
           size="sm"
           className="h-7 gap-1.5 text-xs"
-          onClick={() => openEdit(row.original)}
+          onClick={() => setEditEmployee(row.original)}
         >
           <PenLine className="h-3.5 w-3.5" strokeWidth={1.5} />
           Редактировать
@@ -502,7 +521,7 @@ export function ScheduleEditorWidget() {
         }
       />
 
-      {/* ── Table ────────────────────────────────────────────────────────── */}
+      {/* ── Таблица ──────────────────────────────────────────────────────── */}
       <div className="overflow-hidden rounded-2xl bg-card shadow-sm">
         {empQuery.isError ? (
           <div className="px-6 py-12 text-center">
@@ -634,7 +653,10 @@ export function ScheduleEditorWidget() {
             onSubmit={templateForm.handleSubmit(applyTemplate)}
           >
             <div className="flex-1 overflow-y-auto pr-1">
-              <ScheduleEditor control={templateForm.control} errors={templateForm.formState.errors} />
+              <ScheduleEditor
+                control={templateForm.control}
+                errors={templateForm.formState.errors}
+              />
             </div>
 
             <DialogFooter className="mt-6">

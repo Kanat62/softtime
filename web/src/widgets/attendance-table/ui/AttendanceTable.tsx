@@ -60,6 +60,31 @@ function fmtDate(iso: string): string {
   }
 }
 
+/** Format ISO datetime → "HH:mm" in local time, or "—" */
+function fmtTime(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  try {
+    return format(new Date(iso), "HH:mm");
+  } catch {
+    return "—";
+  }
+}
+
+/** Extract "HH:mm" from ISO for <input type="time"> initialisation */
+function isoToTimeInput(iso: string | null | undefined): string {
+  if (!iso) return "";
+  try {
+    return format(new Date(iso), "HH:mm");
+  } catch {
+    return "";
+  }
+}
+
+/** Convert date "YYYY-MM-DD" + time input "HH:mm" → ISO datetime string */
+function toISO(date: string, time: string): string {
+  return new Date(`${date}T${time}:00`).toISOString();
+}
+
 function fmtMinutes(min: number | null): string {
   if (min === null || min <= 0) return "—";
   const h = Math.floor(min / 60);
@@ -79,8 +104,8 @@ function initials(name: string) {
 // ─── Edit sheet state ─────────────────────────────────────────────────────────
 
 interface EditState {
-  checkIn: string;
-  checkOut: string;
+  checkIn: string;  // "HH:mm" for <input type="time">
+  checkOut: string; // "HH:mm" for <input type="time">
   note: string;
 }
 
@@ -132,8 +157,8 @@ export function AttendanceTable() {
   const attParams = {
     page: page + 1,
     limit: PAGE_SIZE,
-    dateFrom,
-    dateTo,
+    from: dateFrom,
+    to: dateTo,
     userId: userIdFilter || undefined,
     status: statusFilter || undefined,
   };
@@ -145,8 +170,8 @@ export function AttendanceTable() {
   });
 
   const todayQuery = useQuery({
-    queryKey: queryKeys.attendance({ dateFrom: today, dateTo: today, limit: 200, page: 1 }),
-    queryFn: () => attendanceApi.list({ dateFrom: today, dateTo: today, limit: 200, page: 1 }),
+    queryKey: queryKeys.attendance({ from: today, to: today, limit: 200, page: 1 }),
+    queryFn: () => attendanceApi.list({ from: today, to: today, limit: 200, page: 1 }),
     refetchInterval: 60_000,
   });
 
@@ -174,8 +199,8 @@ export function AttendanceTable() {
   function openEdit(row: AttendanceRow) {
     setEditRow(row);
     setEditState({
-      checkIn: row.checkIn ?? "",
-      checkOut: row.checkOut ?? "",
+      checkIn: isoToTimeInput(row.checkInAt),
+      checkOut: isoToTimeInput(row.checkOutAt),
       note: row.note ?? "",
     });
   }
@@ -185,8 +210,8 @@ export function AttendanceTable() {
     patchMutation.mutate({
       id: editRow.id,
       dto: {
-        checkIn: editState.checkIn || null,
-        checkOut: editState.checkOut || null,
+        checkInAt: editState.checkIn ? toISO(editRow.date, editState.checkIn) : null,
+        checkOutAt: editState.checkOut ? toISO(editRow.date, editState.checkOut) : null,
         note: editState.note || null,
       },
     });
@@ -194,7 +219,7 @@ export function AttendanceTable() {
 
   // ── Table ─────────────────────────────────────────────────────────────────
   const rows = attQuery.data?.data ?? [];
-  const total = attQuery.data?.total ?? 0;
+  const total = attQuery.data?.meta.total ?? 0;
   const pageCount = Math.ceil(total / PAGE_SIZE);
 
   const columns: ColumnDef<AttendanceRow>[] = [
@@ -224,14 +249,14 @@ export function AttendanceTable() {
       id: "checkIn",
       header: "Приход",
       cell: ({ row }) => (
-        <span className="font-mono text-sm text-foreground">{row.original.checkIn ?? "—"}</span>
+        <span className="font-mono text-sm text-foreground">{fmtTime(row.original.checkInAt)}</span>
       ),
     },
     {
       id: "checkOut",
       header: "Уход",
       cell: ({ row }) => (
-        <span className="font-mono text-sm text-foreground">{row.original.checkOut ?? "—"}</span>
+        <span className="font-mono text-sm text-foreground">{fmtTime(row.original.checkOutAt)}</span>
       ),
     },
     {

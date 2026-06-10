@@ -8,7 +8,7 @@ import { Plus, Wifi } from "lucide-react";
 import { networkApi } from "@/entities/office-network/api";
 import type { OfficeNetwork } from "@/entities/office-network/model/types";
 import { queryKeys } from "@/shared/api/query-keys";
-import { PageHeader, EmptyState, StatusBadge } from "@/shared/ui";
+import { PageHeader, EmptyState } from "@/shared/ui";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Skeleton } from "@/shared/ui/skeleton";
@@ -30,16 +30,17 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/shared/ui/alert-dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/shared/ui/form";
 
 const schema = z.object({
-  ssid: z.string().min(1, "Обязательно").max(64),
+  label: z.string().min(1, "Обязательно").max(100),
   cidr: z
     .string()
     .min(1, "Обязательно")
-    .regex(/^[\d./a-fA-F:]+$/, "Неверный формат IP/CIDR"),
-  mode: z.enum(["WHITELIST", "BLOCKED"]),
+    .regex(
+      /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}(\/\d{1,2})?$/,
+      "Формат: 192.168.1.0/24 или 192.168.1.1",
+    ),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -52,7 +53,7 @@ export function OfficeNetworksTable() {
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { ssid: "", cidr: "", mode: "WHITELIST" },
+    defaultValues: { label: "", cidr: "" },
   });
 
   const networksQuery = useQuery({
@@ -94,13 +95,13 @@ export function OfficeNetworksTable() {
 
   function openCreate() {
     setEditTarget(null);
-    form.reset({ ssid: "", cidr: "", mode: "WHITELIST" });
+    form.reset({ label: "", cidr: "" });
     setDialogOpen(true);
   }
 
   function openEdit(n: OfficeNetwork) {
     setEditTarget(n);
-    form.reset({ ssid: n.ssid, cidr: n.cidr, mode: n.mode });
+    form.reset({ label: n.label, cidr: n.cidr });
     setDialogOpen(true);
   }
 
@@ -146,7 +147,7 @@ export function OfficeNetworksTable() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-muted/40">
-                  {["Название сети", "IP / CIDR", "Режим", "Статус", ""].map((h) => (
+                  {["Название", "IP / CIDR", ""].map((h) => (
                     <th
                       key={h}
                       className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
@@ -166,12 +167,6 @@ export function OfficeNetworksTable() {
                         <td className="px-4 py-3">
                           <Skeleton className="h-4 w-32 rounded" />
                         </td>
-                        <td className="px-4 py-3">
-                          <Skeleton className="h-4 w-20 rounded" />
-                        </td>
-                        <td className="px-4 py-3">
-                          <Skeleton className="h-5 w-20 rounded-full" />
-                        </td>
                         <td className="px-4 py-3" />
                       </tr>
                     ))
@@ -183,17 +178,11 @@ export function OfficeNetworksTable() {
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
                             <Wifi className="h-4 w-4 shrink-0 text-primary" />
-                            <span className="font-medium text-foreground">{n.ssid}</span>
+                            <span className="font-medium text-foreground">{n.label}</span>
                           </div>
                         </td>
                         <td className="px-4 py-3 font-mono text-xs text-muted-foreground">
                           {n.cidr}
-                        </td>
-                        <td className="px-4 py-3 text-muted-foreground">
-                          {n.mode === "WHITELIST" ? "Разрешить" : "Блокировать"}
-                        </td>
-                        <td className="px-4 py-3">
-                          <StatusBadge status={n.status} />
                         </td>
                         <td className="px-4 py-3 text-right">
                           <div className="flex items-center justify-end gap-1">
@@ -239,29 +228,24 @@ export function OfficeNetworksTable() {
       </div>
 
       {/* ── Add / Edit Dialog ───────────────────────────────────────────────── */}
-      <Dialog
-        open={dialogOpen}
-        onOpenChange={(open) => {
-          if (!open) closeDialog();
-        }}
-      >
+      <Dialog open={dialogOpen} onOpenChange={(open) => { if (!open) closeDialog(); }}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>{editTarget ? "Редактировать сеть" : "Добавить сеть"}</DialogTitle>
             <DialogDescription>
-              Укажите параметры офисной Wi-Fi сети или IP-диапазона.
+              Укажите название и IP-диапазон (CIDR) офисной сети.
             </DialogDescription>
           </DialogHeader>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
                 control={form.control}
-                name="ssid"
+                name="label"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Название сети (SSID)</FormLabel>
+                    <FormLabel>Название</FormLabel>
                     <FormControl>
-                      <Input placeholder="SoftTime-Office" {...field} />
+                      <Input placeholder="Главный офис" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -276,27 +260,6 @@ export function OfficeNetworksTable() {
                     <FormControl>
                       <Input placeholder="192.168.1.0/24" className="font-mono" {...field} />
                     </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="mode"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Режим</FormLabel>
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="WHITELIST">Разрешить (Whitelist)</SelectItem>
-                        <SelectItem value="BLOCKED">Блокировать</SelectItem>
-                      </SelectContent>
-                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -320,9 +283,10 @@ export function OfficeNetworksTable() {
           <AlertDialogHeader>
             <AlertDialogTitle>Удалить сеть?</AlertDialogTitle>
             <AlertDialogDescription>
-              Сеть <span className="font-medium text-foreground">«{deleteTarget?.ssid}»</span> (
-              {deleteTarget?.cidr}) будет удалена. Сотрудники из этой сети потеряют возможность
-              делать check-in по Wi-Fi.
+              Сеть{" "}
+              <span className="font-medium text-foreground">«{deleteTarget?.label}»</span>{" "}
+              ({deleteTarget?.cidr}) будет удалена. Сотрудники из этой сети потеряют возможность
+              делать check-in по IP.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -338,11 +302,10 @@ export function OfficeNetworksTable() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* ── Info footer ────────────────────────────────────────────────────── */}
       {networks.length > 0 && (
         <p className="text-xs text-muted-foreground">
-          Сотрудники могут делать check-in только из разрешённых сетей. Если список пуст — проверка
-          сети отключена.
+          Check-in через QR возможен только из разрешённых сетей. Если список пуст — проверка сети
+          отключена.
         </p>
       )}
     </div>

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.absenceRequestSchema = void 0;
+exports.rejectRequestSchema = exports.absenceRequestSchema = void 0;
 const zod_1 = require("zod");
 const enums_1 = require("../enums");
 /** Схема заявки сотрудника (отсутствие или ранний уход) */
@@ -20,5 +20,9 @@ exports.absenceRequestSchema = zod_1.z.object({
         .nullable()
         .optional(),
     comment: zod_1.z.string().nullable().optional(),
+});
+/** Схема отклонения заявки — тело PATCH /requests/:id/reject */
+exports.rejectRequestSchema = zod_1.z.object({
+    decisionNote: zod_1.z.string().max(500, 'Комментарий не может превышать 500 символов').optional(),
 });
 //# sourceMappingURL=request.js.map

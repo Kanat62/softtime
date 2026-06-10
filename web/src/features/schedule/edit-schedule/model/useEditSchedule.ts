@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { scheduleApi } from "@/entities/schedule/api";
 import type { ScheduleDay } from "@/entities/schedule/model/types";
 import { queryKeys } from "@/shared/api/query-keys";
+import { isNormalizedError } from "@/shared/api/error";
 
 export function useEditSchedule() {
   const qc = useQueryClient();
@@ -13,6 +14,9 @@ export function useEditSchedule() {
       toast.success("Расписание сохранено");
       qc.invalidateQueries({ queryKey: queryKeys.schedules() });
     },
-    onError: () => toast.error("Ошибка при сохранении"),
+    onError: (err) => {
+      const msg = isNormalizedError(err) ? err.message : "Ошибка при сохранении расписания";
+      toast.error(msg);
+    },
   });
 }

@@ -17,21 +17,38 @@ const PAGE_SIZE = 20;
 const ACTION_LABELS: Record<string, string> = {
   LOGIN: "Вход в систему",
   APPROVE_REQUEST: "Одобрение заявки",
+  REQUEST_APPROVED: "Одобрение заявки",
   REJECT_REQUEST: "Отклонение заявки",
+  REQUEST_REJECTED: "Отклонение заявки",
   CREATE_SCHEDULE: "Создание расписания",
   UPDATE_SCHEDULE: "Изменение расписания",
   CREATE_EMPLOYEE: "Добавление сотрудника",
   UPDATE_EMPLOYEE: "Изменение сотрудника",
   BLOCK_EMPLOYEE: "Блокировка сотрудника",
   PUBLISH_NEWS: "Публикация новости",
+  CREATE_NEWS: "Публикация новости",
   UPDATE_NETWORK: "Изменение сети",
+  QR_REGENERATED: "Обновление QR-кода",
   REGENERATE_QR: "Обновление QR-кода",
   MANUAL_CHECKOUT: "Ручная отметка ухода",
+  ATTENDANCE_MANUAL_FIX: "Ручная правка посещаемости",
+  SETTINGS_UPDATED: "Изменение настроек",
 };
 
 const ACTION_OPTIONS = [
   { value: "_all", label: "Все действия" },
-  ...Object.entries(ACTION_LABELS).map(([value, label]) => ({ value, label })),
+  { value: "LOGIN", label: "Вход в систему" },
+  { value: "APPROVE_REQUEST", label: "Одобрение заявки" },
+  { value: "REJECT_REQUEST", label: "Отклонение заявки" },
+  { value: "CREATE_SCHEDULE", label: "Создание расписания" },
+  { value: "UPDATE_SCHEDULE", label: "Изменение расписания" },
+  { value: "CREATE_EMPLOYEE", label: "Добавление сотрудника" },
+  { value: "UPDATE_EMPLOYEE", label: "Изменение сотрудника" },
+  { value: "BLOCK_EMPLOYEE", label: "Блокировка сотрудника" },
+  { value: "CREATE_NEWS", label: "Публикация новости" },
+  { value: "QR_REGENERATED", label: "Обновление QR-кода" },
+  { value: "ATTENDANCE_MANUAL_FIX", label: "Ручная правка посещаемости" },
+  { value: "SETTINGS_UPDATED", label: "Изменение настроек" },
 ];
 
 function fmtDateTime(iso: string) {
@@ -43,9 +60,9 @@ function fmtDateTime(iso: string) {
 }
 
 function actionTone(action: string): string {
-  if (["BLOCK_EMPLOYEE", "REJECT_REQUEST"].includes(action))
+  if (["BLOCK_EMPLOYEE", "REJECT_REQUEST", "REQUEST_REJECTED"].includes(action))
     return "text-destructive bg-destructive/10";
-  if (["APPROVE_REQUEST", "CREATE_EMPLOYEE", "PUBLISH_NEWS"].includes(action))
+  if (["APPROVE_REQUEST", "REQUEST_APPROVED", "CREATE_EMPLOYEE", "PUBLISH_NEWS", "CREATE_NEWS"].includes(action))
     return "text-success bg-success/10";
   if (action === "LOGIN") return "text-muted-foreground bg-muted";
   return "text-primary bg-primary-light";
@@ -60,8 +77,8 @@ export function AuditTable() {
   const params = {
     page: page + 1,
     limit: PAGE_SIZE,
-    dateFrom: dateFrom || undefined,
-    dateTo: dateTo || undefined,
+    from: dateFrom || undefined,
+    to: dateTo || undefined,
     action: action || undefined,
   };
 
@@ -72,7 +89,7 @@ export function AuditTable() {
   });
 
   const logs = logsQuery.data?.data ?? [];
-  const total = logsQuery.data?.total ?? 0;
+  const total = logsQuery.data?.meta.total ?? 0;
   const pageCount = Math.ceil(total / PAGE_SIZE);
 
   function handleReset() {
@@ -167,7 +184,7 @@ export function AuditTable() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-muted/40">
-                  {["Действие", "Объект", "Администратор", "Дата и время"].map((h) => (
+                  {["Действие", "Объект (тип)", "Субъект (ID)", "Дата и время"].map((h) => (
                     <th
                       key={h}
                       className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
@@ -207,8 +224,17 @@ export function AuditTable() {
                             {ACTION_LABELS[log.action] ?? log.action}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-muted-foreground">{log.target ?? "—"}</td>
-                        <td className="px-4 py-3 text-muted-foreground">{log.actorEmail}</td>
+                        <td className="px-4 py-3 text-muted-foreground">
+                          <span className="font-mono text-xs">{log.entityType}</span>
+                          {log.entityId && (
+                            <span className="ml-1 text-xs text-muted-foreground/60">
+                              #{log.entityId.slice(0, 8)}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 font-mono text-xs text-muted-foreground">
+                          {log.actorId.slice(0, 8)}…
+                        </td>
                         <td className="px-4 py-3 text-muted-foreground">
                           {fmtDateTime(log.createdAt)}
                         </td>

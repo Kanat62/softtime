@@ -9,8 +9,11 @@ export interface AbsenceRequest {
   type: RequestType;
   startDate: string;
   endDate: string | null;
+  /** Желаемое время ухода — только для EARLY_LEAVE */
+  desiredTime: string | null;
   comment: string | null;
   status: RequestStatus;
+  decidedBy: string | null;
   decisionNote: string | null;
   createdAt: string;
 }

@@ -1,7 +1,6 @@
 export interface OfficeNetwork {
   id: string;
-  ssid: string;
+  companyId: string;
+  label: string;
   cidr: string;
-  mode: "WHITELIST" | "BLOCKED";
-  status: "ACTIVE" | "BLOCKED";
 }

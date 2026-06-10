@@ -6,11 +6,11 @@ import { queryKeys } from "@/shared/api/query-keys";
 export function useRegenerateQr() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => qrApi.regenerate(id),
+    mutationFn: (officeNetworkId?: string | null) => qrApi.regenerate(officeNetworkId),
     onSuccess: () => {
       toast.success("QR-код обновлён");
       qc.invalidateQueries({ queryKey: queryKeys.qr });
     },
-    onError: () => toast.error("Ошибка при обновлении"),
+    onError: () => toast.error("Ошибка при обновлении QR"),
   });
 }

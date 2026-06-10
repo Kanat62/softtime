@@ -4,16 +4,14 @@ import type { AuditLog } from "../model/types";
 export interface AuditLogParams {
   page?: number;
   limit?: number;
-  dateFrom?: string;
-  dateTo?: string;
+  from?: string;
+  to?: string;
   action?: string;
 }
 
 export interface PaginatedAuditLogs {
   data: AuditLog[];
-  total: number;
-  page: number;
-  limit: number;
+  meta: { total: number; page: number; limit: number; pages: number };
 }
 
 export const auditLogApi = {

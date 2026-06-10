@@ -1,15 +1,16 @@
 import { apiClient } from "@/shared/api/client";
 
 export interface CompanySettings {
-  companyName: string;
-  timezone: string;
-  defaultStartTime: string;
-  defaultEndTime: string;
-  autoCheckoutBuffer: number;
-  companyCode: string;
+  id: string;
+  companyId: string;
+  minWorkdayHours: number;
+  defaultCheckoutBuffer: number;
 }
 
-export type UpdateSettingsDto = Omit<CompanySettings, "companyCode">;
+export interface UpdateSettingsDto {
+  minWorkdayHours?: number;
+  defaultCheckoutBuffer?: number;
+}
 
 export const companyApi = {
   getSettings: () => apiClient.get<CompanySettings>("/settings").then((r) => r.data),
@@ -18,5 +19,5 @@ export const companyApi = {
     apiClient.patch<CompanySettings>("/settings", dto).then((r) => r.data),
 
   changePassword: (currentPassword: string, newPassword: string) =>
-    apiClient.patch("/admin/password", { currentPassword, newPassword }).then((r) => r.data),
+    apiClient.patch("/profile", { currentPassword, newPassword }).then((r) => r.data),
 };

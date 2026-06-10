@@ -8,9 +8,7 @@ export interface PaymentParams {
 
 export interface PaginatedPayments {
   data: Payment[];
-  total: number;
-  page: number;
-  limit: number;
+  meta: { total: number; page: number; limit: number; pages: number };
 }
 
 export const paymentApi = {
