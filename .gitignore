@@ -1,0 +1,42 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build output
+backend/dist/
+packages/shared/dist/
+**/dist/
+
+# Environment & secrets
+.env
+**/.env
+mobile/.env
+
+# Expo
+.expo/
+mobile/.expo/
+
+# Android build
+**/.gradle/
+**/.cxx/
+**/build/
+android/
+mobile/android/build/
+
+# iOS
+ios/
+**/ios/Pods/
+**/ios/build/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
