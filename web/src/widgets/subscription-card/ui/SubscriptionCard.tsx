@@ -1,8 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { format, differenceInDays } from "date-fns";
+import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import { toast } from "sonner";
-import { Check, CreditCard, Download } from "lucide-react";
+import { AlertTriangle, Check, CreditCard, ExternalLink } from "lucide-react";
 import { subscriptionApi } from "@/entities/subscription/api";
 import { paymentApi } from "@/entities/payment/api";
 import { queryKeys } from "@/shared/api/query-keys";
@@ -29,7 +29,8 @@ const FEATURES = [
   "Email-поддержка",
 ];
 
-function fmtDate(iso: string) {
+function fmtDate(iso: string | null | undefined) {
+  if (!iso) return "—";
   try {
     return format(new Date(iso), "d MMMM yyyy", { locale: ru });
   } catch {
@@ -37,17 +38,13 @@ function fmtDate(iso: string) {
   }
 }
 
-function daysRemaining(nextBillingDate?: string): number | null {
-  if (!nextBillingDate) return null;
-  return differenceInDays(new Date(nextBillingDate), new Date());
+function fmtPeriod(start: string, end: string) {
+  try {
+    return `${format(new Date(start), "d MMM", { locale: ru })} – ${format(new Date(end), "d MMM yyyy", { locale: ru })}`;
+  } catch {
+    return `${start} – ${end}`;
+  }
 }
-
-const STATUS_LABELS: Record<string, string> = {
-  TRIAL: "Пробный период",
-  ACTIVE: "Активна",
-  GRACE: "Льготный период",
-  SUSPENDED: "Приостановлена",
-};
 
 export function SubscriptionCard() {
   const qc = useQueryClient();
@@ -59,17 +56,17 @@ export function SubscriptionCard() {
   });
 
   const paymentsQuery = useQuery({
-    queryKey: queryKeys.payments(),
+    queryKey: queryKeys.payments({ page: 1, limit: 20 }),
     queryFn: () => paymentApi.list({ page: 1, limit: 20 }),
   });
 
   const payMutation = useMutation({
     mutationFn: subscriptionApi.pay,
-    onSuccess: () => {
-      toast.success("Подписка активирована");
-      qc.invalidateQueries({ queryKey: queryKeys.subscription });
+    onSuccess: ({ checkoutUrl }) => {
+      window.open(checkoutUrl, "_blank", "noopener,noreferrer");
+      toast.success("Перенаправляем на страницу оплаты…");
     },
-    onError: () => toast.error("Ошибка при оплате"),
+    onError: () => toast.error("Ошибка при инициации оплаты"),
   });
 
   const cancelMutation = useMutation({
@@ -84,13 +81,27 @@ export function SubscriptionCard() {
 
   const sub = subQuery.data;
   const payments = paymentsQuery.data?.data ?? [];
-  const days = daysRemaining(sub?.nextBillingDate);
-  const canPay = sub && ["TRIAL", "GRACE", "SUSPENDED"].includes(sub.status);
-  const trialProgress = days != null ? Math.max(0, Math.min(100, 100 - (days / 30) * 100)) : 0;
+  const canPay = sub && ["TRIAL", "GRACE", "EXPIRED"].includes(sub.status);
+  const isCancelled = sub?.status === "CANCELLED";
+  const daysLeft = sub?.daysLeft ?? 0;
+  const progressPct = Math.max(0, Math.min(100, 100 - (daysLeft / 30) * 100));
 
   return (
     <div className="space-y-6">
       <PageHeader title="Подписка" />
+
+      {/* ── CANCELLED / SUSPENDED banner ───────────────────────────────────── */}
+      {isCancelled && (
+        <div className="flex items-start gap-3 rounded-2xl border border-destructive/30 bg-destructive/5 p-5">
+          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
+          <div>
+            <p className="font-semibold text-destructive">Аккаунт приостановлен</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Подписка была отменена. Для восстановления доступа обратитесь в службу поддержки.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* ── Status card + timer ─────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
@@ -105,18 +116,18 @@ export function SubscriptionCard() {
             <>
               <div className="flex items-start justify-between">
                 <div>
-                  <div className="text-sm text-muted-foreground">Текущий тариф</div>
-                  <div className="mt-1 text-2xl font-semibold text-foreground">{sub.plan}</div>
+                  <div className="text-sm text-muted-foreground">Подписка SoftTime</div>
+                  <div className="mt-1 text-2xl font-semibold text-foreground">
+                    ${sub.priceUsd} / месяц
+                  </div>
                   <div className="mt-1 text-sm text-muted-foreground">
-                    ${sub.amount} / месяц
-                    {sub.nextBillingDate
-                      ? ` · следующее списание ${fmtDate(sub.nextBillingDate)}`
+                    {fmtDate(sub.periodStart)} – {fmtDate(sub.periodEnd)}
+                    {sub.nextBillingAt
+                      ? ` · следующее списание ${fmtDate(sub.nextBillingAt)}`
                       : ""}
                   </div>
                 </div>
-                <StatusBadge status={sub.status}>
-                  {STATUS_LABELS[sub.status] ?? sub.status}
-                </StatusBadge>
+                <StatusBadge status={sub.status} />
               </div>
               <div className="mt-5 grid grid-cols-1 gap-2 sm:grid-cols-2">
                 {FEATURES.map((f) => (
@@ -130,7 +141,8 @@ export function SubscriptionCard() {
                 {canPay && (
                   <Button onClick={() => payMutation.mutate()} disabled={payMutation.isPending}>
                     <CreditCard className="mr-2 h-4 w-4" />
-                    {payMutation.isPending ? "Обработка..." : `Оплатить $${sub.amount}`}
+                    {payMutation.isPending ? "Перенаправление..." : `Оплатить $${sub.priceUsd}`}
+                    {!payMutation.isPending && <ExternalLink className="ml-2 h-3.5 w-3.5" />}
                   </Button>
                 )}
                 {sub.status === "ACTIVE" && (
@@ -150,26 +162,26 @@ export function SubscriptionCard() {
               <Skeleton className="h-9 w-20 rounded" />
               <Skeleton className="h-2 w-full rounded-full" />
             </div>
-          ) : days != null ? (
+          ) : sub && !isCancelled ? (
             <>
               <div className="text-sm text-muted-foreground">
-                {sub?.status === "TRIAL" ? "До конца триала" : "До следующего списания"}
+                {sub.status === "TRIAL" ? "До конца триала" : "До следующего списания"}
               </div>
               <div className="mt-1 text-3xl font-semibold text-foreground">
-                {Math.max(0, days)} дн.
+                {Math.max(0, daysLeft)} дн.
               </div>
               <div className="mt-4 h-2 overflow-hidden rounded-full bg-muted">
                 <div
-                  className={`h-full rounded-full transition-all ${days <= 5 ? "bg-destructive" : days <= 10 ? "bg-warning" : "bg-primary"}`}
-                  style={{ width: `${trialProgress}%` }}
+                  className={`h-full rounded-full transition-all ${daysLeft <= 5 ? "bg-destructive" : daysLeft <= 10 ? "bg-warning" : "bg-primary"}`}
+                  style={{ width: `${progressPct}%` }}
                 />
               </div>
-              {sub?.nextBillingDate && (
+              {sub.nextBillingAt && (
                 <div className="mt-2 text-xs text-muted-foreground">
-                  Дата: {fmtDate(sub.nextBillingDate)}
+                  Дата: {fmtDate(sub.nextBillingAt)}
                 </div>
               )}
-              {sub?.status === "TRIAL" && (
+              {sub.status === "TRIAL" && (
                 <div className="mt-4 rounded-md bg-muted/50 p-3 text-xs text-muted-foreground">
                   После окончания триала компания перейдёт в{" "}
                   <span className="font-medium text-warning-foreground">льготный период</span> на 3
@@ -178,7 +190,9 @@ export function SubscriptionCard() {
               )}
             </>
           ) : (
-            <p className="text-sm text-muted-foreground">Нет данных о дате списания.</p>
+            <p className="text-sm text-muted-foreground">
+              {isCancelled ? "Подписка отменена." : "Нет данных о дате списания."}
+            </p>
           )}
         </div>
       </div>
@@ -191,7 +205,7 @@ export function SubscriptionCard() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border bg-muted/40">
-              {["Дата", "Счёт", "Сумма", "Способ", "Статус", ""].map((h) => (
+              {["Дата", "Период", "Сумма", "Провайдер", "Референс", "Статус"].map((h) => (
                 <th
                   key={h}
                   className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
@@ -221,19 +235,17 @@ export function SubscriptionCard() {
             ) : (
               payments.map((p) => (
                 <tr key={p.id} className="border-b border-border last:border-0 hover:bg-muted/30">
-                  <td className="px-4 py-3 text-muted-foreground">{fmtDate(p.date)}</td>
-                  <td className="px-4 py-3 font-mono text-xs text-foreground">
-                    {p.invoiceNumber ?? "—"}
+                  <td className="px-4 py-3 text-muted-foreground">{fmtDate(p.createdAt)}</td>
+                  <td className="px-4 py-3 text-xs text-muted-foreground">
+                    {fmtPeriod(p.periodStart, p.periodEnd)}
                   </td>
-                  <td className="px-4 py-3 font-medium text-foreground">${p.amount}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{p.method}</td>
+                  <td className="px-4 py-3 font-medium text-foreground">${p.amountUsd}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{p.provider}</td>
+                  <td className="px-4 py-3 font-mono text-xs text-foreground">
+                    {p.providerRef ?? "—"}
+                  </td>
                   <td className="px-4 py-3">
                     <StatusBadge status={p.status} />
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <Download className="h-4 w-4" />
-                    </Button>
                   </td>
                 </tr>
               ))
@@ -248,8 +260,8 @@ export function SubscriptionCard() {
           <AlertDialogHeader>
             <AlertDialogTitle>Отменить подписку?</AlertDialogTitle>
             <AlertDialogDescription>
-              Подписка будет отменена. Компания перейдёт в льготный период, после чего доступ будет
-              приостановлен.
+              Подписка будет отменена. Компания перейдёт в статус «Приостановлена», и сотрудники
+              потеряют доступ к check-in / check-out.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

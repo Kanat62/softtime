@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { UserRole } from "@softtime/shared";
 import { RoleGuard } from "@/app/router/guards";
 import { AppShell } from "@/widgets/app-shell";
 
@@ -9,8 +10,8 @@ import { AppShell } from "@/widgets/app-shell";
  */
 export function ProviderLayout({ children }: { children: ReactNode }) {
   return (
-    <RoleGuard role="PROVIDER">
-      <AppShell role="PROVIDER">{children}</AppShell>
+    <RoleGuard role={UserRole.PROVIDER}>
+      <AppShell role={UserRole.PROVIDER}>{children}</AppShell>
     </RoleGuard>
   );
 }

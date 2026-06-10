@@ -121,14 +121,14 @@ export function EmployeeProfile() {
       id: "checkIn",
       header: "Приход",
       cell: ({ row }) => (
-        <span className="text-sm text-muted-foreground">{fmtTime(row.original.checkIn)}</span>
+        <span className="text-sm text-muted-foreground">{fmtTime(row.original.checkInAt)}</span>
       ),
     },
     {
       id: "checkOut",
       header: "Уход",
       cell: ({ row }) => (
-        <span className="text-sm text-muted-foreground">{fmtTime(row.original.checkOut)}</span>
+        <span className="text-sm text-muted-foreground">{fmtTime(row.original.checkOutAt)}</span>
       ),
     },
     {
@@ -152,7 +152,7 @@ export function EmployeeProfile() {
     columns: attColumns,
     getCoreRowModel: getCoreRowModel(),
     manualPagination: true,
-    pageCount: Math.ceil((attData?.total ?? 0) / ATT_LIMIT),
+    pageCount: Math.ceil((attData?.meta.total ?? 0) / ATT_LIMIT),
   });
 
   // ─── Requests table ────────────────────────────────────────────────────
@@ -199,7 +199,7 @@ export function EmployeeProfile() {
     columns: reqColumns,
     getCoreRowModel: getCoreRowModel(),
     manualPagination: true,
-    pageCount: Math.ceil((reqData?.total ?? 0) / REQ_LIMIT),
+    pageCount: Math.ceil((reqData?.meta.total ?? 0) / REQ_LIMIT),
   });
 
   // ─── Render ────────────────────────────────────────────────────────────
@@ -265,7 +265,7 @@ export function EmployeeProfile() {
         <PaginatedTable
           table={attTable}
           isLoading={attLoading}
-          total={attData?.total ?? 0}
+          total={attData?.meta.total ?? 0}
           page={attPage}
           limit={ATT_LIMIT}
           onPageChange={setAttPage}
@@ -285,7 +285,7 @@ export function EmployeeProfile() {
         <PaginatedTable
           table={reqTable}
           isLoading={reqLoading}
-          total={reqData?.total ?? 0}
+          total={reqData?.meta.total ?? 0}
           page={reqPage}
           limit={REQ_LIMIT}
           onPageChange={setReqPage}

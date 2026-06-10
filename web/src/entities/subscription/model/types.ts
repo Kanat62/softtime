@@ -1,9 +1,13 @@
-export type SubStatus = "TRIAL" | "ACTIVE" | "GRACE" | "SUSPENDED";
+import { SubStatus } from "@softtime/shared";
+export type { SubStatus };
+
 export interface Subscription {
   id: string;
   companyId: string;
-  plan: string;
   status: SubStatus;
-  nextBillingDate?: string;
-  amount: number;
+  priceUsd: number;
+  periodStart: string;
+  periodEnd: string;
+  nextBillingAt: string | null;
+  daysLeft: number;
 }

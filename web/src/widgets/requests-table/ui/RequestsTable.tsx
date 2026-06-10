@@ -10,6 +10,7 @@ import { requestApi } from "@/entities/request/api";
 import type { AbsenceRequest } from "@/entities/request/model/types";
 import { userApi } from "@/entities/user/api";
 import { queryKeys } from "@/shared/api/query-keys";
+import { isNormalizedError } from "@/shared/api/error";
 import { PageHeader, EmptyState, StatusBadge } from "@/shared/ui";
 import { Button } from "@/shared/ui/button";
 import { Label } from "@/shared/ui/label";
@@ -57,6 +58,15 @@ const STATUS_OPTIONS: { label: string; value: RequestStatus | "" }[] = [
   { label: "Отклонено", value: RequestStatus.REJECTED },
 ];
 
+// Types that create absence days when approved
+const ABSENCE_TYPES = new Set<RequestType>([
+  RequestType.SICK,
+  RequestType.FAMILY,
+  RequestType.VACATION,
+  RequestType.BUSINESS_TRIP,
+  RequestType.REMOTE,
+]);
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function fmtDate(iso: string): string {
@@ -96,6 +106,26 @@ function DetailRow({ label, value }: { label: string; value: string }) {
   );
 }
 
+// ─── Approve context hint ─────────────────────────────────────────────────────
+
+function ApproveHint({ type }: { type: RequestType }) {
+  if (type === RequestType.EARLY_LEAVE) {
+    return (
+      <p className="rounded-lg bg-blue-50 px-3 py-2 text-xs text-blue-700">
+        Одобрение означает, что ранний уход не будет засчитан как нарушение.
+      </p>
+    );
+  }
+  if (ABSENCE_TYPES.has(type)) {
+    return (
+      <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-700">
+        Дни в указанном периоде будут помечены как «Одобрённое отсутствие».
+      </p>
+    );
+  }
+  return null;
+}
+
 // ─── Widget ───────────────────────────────────────────────────────────────────
 
 export function RequestsTable() {
@@ -123,6 +153,14 @@ export function RequestsTable() {
     placeholderData: (prev) => prev,
   });
 
+  // Separate count query for the pending badge — always fetches status=PENDING
+  const pendingCountQuery = useQuery({
+    queryKey: queryKeys.requests({ page: 1, limit: 1, status: RequestStatus.PENDING }),
+    queryFn: () => requestApi.list({ page: 1, limit: 1, status: RequestStatus.PENDING }),
+    staleTime: 30_000,
+  });
+  const pendingCount = pendingCountQuery.data?.meta.total ?? 0;
+
   const empQuery = useQuery({
     queryKey: queryKeys.employees({ page: 1, limit: 100 }),
     queryFn: () => userApi.listEmployees({ page: 1, limit: 100 }),
@@ -135,19 +173,23 @@ export function RequestsTable() {
     return m;
   }, [empQuery.data]);
 
-  const invalidate = () => qc.invalidateQueries({ queryKey: ["requests"] });
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: ["requests"] });
+  };
 
   // ── Mutations ────────────────────────────────────────────────────────────
   const approveMutation = useMutation({
-    mutationFn: ({ id, note }: { id: string; note: string }) =>
-      requestApi.approve(id, note || undefined),
+    mutationFn: ({ id }: { id: string }) => requestApi.approve(id),
     onSuccess: () => {
       toast.success("Заявка одобрена");
       setActiveReq(null);
       setDecisionNote("");
       invalidate();
     },
-    onError: () => toast.error("Ошибка при одобрении"),
+    onError: (err) => {
+      const msg = isNormalizedError(err) ? err.message : "Ошибка при одобрении заявки";
+      toast.error(msg);
+    },
   });
 
   const rejectMutation = useMutation({
@@ -159,7 +201,10 @@ export function RequestsTable() {
       setConfirmReject(false);
       invalidate();
     },
-    onError: () => toast.error("Ошибка при отклонении"),
+    onError: (err) => {
+      const msg = isNormalizedError(err) ? err.message : "Ошибка при отклонении заявки";
+      toast.error(msg);
+    },
   });
 
   // ── Handlers ─────────────────────────────────────────────────────────────
@@ -171,7 +216,7 @@ export function RequestsTable() {
 
   function handleApprove() {
     if (!activeReq) return;
-    approveMutation.mutate({ id: activeReq.id, note: decisionNote });
+    approveMutation.mutate({ id: activeReq.id });
   }
 
   function handleRejectConfirmed() {
@@ -181,7 +226,7 @@ export function RequestsTable() {
 
   // ── Table ─────────────────────────────────────────────────────────────────
   const rows = reqQuery.data?.data ?? [];
-  const total = reqQuery.data?.total ?? 0;
+  const total = reqQuery.data?.meta.total ?? 0;
   const pageCount = Math.ceil(total / PAGE_SIZE);
 
   const columns: ColumnDef<AbsenceRequest>[] = [
@@ -259,16 +304,19 @@ export function RequestsTable() {
     },
   });
 
-  // ── Pending count badge ───────────────────────────────────────────────────
-  const pendingCount = useMemo(
-    () => (reqQuery.data?.data ?? []).filter((r) => r.status === RequestStatus.PENDING).length,
-    [reqQuery.data],
-  );
-
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="space-y-6">
-      <PageHeader title="Заявки" />
+      <PageHeader
+        title="Заявки"
+        actions={
+          pendingCount > 0 ? (
+            <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-destructive px-2 text-xs font-semibold text-white">
+              {pendingCount}
+            </span>
+          ) : undefined
+        }
+      />
 
       {/* ── Фильтр ───────────────────────────────────────────────────────── */}
       <div className="flex flex-wrap items-end gap-3">
@@ -288,6 +336,11 @@ export function RequestsTable() {
               {STATUS_OPTIONS.map((o) => (
                 <SelectItem key={o.value || "_all"} value={o.value || "_all"}>
                   {o.label}
+                  {o.value === RequestStatus.PENDING && pendingCount > 0 && (
+                    <span className="ml-2 rounded-full bg-destructive px-1.5 py-0.5 text-[10px] text-white">
+                      {pendingCount}
+                    </span>
+                  )}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -435,6 +488,9 @@ export function RequestsTable() {
                   label="Период"
                   value={fmtPeriod(activeReq.startDate, activeReq.endDate)}
                 />
+                {activeReq.type === RequestType.EARLY_LEAVE && activeReq.desiredTime && (
+                  <DetailRow label="Желаемое время ухода" value={activeReq.desiredTime} />
+                )}
                 <DetailRow label="Комментарий" value={activeReq.comment ?? "—"} />
                 <DetailRow label="Подано" value={fmtDate(activeReq.createdAt)} />
                 <div className="flex items-center justify-between">
@@ -454,6 +510,9 @@ export function RequestsTable() {
               {/* Comment field + action buttons (only for PENDING) */}
               {activeReq.status === RequestStatus.PENDING && (
                 <>
+                  {/* Contextual hint about what approval means */}
+                  <ApproveHint type={activeReq.type} />
+
                   <div className="space-y-1.5">
                     <Label htmlFor="decision-note">Комментарий к решению</Label>
                     <Textarea

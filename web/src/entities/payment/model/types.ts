@@ -1,11 +1,15 @@
-export type PaymentStatus = "PAID" | "PENDING" | "REJECTED";
+import { PaymentStatus } from "@softtime/shared";
+export type { PaymentStatus };
+
 export interface Payment {
   id: string;
   companyId: string;
-  amount: number;
-  currency: string;
-  method: string;
+  subscriptionId: string;
+  amountUsd: number;
+  periodStart: string;
+  periodEnd: string;
   status: PaymentStatus;
-  date: string;
-  invoiceNumber?: string;
+  provider: string;
+  providerRef: string | null;
+  createdAt: string;
 }

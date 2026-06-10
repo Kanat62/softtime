@@ -1,12 +1,15 @@
-import { apiClient } from "@/shared/api/client";
 import { RequestStatus } from "@softtime/shared";
+import { request } from "@/shared/api/request";
 import type { AbsenceRequest } from "../model/types";
 
 export interface PaginatedRequests {
   data: AbsenceRequest[];
-  total: number;
-  page: number;
-  limit: number;
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  };
 }
 
 export interface RequestParams {
@@ -19,15 +22,17 @@ export interface RequestParams {
 export const requestApi = {
   /** GET /requests?userId&status&page&limit */
   list: (params: RequestParams) =>
-    apiClient.get<PaginatedRequests>("/requests", { params }).then((r) => r.data),
+    request<PaginatedRequests>({ method: "GET", url: "/requests", params }),
 
-  /** POST /requests/:id/approve */
-  approve: (id: string, decisionNote?: string) =>
-    apiClient
-      .post<AbsenceRequest>(`/requests/${id}/approve`, { decisionNote: decisionNote ?? null })
-      .then((r) => r.data),
+  /** PATCH /requests/:id/approve */
+  approve: (id: string) =>
+    request<AbsenceRequest>({ method: "PATCH", url: `/requests/${id}/approve` }),
 
-  /** POST /requests/:id/reject */
+  /** PATCH /requests/:id/reject */
   reject: (id: string, decisionNote: string) =>
-    apiClient.post<AbsenceRequest>(`/requests/${id}/reject`, { decisionNote }).then((r) => r.data),
+    request<AbsenceRequest>({
+      method: "PATCH",
+      url: `/requests/${id}/reject`,
+      data: { decisionNote },
+    }),
 };

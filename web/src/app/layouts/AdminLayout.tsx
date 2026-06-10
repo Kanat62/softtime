@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { UserRole } from "@softtime/shared";
 import { RoleGuard } from "@/app/router/guards";
 import { AppShell } from "@/widgets/app-shell";
 
@@ -9,8 +10,8 @@ import { AppShell } from "@/widgets/app-shell";
  */
 export function AdminLayout({ children }: { children: ReactNode }) {
   return (
-    <RoleGuard role="ADMIN">
-      <AppShell role="ADMIN">{children}</AppShell>
+    <RoleGuard role={UserRole.ADMIN}>
+      <AppShell role={UserRole.ADMIN}>{children}</AppShell>
     </RoleGuard>
   );
 }

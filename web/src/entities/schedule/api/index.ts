@@ -1,19 +1,16 @@
-import { apiClient } from "@/shared/api/client";
-import type { EmployeeScheduleData, ScheduleDay } from "../model/types";
+import { request } from "@/shared/api/request";
+import type { ScheduleDay } from "../model/types";
 
 export const scheduleApi = {
-  /** GET /schedules — все расписания всех сотрудников */
-  listAll: () => apiClient.get<EmployeeScheduleData[]>("/schedules").then((r) => r.data),
-
-  /** GET /schedules/:userId — расписание конкретного сотрудника */
+  /** GET /schedules/:userId — расписание сотрудника (7 записей) */
   getByUserId: (userId: string) =>
-    apiClient.get<ScheduleDay[]>(`/schedules/${userId}`).then((r) => r.data),
+    request<ScheduleDay[]>({ method: "GET", url: `/schedules/${userId}` }),
 
-  /** PUT /schedules/:userId — сохранить расписание сотрудника */
+  /** PUT /schedules/:userId — сохранить расписание (ровно 7 дней, мин. 6ч рабочий день) */
   saveByUserId: (userId: string, days: ScheduleDay[]) =>
-    apiClient.put<ScheduleDay[]>(`/schedules/${userId}`, { days }).then((r) => r.data),
+    request<ScheduleDay[]>({ method: "PUT", url: `/schedules/${userId}`, data: { days } }),
 
-  /** POST /schedules/template — применить шаблон ко всем или выбранным */
-  applyTemplate: (dto: { days: ScheduleDay[]; userIds?: string[] }) =>
-    apiClient.post<void>("/schedules/template", dto),
+  /** POST /schedules/apply-all — применить шаблон ко всем или выбранным */
+  applyToAll: (dto: { days: ScheduleDay[]; userIds?: string[] }) =>
+    request<ScheduleDay[]>({ method: "POST", url: "/schedules/apply-all", data: dto }),
 };

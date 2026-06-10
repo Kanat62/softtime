@@ -1,39 +1,43 @@
-import { apiClient } from "@/shared/api/client";
-import type {
-  AttendanceRow,
-  InOfficeEmployee,
-  AttendancePatchDto,
-  AbsenceCreateDto,
-} from "../model/types";
+import { request } from "@/shared/api/request";
+import type { AttendanceRow, AttendancePatchDto, ManualAttendanceDto } from "../model/types";
 
 export interface PaginatedAttendance {
   data: AttendanceRow[];
-  total: number;
-  page: number;
-  limit: number;
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  };
 }
 
 export interface AttendanceParams {
   page: number;
   limit: number;
   userId?: string;
-  dateFrom?: string;
-  dateTo?: string;
+  from?: string;
+  to?: string;
   status?: string;
 }
 
 export const attendanceApi = {
+  /** GET /attendance — admin list with filters */
   list: (params: AttendanceParams) =>
-    apiClient.get<PaginatedAttendance>("/attendance", { params }).then((r) => r.data),
+    request<PaginatedAttendance>({ method: "GET", url: "/attendance", params }),
 
-  inOffice: () => apiClient.get<InOfficeEmployee[]>("/attendance/in-office").then((r) => r.data),
+  /** GET /attendance/today — employees currently checked in (no checkOut) */
+  inOffice: () =>
+    request<AttendanceRow[]>({ method: "GET", url: "/attendance/today" }),
 
+  /** PATCH /attendance/:id — correct check-in/out, marks isManual=true */
   patchRecord: (id: string, dto: AttendancePatchDto) =>
-    apiClient.patch<AttendanceRow>(`/attendance/${id}`, dto).then((r) => r.data),
+    request<AttendanceRow>({ method: "PATCH", url: `/attendance/${id}`, data: dto }),
 
-  manualCheckout: (id: string, checkOut: string) =>
-    apiClient.post<AttendanceRow>(`/attendance/${id}/checkout`, { checkOut }).then((r) => r.data),
+  /** Manual checkout: PATCH /attendance/:id with ISO checkOutAt */
+  manualCheckout: (id: string, checkOutAt: string) =>
+    request<AttendanceRow>({ method: "PATCH", url: `/attendance/${id}`, data: { checkOutAt } }),
 
-  addAbsence: (dto: AbsenceCreateDto) =>
-    apiClient.post<AttendanceRow>("/attendance/absence", dto).then((r) => r.data),
+  /** POST /attendance/manual — create absence or manual record */
+  manualCreate: (dto: ManualAttendanceDto) =>
+    request<AttendanceRow>({ method: "POST", url: "/attendance/manual", data: dto }),
 };

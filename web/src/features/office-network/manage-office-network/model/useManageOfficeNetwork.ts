@@ -18,7 +18,8 @@ export function useCreateOfficeNetwork() {
 export function useUpdateOfficeNetwork() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, dto }: { id: string; dto: UpdateNetworkDto }) => networkApi.update(id, dto),
+    mutationFn: ({ id, dto }: { id: string; dto: UpdateNetworkDto }) =>
+      networkApi.update(id, dto),
     onSuccess: () => {
       toast.success("Сеть обновлена");
       qc.invalidateQueries({ queryKey: queryKeys.officeNetworks });

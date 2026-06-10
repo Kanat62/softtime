@@ -1,14 +1,14 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { attendanceApi } from "@/entities/attendance/api";
-import type { AbsenceCreateDto } from "@/entities/attendance/model/types";
+import type { ManualAttendanceDto } from "@/entities/attendance/model/types";
 
 export function useAddAbsence(onSuccess?: () => void) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (dto: AbsenceCreateDto) => attendanceApi.addAbsence(dto),
+    mutationFn: (dto: ManualAttendanceDto) => attendanceApi.manualCreate(dto),
     onSuccess: () => {
-      toast.success("Запись об отсутствии добавлена");
+      toast.success("Запись добавлена");
       qc.invalidateQueries({ queryKey: ["attendance"] });
       onSuccess?.();
     },

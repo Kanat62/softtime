@@ -20,4 +20,10 @@ export const absenceRequestSchema = z.object({
   comment: z.string().nullable().optional(),
 });
 
+/** Схема отклонения заявки — тело PATCH /requests/:id/reject */
+export const rejectRequestSchema = z.object({
+  decisionNote: z.string().max(500, 'Комментарий не может превышать 500 символов').optional(),
+});
+
 export type AbsenceRequestDto = z.infer<typeof absenceRequestSchema>;
+export type RejectRequestDto = z.infer<typeof rejectRequestSchema>;

@@ -4,8 +4,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Eye, EyeOff, Mail, Lock, Clock, Users, BarChart2 } from "lucide-react";
-import axios from "axios";
 import { loginSchema, type LoginDto } from "@softtime/shared";
+import { isNormalizedError } from "@/shared/api/error";
 import { useAuth } from "@/entities/session";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
@@ -35,11 +35,11 @@ export function LoginPage() {
       toast.success("Вход выполнен");
       navigate({ to: user.role === "PROVIDER" ? "/provider/dashboard" : "/admin/dashboard" });
     } catch (err) {
-      if (axios.isAxiosError(err)) {
-        const status = err.response?.status;
-        const code = err.response?.data?.code ?? err.response?.data?.error;
-        if (status === 403 || code === "ACCOUNT_BLOCKED" || code === "USER_BLOCKED") {
-          toast.error("Аккаунт заблокирован. Обратитесь к администратору.");
+      if (isNormalizedError(err)) {
+        if (err.statusCode === 429) {
+          toast.error(err.message);
+        } else if (err.statusCode === 0) {
+          toast.error("Нет соединения с сервером");
         } else {
           toast.error("Неверный email или пароль");
         }

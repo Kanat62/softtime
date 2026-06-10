@@ -1,28 +1,32 @@
-import { UserStatus } from "@softtime/shared";
+import { UserRole, UserStatus } from "@softtime/shared";
 
-export type { UserStatus };
+export type { UserRole, UserStatus };
 
-/** Сотрудник как возвращает API (без passwordHash) */
 export interface Employee {
   id: string;
   fullName: string;
   email: string;
+  role: UserRole;
   status: UserStatus;
   hiredAt: string | null;
   lastActivityAt: string | null;
   avatarUrl: string | null;
   adminNote: string | null;
   companyId: string;
+  createdAt: string;
 }
 
-/** Детальный профиль (те же поля + опционально расширенные данные от эндпойнта /users/:id) */
+/** Детальный профиль (те же поля что у Employee) */
 export type EmployeeDetail = Employee;
 
 export interface PaginatedEmployees {
   data: Employee[];
-  total: number;
-  page: number;
-  limit: number;
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  };
 }
 
 export interface EmployeeListParams {

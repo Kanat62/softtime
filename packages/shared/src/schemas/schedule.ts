@@ -65,5 +65,13 @@ export const dayScheduleSchema = z
 /** Схема полного расписания на неделю (7 дней) */
 export const scheduleSchema = z.array(dayScheduleSchema).length(7, 'Расписание должно содержать ровно 7 дней');
 
+/** Схема применения расписания ко всем/выбранным сотрудникам — тело POST /schedules/apply-all */
+export const applyAllScheduleSchema = z.object({
+  days: scheduleSchema,
+  /** Если не указан — применяется ко всем сотрудникам компании */
+  userIds: z.array(z.string().uuid()).optional(),
+});
+
 export type DayScheduleDto = z.infer<typeof dayScheduleSchema>;
 export type ScheduleDto = z.infer<typeof scheduleSchema>;
+export type ApplyAllScheduleDto = z.infer<typeof applyAllScheduleSchema>;

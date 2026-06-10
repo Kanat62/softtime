@@ -30,7 +30,7 @@ const attendanceMeQuerySchema = z.object({
   from: z.string().date().optional(),
   to: z.string().date().optional(),
   page: z.coerce.number().int().positive().default(1),
-  limit: z.coerce.number().int().min(1).max(100).default(30),
+  limit: z.coerce.number().int().min(1).max(500).default(30),
 });
 
 const attendanceQuerySchema = z.object({
@@ -39,7 +39,7 @@ const attendanceQuerySchema = z.object({
   userId: z.string().uuid().optional(),
   status: z.nativeEnum(DayStatus).optional(),
   page: z.coerce.number().int().positive().default(1),
-  limit: z.coerce.number().int().min(1).max(100).default(50),
+  limit: z.coerce.number().int().min(1).max(500).default(50),
 });
 
 const patchAttendanceSchema = z
