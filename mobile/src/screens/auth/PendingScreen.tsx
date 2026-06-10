@@ -1,9 +1,10 @@
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Clock } from 'lucide-react-native';
 import {
   colors,
+  fontFamily,
   iconStrokeWidth,
   radius,
   space,
@@ -11,9 +12,52 @@ import {
 } from '@/shared/config/theme';
 import { Button } from '@/shared/ui';
 import { useAuth } from '@/app/providers/AuthProvider';
+import { tokenStorage } from '@/shared/storage/secure';
+import { refreshTokensApi } from '@/entities/user/api/auth';
+import { decodeJwtPayload } from '@/shared/lib/jwt';
+import { UserStatus, UserRole } from '@softtime/shared';
+
+const POLL_INTERVAL_MS = 10_000;
 
 export function PendingScreen() {
-  const { logout } = useAuth();
+  const { logout, setAuth } = useAuth();
+  const cancelled = useRef(false);
+
+  useEffect(() => {
+    cancelled.current = false;
+
+    async function checkStatus() {
+      const refreshToken = await tokenStorage.getRefreshToken();
+      if (!refreshToken || cancelled.current) return;
+
+      try {
+        const tokens = await refreshTokensApi(refreshToken);
+        if (cancelled.current) return;
+
+        const payload = decodeJwtPayload(tokens.accessToken);
+        if (!payload) return;
+
+        if (payload.status === UserStatus.ACTIVE) {
+          await setAuth({
+            accessToken: tokens.accessToken,
+            refreshToken: tokens.refreshToken,
+            role: payload.role as UserRole,
+            status: UserStatus.ACTIVE,
+            companyStatus: null,
+          });
+        }
+      } catch {
+        // Network error or token expired — keep polling silently
+      }
+    }
+
+    const interval = setInterval(checkStatus, POLL_INTERVAL_MS);
+
+    return () => {
+      cancelled.current = true;
+      clearInterval(interval);
+    };
+  }, [setAuth]);
 
   return (
     <SafeAreaView style={styles.root}>
@@ -23,6 +67,10 @@ export function PendingScreen() {
         </View>
         <Text style={styles.title}>Заявка отправлена</Text>
         <Text style={styles.subtitle}>Ждите подтверждения администратора</Text>
+        <View style={styles.pollingRow}>
+          <ActivityIndicator size="small" color={colors.textDisabled} />
+          <Text style={styles.pollingText}>Проверяем статус...</Text>
+        </View>
       </View>
 
       <View style={styles.footer}>
@@ -64,6 +112,17 @@ const styles = StyleSheet.create({
     ...typography.base,
     color: colors.textSecondary,
     textAlign: 'center',
+  },
+  pollingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[2],
+    marginTop: space[2],
+  },
+  pollingText: {
+    ...typography.sm,
+    fontFamily: fontFamily.regular,
+    color: colors.textDisabled,
   },
   footer: {
     paddingHorizontal: space[4],
