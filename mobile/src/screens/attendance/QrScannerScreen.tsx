@@ -1,5 +1,6 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
   Animated,
   Easing,
   StatusBar,
@@ -9,23 +10,49 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { CheckCircle, Wifi, X } from 'lucide-react-native';
+import { X } from 'lucide-react-native';
+import { useRoute } from '@react-navigation/native';
+import type { RouteProp } from '@react-navigation/native';
+import { Camera, useCameraDevice, useCameraPermission, useCodeScanner } from 'react-native-vision-camera';
+import type { WorkerHomeStackParamList } from '@/shared/navigation/types';
 import { colors, fontFamily, iconStrokeWidth, radius, space } from '@/shared/config/theme';
 import { useWorkerNavigation } from '@/shared/navigation/hooks';
-import { useCheckIn } from '@/features/attendance/check-in/model/useCheckIn';
+import {
+  useAttendanceScan,
+  mapScanError,
+} from '@/features/attendance/check-in/model/useCheckIn';
+import { formatTime } from '@/shared/lib/date';
+import { useIsOnline } from '@/shared/lib/network';
+import type { CheckInResult, CheckOutResult } from '@softtime/shared';
+
+type QrScannerRoute = RouteProp<WorkerHomeStackParamList, 'QrScanner'>;
 
 const FRAME_SIZE = 260;
 const CORNER_SIZE = 28;
 const CORNER_THICKNESS = 3;
 const SCAN_DURATION = 1600;
-const MOCK_SCAN_DELAY = 2000;
 
 export function QrScannerScreen() {
   const navigation = useWorkerNavigation();
-  const { getNextMockResult } = useCheckIn();
-  const scanLineY = useRef(new Animated.Value(0)).current;
+  const route = useRoute<QrScannerRoute>();
+  const { mode } = route.params;
 
-  // Looping scan line animation
+  const { hasPermission, requestPermission } = useCameraPermission();
+  const device = useCameraDevice('back');
+
+  const [scanError, setScanError] = useState<string | null>(null);
+  const isProcessingRef = useRef(false);
+  const isOnline = useIsOnline();
+
+  const scanLineY = useRef(new Animated.Value(0)).current;
+  const { mutate, isPending } = useAttendanceScan(mode);
+
+  const title = mode === 'checkIn' ? 'Отметить приход' : 'Отметить уход';
+
+  useEffect(() => {
+    if (!hasPermission) requestPermission();
+  }, [hasPermission, requestPermission]);
+
   useEffect(() => {
     const anim = Animated.loop(
       Animated.sequence([
@@ -47,18 +74,61 @@ export function QrScannerScreen() {
     return () => anim.stop();
   }, [scanLineY]);
 
-  // Mock scan: navigate to result after delay
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      const result = getNextMockResult();
-      navigation.navigate('ScanResult', result);
-    }, MOCK_SCAN_DELAY);
-    return () => clearTimeout(timer);
-  }, []);
+  const codeScanner = useCodeScanner({
+    codeTypes: ['qr'],
+    onCodeScanned: (codes) => {
+      if (!isOnline || isProcessingRef.current || isPending) return;
+      const qrToken = codes[0]?.value;
+      if (!qrToken) return;
+
+      isProcessingRef.current = true;
+      setScanError(null);
+
+      mutate(qrToken, {
+        onSuccess: (result) => {
+          const isCheckIn = mode === 'checkIn';
+          if (isCheckIn) {
+            const r = result as CheckInResult;
+            navigation.replace('ScanResult', {
+              type: 'checkIn',
+              status: r.checkInStatus,
+              time: r.record.checkInAt ? formatTime(r.record.checkInAt) : '--:--',
+              message: r.message,
+              diffMinutes: r.diffMinutes,
+            });
+          } else {
+            const r = result as unknown as CheckOutResult;
+            navigation.replace('ScanResult', {
+              type: 'checkOut',
+              status: r.checkOutStatus,
+              time: r.record.checkOutAt ? formatTime(r.record.checkOutAt) : '--:--',
+              message: r.message,
+              workedMinutes: r.workedMinutes ?? undefined,
+              dayStatus: r.dayStatus,
+            });
+          }
+        },
+        onError: (err) => {
+          setScanError(mapScanError(err as any));
+          isProcessingRef.current = false;
+        },
+      });
+    },
+  });
 
   return (
     <View style={styles.root}>
       <StatusBar barStyle="light-content" backgroundColor="#000" />
+
+      {/* Camera (behind everything) */}
+      {hasPermission && device && !isPending && (
+        <Camera
+          style={StyleSheet.absoluteFill}
+          device={device}
+          isActive={!isProcessingRef.current}
+          codeScanner={codeScanner}
+        />
+      )}
 
       {/* Top bar */}
       <SafeAreaView edges={['top']}>
@@ -70,63 +140,91 @@ export function QrScannerScreen() {
           >
             <X size={22} color="#fff" strokeWidth={iconStrokeWidth} />
           </TouchableOpacity>
-          <Text style={styles.title}>Отметить приход</Text>
+          <Text style={styles.title}>{title}</Text>
           <View style={styles.closeBtn} />
         </View>
       </SafeAreaView>
 
-      {/* Scanner area */}
+      {/* Scanner overlay */}
       <View style={styles.scanner}>
-        {/* Overlay: top */}
         <View style={styles.maskV} />
-
-        {/* Frame row */}
         <View style={styles.frameRow}>
           <View style={styles.maskH} />
-
-          {/* Scan frame */}
           <View style={styles.frame}>
             <ScanCorner position="topLeft" />
             <ScanCorner position="topRight" />
             <ScanCorner position="bottomLeft" />
             <ScanCorner position="bottomRight" />
-            <Animated.View
-              style={[styles.scanLine, { transform: [{ translateY: scanLineY }] }]}
-            />
+            {!isPending && (
+              <Animated.View
+                style={[styles.scanLine, { transform: [{ translateY: scanLineY }] }]}
+              />
+            )}
           </View>
-
           <View style={styles.maskH} />
         </View>
-
-        {/* Overlay: bottom + subtitle */}
         <View style={[styles.maskV, styles.maskVBottom]}>
-          <Text style={styles.subtitle}>Наведите камеру на QR-код офиса</Text>
+          <Text style={styles.subtitle}>
+            {!hasPermission
+              ? 'Нет доступа к камере'
+              : 'Наведите камеру на QR-код офиса'}
+          </Text>
         </View>
       </View>
 
-      {/* WiFi badge */}
-      <SafeAreaView edges={['bottom']}>
-        <View style={styles.badge}>
-          <Wifi size={20} color={colors.success} strokeWidth={iconStrokeWidth} />
-          <View style={styles.badgeText}>
-            <Text style={styles.badgeTitle}>Офисная сеть подключена</Text>
-            <Text style={styles.badgeSub}>SoftTime-Office · 192.168.1.100</Text>
+      {/* Offline overlay */}
+      {!isOnline && (
+        <SafeAreaView edges={['bottom']} style={styles.errorContainer}>
+          <View style={[styles.errorBanner, styles.offlineBanner]}>
+            <Text style={styles.errorText}>Нет подключения к интернету</Text>
           </View>
-          <CheckCircle size={20} color={colors.success} strokeWidth={iconStrokeWidth} />
+        </SafeAreaView>
+      )}
+
+      {/* Loading overlay */}
+      {isPending && (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={styles.loadingText}>Проверяем...</Text>
         </View>
-      </SafeAreaView>
+      )}
+
+      {/* Error banner */}
+      {scanError && (
+        <SafeAreaView edges={['bottom']} style={styles.errorContainer}>
+          <View style={styles.errorBanner}>
+            <Text style={styles.errorText}>{scanError}</Text>
+            <TouchableOpacity
+              onPress={() => setScanError(null)}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Text style={styles.retryText}>Повторить</Text>
+            </TouchableOpacity>
+          </View>
+        </SafeAreaView>
+      )}
+
+      {/* Permission denied hint */}
+      {!hasPermission && (
+        <SafeAreaView edges={['bottom']} style={styles.errorContainer}>
+          <View style={styles.errorBanner}>
+            <Text style={styles.errorText}>
+              Нет доступа к камере. Разрешите в настройках устройства.
+            </Text>
+          </View>
+        </SafeAreaView>
+      )}
     </View>
   );
 }
 
-// ─── Corner bracket ───────────────────────────────────────────────────────────
+// ─── Corner bracket ────────────────────────────────────────────────────────────
 
 type CornerPosition = 'topLeft' | 'topRight' | 'bottomLeft' | 'bottomRight';
 
 function ScanCorner({ position }: { position: CornerPosition }) {
   const isTop = position.startsWith('top');
   const isLeft = position.endsWith('Left');
-
   return (
     <View
       style={[
@@ -135,25 +233,13 @@ function ScanCorner({ position }: { position: CornerPosition }) {
         isLeft ? { left: 0 } : { right: 0 },
       ]}
     >
-      {/* Horizontal bar */}
-      <View
-        style={[
-          styles.cornerH,
-          isTop ? { top: 0 } : { bottom: 0 },
-        ]}
-      />
-      {/* Vertical bar */}
-      <View
-        style={[
-          styles.cornerV,
-          isLeft ? { left: 0 } : { right: 0 },
-        ]}
-      />
+      <View style={[styles.cornerH, isTop ? { top: 0 } : { bottom: 0 }]} />
+      <View style={[styles.cornerV, isLeft ? { left: 0 } : { right: 0 }]} />
     </View>
   );
 }
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
+// ─── Styles ────────────────────────────────────────────────────────────────────
 
 const MASK_COLOR = 'rgba(0,0,0,0.6)';
 
@@ -162,8 +248,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000',
   },
-
-  // Top bar
   topBar: {
     height: 56,
     flexDirection: 'row',
@@ -183,8 +267,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     textAlign: 'center',
   },
-
-  // Scanner
   scanner: {
     flex: 1,
   },
@@ -205,8 +287,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: MASK_COLOR,
   },
-
-  // Frame
   frame: {
     width: FRAME_SIZE,
     height: FRAME_SIZE,
@@ -244,33 +324,50 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.75)',
     textAlign: 'center',
   },
-
-  // WiFi badge
-  badge: {
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: space[3],
+  },
+  loadingText: {
+    fontSize: 16,
+    fontFamily: fontFamily.medium,
+    color: '#fff',
+  },
+  errorContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+  },
+  errorBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    justifyContent: 'space-between',
+    backgroundColor: 'rgba(239,68,68,0.9)',
     marginHorizontal: space[4],
     marginBottom: space[4],
     borderRadius: radius.md,
     paddingVertical: space[3],
     paddingHorizontal: space[4],
     gap: space[3],
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.12)',
   },
-  badgeText: {
+  errorText: {
     flex: 1,
+    fontSize: 13,
+    fontFamily: fontFamily.medium,
+    color: '#fff',
   },
-  badgeTitle: {
+  retryText: {
     fontSize: 13,
     fontFamily: fontFamily.semiBold,
     color: '#fff',
+    textDecorationLine: 'underline',
   },
-  badgeSub: {
-    fontSize: 11,
-    fontFamily: fontFamily.regular,
-    color: 'rgba(255,255,255,0.5)',
-    marginTop: 2,
+  offlineBanner: {
+    backgroundColor: 'rgba(0,0,0,0.75)',
+    justifyContent: 'center',
   },
 });

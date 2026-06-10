@@ -303,16 +303,17 @@ AbsenceRequest, Subscription, Payment, News
 ## Что реализовано / что заглушка
 
 **Реализованы (полные экраны и виджеты):**
-- HomeScreen, OfficeScreen, MyScheduleScreen, AttendanceHistoryScreen
+- HomeScreen, OfficeScreen, MyScheduleScreen, AttendanceHistoryScreen (+ DateRangeSheet календарь для «Период»)
+- QrScannerScreen (vision-camera), ScanResultScreen
 - ProfileScreen, ManagementScreen
 - SubscriptionScreen, PaymentScreen, PaymentSuccessScreen
 - RequestsScreen, NewsFeedScreen, NewsDetailScreen
 - Auth-экраны: Splash, Onboarding, RoleSelect, RegisterAdmin, RegisterWorker, Login, Pending, Blocked
 - Widgets: HomeHeader, AttendanceCard, EmployeesToday, ScheduleMini, ScheduleWeek, HistoryList, PendingEmployees, IncomingRequests
+- Features: auth/login, auth/register-*, attendance/check-in (useAttendanceScan), attendance/history (useAttendanceHistory)
 
 **Заглушки (stub placeholder):**
-- QrScannerScreen, ScanResultScreen
-- `features/` — большинство слайсов не созданы, только auth/login, auth/register-*, attendance/check-in
+- (нет, все основные экраны реализованы)
 
 **Отсутствует (по docs/mobile-fsd.md, нужно создать):**
 - `app/navigation/linking.ts` — deep links

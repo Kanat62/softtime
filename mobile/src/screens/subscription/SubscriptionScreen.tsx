@@ -20,8 +20,8 @@ import {
 import { SubStatus, PaymentStatus } from '@softtime/shared';
 import type { Subscription, Payment } from '@softtime/shared';
 import { useAdminProfileNavigation } from '@/shared/navigation/hooks';
-import { mockSubscription, mockPayments } from '@/entities/subscription';
-import { Button, StatusBadge } from '@/shared/ui';
+import { useSubscription } from '@/features/subscription/model/useSubscription';
+import { Button, ErrorState, OfflineBanner, Skeleton, StatusBadge } from '@/shared/ui';
 import {
   colors,
   fontFamily,
@@ -125,7 +125,44 @@ const STATUS_CONFIGS: Record<SubStatus, StatusConfig> = {
 export function SubscriptionScreen() {
   const navigation = useAdminProfileNavigation();
   const [showHistory, setShowHistory] = useState(false);
-  const sub = mockSubscription;
+  const { subscription, isLoading, isError, refetch, payments } = useSubscription();
+
+  if (isLoading) {
+    return (
+      <SafeAreaView style={s.root} edges={['top']}>
+        <View style={s.topBar}>
+          <View style={s.backBtn} />
+          <Text style={s.topBarTitle}>Подписка</Text>
+          <View style={s.backBtn} />
+        </View>
+        <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
+          <Skeleton height={220} borderRadius={16} />
+          <Skeleton height={160} borderRadius={16} />
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
+
+  if (isError || !subscription) {
+    return (
+      <SafeAreaView style={s.root} edges={['top']}>
+        <View style={s.topBar}>
+          <TouchableOpacity
+            style={s.backBtn}
+            onPress={() => navigation.goBack()}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <ChevronLeft size={24} color={colors.textPrimary} strokeWidth={iconStrokeWidth} />
+          </TouchableOpacity>
+          <Text style={s.topBarTitle}>Подписка</Text>
+          <View style={s.backBtn} />
+        </View>
+        <ErrorState title="Не удалось загрузить подписку" onRetry={refetch} />
+      </SafeAreaView>
+    );
+  }
+
+  const sub = subscription;
   const cfg = STATUS_CONFIGS[sub.status];
   const needsPayment = isNonActive(sub.status);
 
@@ -155,6 +192,7 @@ export function SubscriptionScreen() {
         <Text style={s.topBarTitle}>Подписка</Text>
         <View style={s.backBtn} />
       </View>
+      <OfflineBanner variant="stale" />
 
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
 
@@ -210,7 +248,7 @@ export function SubscriptionScreen() {
       {/* Payment history sheet */}
       <PaymentHistorySheet
         visible={showHistory}
-        payments={mockPayments}
+        payments={payments}
         onClose={() => setShowHistory(false)}
       />
     </SafeAreaView>

@@ -5,6 +5,7 @@ import {
   Modal,
   Platform,
   Pressable,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -16,6 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { CalendarDays, ChevronLeft, ChevronRight, FileText, X } from 'lucide-react-native';
 import { RequestType, RequestStatus } from '@softtime/shared';
 import type { AbsenceRequest } from '@softtime/shared';
+import type { AppError } from '@/shared/api/errors';
 import {
   colors,
   fontFamily,
@@ -27,8 +29,10 @@ import {
   space,
   typography,
 } from '@/shared/config/theme';
-import { Button, EmptyState, StatusBadge } from '@/shared/ui';
-import { mockMyRequests } from '@/entities/request';
+import { Button, EmptyState, ErrorState, OfflineBanner, Skeleton, StatusBadge } from '@/shared/ui';
+import { useIsOnline } from '@/shared/lib/network';
+import { useSubmitRequest } from '@/features/request/submit/model/useSubmitRequest';
+import { useMyRequests } from '@/features/request/history/model/useMyRequests';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -69,14 +73,14 @@ function formatFullDate(date: Date): string {
 }
 
 function formatDateRange(start: Date, end: Date | null | undefined): string {
-  const startDay = start.getDate();
+  const startDay   = start.getDate();
   const startMonth = MONTHS_SHORT[start.getMonth()];
 
   if (!end || end.toDateString() === start.toDateString()) {
     return `${startDay} ${startMonth} ${start.getFullYear()}`;
   }
 
-  const endDay = end.getDate();
+  const endDay   = end.getDate();
   const endMonth = MONTHS_SHORT[end.getMonth()];
 
   if (start.getMonth() === end.getMonth() && start.getFullYear() === end.getFullYear()) {
@@ -84,6 +88,13 @@ function formatDateRange(start: Date, end: Date | null | undefined): string {
   }
 
   return `${startDay} ${startMonth} – ${endDay} ${endMonth} ${end.getFullYear()}`;
+}
+
+function mapSubmitError(err: AppError): string {
+  if (err.isNetworkError) return 'Нет соединения. Проверьте интернет.';
+  if (err.statusCode === 409) return 'Заявка на этот период уже существует.';
+  if (err.statusCode === 400) return 'Проверьте правильность заполнения формы.';
+  return err.message ?? 'Не удалось отправить заявку.';
 }
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
@@ -96,48 +107,56 @@ const TABS: Array<{ key: Tab; label: string }> = [
 ];
 
 export function RequestsScreen() {
-  const [activeTab, setActiveTab]         = useState<Tab>('new');
-  const [myRequests, setMyRequests]       = useState<AbsenceRequest[]>(mockMyRequests);
+  const [activeTab, setActiveTab] = useState<Tab>('new');
+  const isOnline = useIsOnline();
+
+  const submitMutation = useSubmitRequest();
+  const { items: myRequests, isLoading: requestsLoading, isError: requestsError, refetch: refetchRequests } =
+    useMyRequests();
 
   // Form state
-  const [selectedType, setSelectedType]   = useState<RequestType | null>(null);
-  const [startDate, setStartDate]         = useState<Date | null>(null);
-  const [endDate, setEndDate]             = useState<Date | null>(null);
-  const [comment, setComment]             = useState('');
-  const [submitting, setSubmitting]       = useState(false);
+  const [selectedType, setSelectedType] = useState<RequestType | null>(null);
+  const [startDate, setStartDate]       = useState<Date | null>(null);
+  const [endDate, setEndDate]           = useState<Date | null>(null);
+  const [comment, setComment]           = useState('');
 
-  // Date picker target: which field is being edited
-  const [dateTarget, setDateTarget]       = useState<'start' | 'end' | null>(null);
+  // Date picker
+  const [dateTarget, setDateTarget] = useState<'start' | 'end' | null>(null);
 
-  const canSubmit = selectedType !== null && startDate !== null && !submitting;
+  // Detail sheet
+  const [detailItem, setDetailItem] = useState<AbsenceRequest | null>(null);
 
-  async function handleSubmit() {
-    if (!canSubmit) return;
-    setSubmitting(true);
-    await new Promise<void>((resolve) => setTimeout(resolve, 1000));
+  const canSubmit = isOnline && selectedType !== null && startDate !== null && !submitMutation.isPending;
 
-    const newReq: AbsenceRequest = {
-      id: `req-${Date.now()}`,
-      companyId: 'company-001',
-      userId: 'user-worker-001',
-      type: selectedType!,
-      startDate: startDate!,
-      endDate: endDate ?? null,
-      desiredTime: null,
-      comment: comment.trim() || null,
-      status: RequestStatus.PENDING,
-      decidedBy: null,
-      decisionNote: null,
-      createdAt: new Date(),
-    };
-
-    setMyRequests((prev) => [newReq, ...prev]);
+  function resetForm() {
     setSelectedType(null);
     setStartDate(null);
     setEndDate(null);
     setComment('');
-    setSubmitting(false);
-    setActiveTab('my');
+    submitMutation.reset();
+  }
+
+  function handleTypeChange(type: RequestType) {
+    setSelectedType(type);
+    if (submitMutation.isError) submitMutation.reset();
+  }
+
+  function handleSubmit() {
+    if (!canSubmit) return;
+    submitMutation.mutate(
+      {
+        type: selectedType!,
+        startDate: startDate!.toISOString().slice(0, 10),
+        endDate: endDate ? endDate.toISOString().slice(0, 10) : null,
+        comment: comment.trim() || null,
+      },
+      {
+        onSuccess: () => {
+          resetForm();
+          setActiveTab('my');
+        },
+      },
+    );
   }
 
   function handleDateSelect(date: Date) {
@@ -146,12 +165,17 @@ export function RequestsScreen() {
     setDateTarget(null);
   }
 
+  const submitError = submitMutation.isError
+    ? mapSubmitError(submitMutation.error as unknown as AppError)
+    : null;
+
   return (
     <SafeAreaView style={styles.root} edges={['top']}>
       {/* Page title */}
       <View style={styles.pageHeader}>
         <Text style={styles.pageTitle}>Заявки</Text>
       </View>
+      <OfflineBanner variant="block" />
 
       {/* Inner tab switcher */}
       <View style={styles.segmentWrap}>
@@ -193,7 +217,7 @@ export function RequestsScreen() {
                   <TouchableOpacity
                     key={type}
                     style={[styles.chip, selectedType === type && styles.chipActive]}
-                    onPress={() => setSelectedType(type)}
+                    onPress={() => handleTypeChange(type)}
                     activeOpacity={0.7}
                   >
                     <Text style={[
@@ -295,6 +319,13 @@ export function RequestsScreen() {
               />
             </View>
 
+            {/* Submit error */}
+            {submitError ? (
+              <View style={styles.submitError}>
+                <Text style={styles.submitErrorText}>{submitError}</Text>
+              </View>
+            ) : null}
+
             {/* Submit */}
             <View style={styles.submitWrap}>
               <Button
@@ -302,7 +333,7 @@ export function RequestsScreen() {
                 size="full"
                 onPress={handleSubmit}
                 disabled={!canSubmit}
-                loading={submitting}
+                loading={submitMutation.isPending}
               >
                 Отправить заявку
               </Button>
@@ -311,23 +342,36 @@ export function RequestsScreen() {
             <View style={styles.bottomSpacer} />
           </ScrollView>
         </KeyboardAvoidingView>
+      ) : requestsError ? (
+        <ErrorState onRetry={refetchRequests} />
       ) : (
         <FlatList
-          data={myRequests}
+          data={requestsLoading ? null : myRequests}
           keyExtractor={(item) => item.id}
           contentContainerStyle={[
             styles.myTabList,
-            myRequests.length === 0 && styles.myTabListEmpty,
+            !requestsLoading && myRequests.length === 0 && styles.myTabListEmpty,
           ]}
           ItemSeparatorComponent={() => <View style={styles.separator} />}
-          renderItem={({ item }) => <RequestRow item={item} />}
+          renderItem={({ item }) => <RequestRow item={item} onPress={() => setDetailItem(item)} />}
+          ListHeaderComponent={requestsLoading ? <RequestsSkeleton /> : null}
           ListEmptyComponent={
-            <EmptyState
-              icon={
-                <FileText size={48} color={colors.textDisabled} strokeWidth={iconStrokeWidth} />
-              }
-              title="Нет заявок"
-              description="Здесь появятся ваши заявки"
+            requestsLoading ? null : (
+              <EmptyState
+                icon={
+                  <FileText size={48} color={colors.textDisabled} strokeWidth={iconStrokeWidth} />
+                }
+                title="Нет заявок"
+                description="Здесь появятся ваши заявки"
+              />
+            )
+          }
+          refreshControl={
+            <RefreshControl
+              refreshing={false}
+              onRefresh={refetchRequests}
+              tintColor={colors.primary}
+              colors={[colors.primary]}
             />
           }
           showsVerticalScrollIndicator={false}
@@ -341,17 +385,23 @@ export function RequestsScreen() {
         onSelect={handleDateSelect}
         selectedDate={dateTarget === 'start' ? startDate : endDate}
       />
+
+      {/* Request detail sheet */}
+      <RequestDetailSheet
+        item={detailItem}
+        onClose={() => setDetailItem(null)}
+      />
     </SafeAreaView>
   );
 }
 
 // ─── Request row ──────────────────────────────────────────────────────────────
 
-function RequestRow({ item }: { item: AbsenceRequest }) {
+function RequestRow({ item, onPress }: { item: AbsenceRequest; onPress: () => void }) {
   const pendingLabel = item.status === RequestStatus.PENDING ? 'На рассмотрении' : undefined;
 
   return (
-    <View style={styles.requestRow}>
+    <TouchableOpacity style={styles.requestRow} onPress={onPress} activeOpacity={0.8}>
       <View style={styles.requestRowTop}>
         <View style={styles.requestRowInfo}>
           <Text style={styles.requestType}>{REQUEST_TYPE_LABELS[item.type]}</Text>
@@ -363,6 +413,99 @@ function RequestRow({ item }: { item: AbsenceRequest }) {
       {item.status === RequestStatus.REJECTED && item.decisionNote ? (
         <Text style={styles.decisionNote}>{item.decisionNote}</Text>
       ) : null}
+    </TouchableOpacity>
+  );
+}
+
+// ─── Requests loading skeleton ────────────────────────────────────────────────
+
+function RequestsSkeleton() {
+  return (
+    <View style={{ gap: space[2] }}>
+      {([0, 1, 2] as const).map((i) => (
+        <View key={i} style={styles.requestRow}>
+          <View style={styles.requestRowTop}>
+            <View style={[styles.requestRowInfo, { gap: space[2] }]}>
+              <Skeleton width={160} height={14} />
+              <Skeleton width={100} height={12} />
+            </View>
+            <Skeleton width={80} height={22} borderRadius={11} />
+          </View>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+// ─── Request detail sheet ─────────────────────────────────────────────────────
+
+function RequestDetailSheet({
+  item,
+  onClose,
+}: {
+  item: AbsenceRequest | null;
+  onClose: () => void;
+}) {
+  const statusLabels: Record<string, string> = {
+    [RequestStatus.PENDING]:  'На рассмотрении',
+    [RequestStatus.APPROVED]: 'Одобрено',
+    [RequestStatus.REJECTED]: 'Отклонено',
+  };
+
+  return (
+    <Modal
+      visible={item !== null}
+      transparent
+      animationType="slide"
+      statusBarTranslucent
+      onRequestClose={onClose}
+    >
+      <Pressable style={styles.overlay} onPress={onClose}>
+        <Pressable style={styles.sheet} onPress={() => {}}>
+          <View style={styles.handle} />
+
+          <View style={styles.detailHeader}>
+            <Text style={styles.detailTitle}>Детали заявки</Text>
+            <TouchableOpacity onPress={onClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <X size={20} color={colors.textSecondary} strokeWidth={iconStrokeWidth} />
+            </TouchableOpacity>
+          </View>
+
+          {item && (
+            <View style={styles.detailBody}>
+              <DetailPair label="Тип" value={REQUEST_TYPE_LABELS[item.type]} />
+              <DetailPair label="Период" value={formatDateRange(item.startDate, item.endDate)} />
+              <View style={styles.detailPair}>
+                <Text style={styles.detailLabel}>Статус</Text>
+                <StatusBadge
+                  status={item.status}
+                  label={statusLabels[item.status] ?? item.status}
+                />
+              </View>
+              {item.comment ? (
+                <DetailPair label="Ваш комментарий" value={item.comment} />
+              ) : null}
+              {item.status === RequestStatus.REJECTED && item.decisionNote ? (
+                <View style={styles.decisionBlock}>
+                  <Text style={styles.decisionBlockLabel}>Комментарий администратора</Text>
+                  <Text style={styles.decisionBlockText}>{item.decisionNote}</Text>
+                </View>
+              ) : null}
+            </View>
+          )}
+
+          <View style={styles.detailBottom} />
+        </Pressable>
+      </Pressable>
+    </Modal>
+  );
+}
+
+function DetailPair({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={styles.detailPair}>
+      <Text style={styles.detailLabel}>{label}</Text>
+      <Text style={styles.detailValue}>{value}</Text>
     </View>
   );
 }
@@ -393,11 +536,11 @@ function DatePickerModal({ visible, onClose, onSelect, selectedDate }: DatePicke
 
   const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
   const firstDay    = new Date(viewYear, viewMonth, 1).getDay();
-  const offset      = (firstDay + 6) % 7; // Monday = 0
+  const offset      = (firstDay + 6) % 7;
 
   const cells: Array<number | null> = [
-    ...Array.from<null>({ length: offset }, () => null),
-    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
+    ...(new Array(offset).fill(null) as null[]),
+    ...(Array.from({ length: daysInMonth }, (_, i) => i + 1) as number[]),
   ];
   while (cells.length % 7 !== 0) cells.push(null);
 
@@ -414,10 +557,8 @@ function DatePickerModal({ visible, onClose, onSelect, selectedDate }: DatePicke
     >
       <Pressable style={styles.overlay} onPress={onClose}>
         <Pressable style={styles.sheet} onPress={() => {}}>
-          {/* Handle */}
           <View style={styles.handle} />
 
-          {/* Month navigation */}
           <View style={styles.calHeader}>
             <TouchableOpacity
               onPress={prevMonth}
@@ -444,7 +585,6 @@ function DatePickerModal({ visible, onClose, onSelect, selectedDate }: DatePicke
             </TouchableOpacity>
           </View>
 
-          {/* Day name headers */}
           <View style={styles.calRow}>
             {DAY_NAMES.map((d) => (
               <View key={d} style={styles.calCell}>
@@ -453,17 +593,16 @@ function DatePickerModal({ visible, onClose, onSelect, selectedDate }: DatePicke
             ))}
           </View>
 
-          {/* Day grid */}
           <View style={styles.calGrid}>
             {rows.map((row, ri) => (
               <View key={ri} style={styles.calRow}>
                 {row.map((day, ci) => {
                   if (!day) return <View key={ci} style={styles.calCell} />;
 
-                  const cellDate  = new Date(viewYear, viewMonth, day);
+                  const cellDate   = new Date(viewYear, viewMonth, day);
                   const isSelected = selectedDate !== null &&
                     cellDate.toDateString() === selectedDate.toDateString();
-                  const isToday = cellDate.toDateString() === today.toDateString();
+                  const isTodayDay = cellDate.toDateString() === today.toDateString();
 
                   return (
                     <TouchableOpacity
@@ -476,7 +615,7 @@ function DatePickerModal({ visible, onClose, onSelect, selectedDate }: DatePicke
                         <Text style={[
                           styles.calDayText,
                           isSelected && styles.calDayTextSelected,
-                          isToday && !isSelected && styles.calDayTextToday,
+                          isTodayDay && !isSelected && styles.calDayTextToday,
                         ]}>
                           {day}
                         </Text>
@@ -506,7 +645,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
-  // Page header
   pageHeader: {
     height: 56,
     justifyContent: 'center',
@@ -518,7 +656,6 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
 
-  // Tab switcher
   segmentWrap: {
     paddingHorizontal: layout.screenPadding,
     paddingBottom: space[3],
@@ -550,13 +687,11 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
 
-  // New request tab
   newTabScroll: {
     paddingHorizontal: layout.screenPadding,
     gap: space[4],
   },
 
-  // Section
   section: {
     gap: space[2],
   },
@@ -567,7 +702,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.8,
   },
 
-  // Type chips
   chipsWrap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -595,7 +729,6 @@ const styles = StyleSheet.create({
     fontFamily: fontFamily.semiBold,
   },
 
-  // Date cards
   dateCard: {
     backgroundColor: colors.surface,
     borderRadius: radius.xl,
@@ -604,7 +737,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-
   },
   dateCardLeft: {
     flexDirection: 'row',
@@ -635,7 +767,6 @@ const styles = StyleSheet.create({
     gap: space[2],
   },
 
-  // Textarea
   textarea: {
     backgroundColor: colors.surface,
     borderRadius: radius.md,
@@ -650,7 +781,18 @@ const styles = StyleSheet.create({
     ...(shadows.xs as object),
   },
 
-  // Submit
+  submitError: {
+    backgroundColor: colors.dangerLight,
+    borderRadius: radius.md,
+    paddingVertical: space[3],
+    paddingHorizontal: space[4],
+  },
+  submitErrorText: {
+    ...typography.sm,
+    color: colors.dangerText,
+    fontFamily: fontFamily.medium,
+  },
+
   submitWrap: {
     marginTop: space[2],
   },
@@ -658,7 +800,6 @@ const styles = StyleSheet.create({
     height: space[8],
   },
 
-  // My requests tab
   myTabList: {
     paddingHorizontal: layout.screenPadding,
     paddingTop: space[2],
@@ -671,14 +812,12 @@ const styles = StyleSheet.create({
     height: space[2],
   },
 
-  // Request row
   requestRow: {
     backgroundColor: colors.surface,
     borderRadius: radius.xl,
     paddingVertical: space[3],
     paddingHorizontal: space[4],
     gap: space[2],
-
   },
   requestRowTop: {
     flexDirection: 'row',
@@ -705,7 +844,6 @@ const styles = StyleSheet.create({
     fontFamily: fontFamily.regular,
   },
 
-  // Date picker modal
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.4)',
@@ -783,5 +921,62 @@ const styles = StyleSheet.create({
   },
   calBottom: {
     height: space[6],
+  },
+
+  detailHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: space[5],
+    paddingVertical: space[4],
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  detailTitle: {
+    ...typography.lg,
+    color: colors.textPrimary,
+  },
+  detailBody: {
+    paddingHorizontal: space[5],
+    paddingTop: space[4],
+    gap: space[4],
+  },
+  detailPair: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: space[3],
+  },
+  detailLabel: {
+    ...typography.base,
+    color: colors.textSecondary,
+  },
+  detailValue: {
+    ...typography.base,
+    fontFamily: fontFamily.semiBold,
+    color: colors.textPrimary,
+    flexShrink: 1,
+    textAlign: 'right',
+  },
+  decisionBlock: {
+    backgroundColor: colors.dangerLight,
+    borderRadius: radius.md,
+    padding: space[4],
+    gap: space[2],
+  },
+  decisionBlockLabel: {
+    fontSize: 11,
+    fontFamily: fontFamily.semiBold,
+    color: colors.dangerText,
+    letterSpacing: 0.5,
+  },
+  decisionBlockText: {
+    ...typography.sm,
+    fontFamily: fontFamily.regular,
+    color: colors.dangerText,
+    lineHeight: 18,
+  },
+  detailBottom: {
+    height: space[8],
   },
 });

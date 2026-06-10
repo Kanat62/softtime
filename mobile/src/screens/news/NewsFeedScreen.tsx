@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useState } from 'react';
 import {
   FlatList,
   KeyboardAvoidingView,
@@ -16,6 +16,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Newspaper, Plus, X } from 'lucide-react-native';
 import { UserRole } from '@softtime/shared';
+import type { AppError } from '@/shared/api/errors';
 import {
   colors,
   fontFamily,
@@ -26,10 +27,13 @@ import {
   space,
   typography,
 } from '@/shared/config/theme';
-import { Button, EmptyState } from '@/shared/ui';
+import { Button, EmptyState, ErrorState, OfflineBanner, Skeleton } from '@/shared/ui';
+import { useIsOnline } from '@/shared/lib/network';
 import { useAuth } from '@/app/providers/AuthProvider';
 import { useNewsNavigation } from '@/shared/navigation/hooks';
-import { addMockNews, currentMockNews, type NewsWithRead } from '@/entities/news';
+import type { NewsWithRead } from '@/entities/news/api/news';
+import { useNewsFeed } from '@/features/news/feed/model/useNewsFeed';
+import { useCreateNews } from '@/features/news/create/model/useCreateNews';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -42,6 +46,12 @@ function formatShortDate(date: Date): string {
   return `${date.getDate()} ${MONTHS_SHORT[date.getMonth()]} ${date.getFullYear()}`;
 }
 
+function mapCreateError(err: AppError): string {
+  if (err.isNetworkError) return 'Нет соединения. Проверьте интернет.';
+  if (err.statusCode === 403) return 'Нет прав для публикации новостей.';
+  return err.message ?? 'Не удалось опубликовать новость.';
+}
+
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export function NewsFeedScreen() {
@@ -49,29 +59,18 @@ export function NewsFeedScreen() {
   const { userRole } = useAuth();
   const isAdmin = userRole === UserRole.ADMIN;
 
-  const [newsList, setNewsList]       = useState<NewsWithRead[]>(currentMockNews);
-  const [refreshing, setRefreshing]   = useState(false);
+  const { items, isLoading, isRefreshing, isError, refetch, markReadOptimistic } = useNewsFeed();
+  const createMutation = useCreateNews();
+
   const [sheetVisible, setSheetVisible] = useState(false);
-  const [titleInput, setTitleInput]   = useState('');
-  const [bodyInput, setBodyInput]     = useState('');
-  const [publishing, setPublishing]   = useState(false);
+  const [titleInput, setTitleInput]     = useState('');
+  const [bodyInput, setBodyInput]       = useState('');
+  const isOnline = useIsOnline();
 
-  const canPublish = titleInput.trim().length > 0 && bodyInput.trim().length > 0 && !publishing;
-
-  const handleRefresh = useCallback(() => {
-    setRefreshing(true);
-    setTimeout(() => {
-      setNewsList([...currentMockNews]);
-      setRefreshing(false);
-    }, 800);
-  }, []);
+  const canPublish = isOnline && titleInput.trim().length > 0 && bodyInput.trim().length > 0 && !createMutation.isPending;
 
   function handleCardPress(item: NewsWithRead) {
-    if (!item.isRead) {
-      setNewsList((prev) =>
-        prev.map((n) => (n.id === item.id ? { ...n, isRead: true } : n)),
-      );
-    }
+    markReadOptimistic(item.id);
     navigation.navigate('NewsDetail', { id: item.id });
   }
 
@@ -79,29 +78,20 @@ export function NewsFeedScreen() {
     setSheetVisible(false);
     setTitleInput('');
     setBodyInput('');
+    createMutation.reset();
   }
 
-  async function handlePublish() {
+  function handlePublish() {
     if (!canPublish) return;
-    setPublishing(true);
-    await new Promise<void>((r) => setTimeout(r, 1000));
-
-    const newNews: NewsWithRead = {
-      id: `news-${Date.now()}`,
-      companyId: 'company-001',
-      title: titleInput.trim(),
-      body: bodyInput.trim(),
-      photoUrl: null,
-      createdBy: 'user-admin-001',
-      createdAt: new Date(),
-      isRead: true,
-    };
-
-    addMockNews(newNews);
-    setNewsList([...currentMockNews]);
-    setPublishing(false);
-    handleCloseSheet();
+    createMutation.mutate(
+      { title: titleInput.trim(), body: bodyInput.trim() },
+      { onSuccess: handleCloseSheet },
+    );
   }
+
+  const publishError = createMutation.isError
+    ? mapCreateError(createMutation.error as unknown as AppError)
+    : null;
 
   return (
     <SafeAreaView style={styles.root} edges={['top']}>
@@ -109,44 +99,51 @@ export function NewsFeedScreen() {
       <View style={styles.pageHeader}>
         <Text style={styles.pageTitle}>Новости</Text>
       </View>
+      <OfflineBanner variant="block" />
 
-      {/* Feed */}
-      <FlatList
-        data={newsList}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={[
-          styles.list,
-          newsList.length === 0 && styles.listEmpty,
-        ]}
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
-        renderItem={({ item }) => (
-          <NewsCard item={item} onPress={() => handleCardPress(item)} />
-        )}
-        ListEmptyComponent={
-          <EmptyState
-            icon={
-              <Newspaper size={48} color={colors.textDisabled} strokeWidth={iconStrokeWidth} />
-            }
-            title="Новостей пока нет"
-            description="Новости компании появятся здесь"
-          />
-        }
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-            tintColor={colors.primary}
-            colors={[colors.primary]}
-          />
-        }
-        showsVerticalScrollIndicator={false}
-      />
+      {isError ? (
+        <ErrorState onRetry={refetch} />
+      ) : (
+        <FlatList
+          data={isLoading ? null : items}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={[
+            styles.list,
+            !isLoading && items.length === 0 && styles.listEmpty,
+          ]}
+          ItemSeparatorComponent={() => <View style={styles.separator} />}
+          renderItem={({ item }) => (
+            <NewsCard item={item} onPress={() => handleCardPress(item)} />
+          )}
+          ListHeaderComponent={isLoading ? <FeedSkeleton /> : null}
+          ListEmptyComponent={
+            isLoading ? null : (
+              <EmptyState
+                icon={
+                  <Newspaper size={48} color={colors.textDisabled} strokeWidth={iconStrokeWidth} />
+                }
+                title="Новостей пока нет"
+                description="Новости компании появятся здесь"
+              />
+            )
+          }
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={refetch}
+              tintColor={colors.primary}
+              colors={[colors.primary]}
+            />
+          }
+          showsVerticalScrollIndicator={false}
+        />
+      )}
 
       {/* Admin FAB */}
       {isAdmin && (
         <TouchableOpacity
-          style={styles.fab}
-          onPress={() => setSheetVisible(true)}
+          style={[styles.fab, !isOnline && styles.fabDisabled]}
+          onPress={() => { if (isOnline) setSheetVisible(true); }}
           activeOpacity={0.85}
           accessibilityLabel="Создать новость"
         >
@@ -160,10 +157,11 @@ export function NewsFeedScreen() {
           visible={sheetVisible}
           titleValue={titleInput}
           bodyValue={bodyInput}
-          onTitleChange={setTitleInput}
-          onBodyChange={setBodyInput}
+          onTitleChange={(v) => { setTitleInput(v); if (createMutation.isError) createMutation.reset(); }}
+          onBodyChange={(v) => { setBodyInput(v); if (createMutation.isError) createMutation.reset(); }}
           canPublish={canPublish}
-          publishing={publishing}
+          publishing={createMutation.isPending}
+          publishError={publishError}
           onClose={handleCloseSheet}
           onPublish={handlePublish}
         />
@@ -174,12 +172,7 @@ export function NewsFeedScreen() {
 
 // ─── News card ────────────────────────────────────────────────────────────────
 
-interface NewsCardProps {
-  item: NewsWithRead;
-  onPress: () => void;
-}
-
-function NewsCard({ item, onPress }: NewsCardProps) {
+function NewsCard({ item, onPress }: { item: NewsWithRead; onPress: () => void }) {
   return (
     <TouchableOpacity
       style={[styles.card, !item.isRead && styles.cardUnread]}
@@ -199,6 +192,26 @@ function NewsCard({ item, onPress }: NewsCardProps) {
   );
 }
 
+// ─── Feed loading skeleton ────────────────────────────────────────────────────
+
+function FeedSkeleton() {
+  return (
+    <View style={{ gap: space[3] }}>
+      {([0, 1, 2] as const).map((i) => (
+        <View key={i} style={styles.card}>
+          <View style={[styles.cardMeta, { justifyContent: 'flex-start', gap: space[3] }]}>
+            <Skeleton width={60} height={22} borderRadius={11} />
+            <Skeleton width={80} height={12} />
+          </View>
+          <Skeleton width={220} height={16} />
+          <Skeleton width="100%" height={12} />
+          <Skeleton width={160} height={12} />
+        </View>
+      ))}
+    </View>
+  );
+}
+
 // ─── Create news sheet ────────────────────────────────────────────────────────
 
 interface CreateNewsSheetProps {
@@ -209,6 +222,7 @@ interface CreateNewsSheetProps {
   onBodyChange: (v: string) => void;
   canPublish: boolean;
   publishing: boolean;
+  publishError: string | null;
   onClose: () => void;
   onPublish: () => void;
 }
@@ -221,6 +235,7 @@ function CreateNewsSheet({
   onBodyChange,
   canPublish,
   publishing,
+  publishError,
   onClose,
   onPublish,
 }: CreateNewsSheetProps) {
@@ -234,10 +249,8 @@ function CreateNewsSheet({
     >
       <Pressable style={styles.overlay} onPress={onClose}>
         <Pressable style={styles.sheet} onPress={() => {}}>
-          {/* Handle */}
           <View style={styles.handle} />
 
-          {/* Sheet header */}
           <View style={styles.sheetHeader}>
             <Text style={styles.sheetTitle}>Создать новость</Text>
             <TouchableOpacity
@@ -248,7 +261,6 @@ function CreateNewsSheet({
             </TouchableOpacity>
           </View>
 
-          {/* Sheet body */}
           <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
             <ScrollView
               contentContainerStyle={styles.sheetBody}
@@ -272,6 +284,13 @@ function CreateNewsSheet({
                 numberOfLines={6}
                 textAlignVertical="top"
               />
+
+              {publishError ? (
+                <View style={styles.publishError}>
+                  <Text style={styles.publishErrorText}>{publishError}</Text>
+                </View>
+              ) : null}
+
               <Button
                 variant="primary"
                 size="full"
@@ -298,7 +317,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bg,
   },
 
-  // Page header
   pageHeader: {
     height: 56,
     justifyContent: 'center',
@@ -310,7 +328,6 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
 
-  // Feed list
   list: {
     paddingHorizontal: layout.screenPadding,
     paddingBottom: space[8],
@@ -322,13 +339,11 @@ const styles = StyleSheet.create({
     height: space[3],
   },
 
-  // News card
   card: {
     backgroundColor: colors.surface,
     borderRadius: radius.xl,
     padding: space[4],
     gap: space[2],
-
   },
   cardUnread: {
     backgroundColor: colors.warningLight,
@@ -371,7 +386,6 @@ const styles = StyleSheet.create({
     color: colors.primary,
   },
 
-  // FAB
   fab: {
     position: 'absolute',
     bottom: space[5],
@@ -384,8 +398,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     ...(shadows.lg as object),
   },
+  fabDisabled: {
+    backgroundColor: colors.textDisabled,
+  },
 
-  // Modal overlay
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.4)',
@@ -446,6 +462,17 @@ const styles = StyleSheet.create({
     ...typography.base,
     fontFamily: fontFamily.regular,
     color: colors.textPrimary,
+  },
+  publishError: {
+    backgroundColor: colors.dangerLight,
+    borderRadius: radius.md,
+    paddingVertical: space[3],
+    paddingHorizontal: space[4],
+  },
+  publishErrorText: {
+    ...typography.sm,
+    color: colors.dangerText,
+    fontFamily: fontFamily.medium,
   },
   sheetBottom: {
     height: space[4],

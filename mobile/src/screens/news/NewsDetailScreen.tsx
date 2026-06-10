@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import {
   Animated,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -20,9 +21,9 @@ import {
   space,
   typography,
 } from '@/shared/config/theme';
-import { EmptyState } from '@/shared/ui';
-import { currentMockNews } from '@/entities/news';
+import { ErrorState, OfflineBanner, Skeleton } from '@/shared/ui';
 import type { NewsStackParamList } from '@/shared/navigation/types';
+import { useNewsDetail } from '@/features/news/detail/model/useNewsDetail';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -42,11 +43,12 @@ export function NewsDetailScreen() {
   const route      = useRoute<RouteProp<NewsStackParamList, 'NewsDetail'>>();
   const { id }     = route.params;
 
-  const item = currentMockNews.find((n) => n.id === id) ?? null;
+  const { item, isLoading, isError, refetch } = useNewsDetail(id);
 
   const readOpacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    if (!item) return;
     const timer = setTimeout(() => {
       Animated.timing(readOpacity, {
         toValue: 1,
@@ -55,7 +57,7 @@ export function NewsDetailScreen() {
       }).start();
     }, 1000);
     return () => clearTimeout(timer);
-  }, [readOpacity]);
+  }, [item, readOpacity]);
 
   return (
     <SafeAreaView style={styles.root} edges={['top']}>
@@ -72,12 +74,26 @@ export function NewsDetailScreen() {
         <Text style={styles.topBarTitle}>Новость</Text>
         <View style={styles.backBtn} />
       </View>
+      <OfflineBanner variant="stale" />
 
-      {/* Content */}
-      {item ? (
+      {isError ? (
+        <ErrorState onRetry={refetch} />
+      ) : isLoading ? (
+        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          <DetailSkeleton />
+        </ScrollView>
+      ) : item ? (
         <ScrollView
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={false}
+              onRefresh={refetch}
+              tintColor={colors.primary}
+              colors={[colors.primary]}
+            />
+          }
         >
           {/* Meta row */}
           <View style={styles.metaRow}>
@@ -87,13 +103,10 @@ export function NewsDetailScreen() {
             <Text style={styles.metaDate}>{formatFullDate(item.createdAt)}</Text>
           </View>
 
-          {/* Title */}
           <Text style={styles.title}>{item.title}</Text>
 
-          {/* Divider */}
           <View style={styles.divider} />
 
-          {/* Body */}
           <Text style={styles.body}>{item.body}</Text>
 
           {/* Read badge — fades in after 1 second */}
@@ -110,13 +123,30 @@ export function NewsDetailScreen() {
 
           <View style={styles.bottomSpacer} />
         </ScrollView>
-      ) : (
-        <EmptyState
-          title="Новость не найдена"
-          description="Возможно, она была удалена"
-        />
-      )}
+      ) : null}
     </SafeAreaView>
+  );
+}
+
+// ─── Detail skeleton ──────────────────────────────────────────────────────────
+
+function DetailSkeleton() {
+  return (
+    <View style={{ gap: space[4] }}>
+      <View style={[styles.metaRow]}>
+        <Skeleton width={60} height={22} borderRadius={11} />
+        <Skeleton width={100} height={12} />
+      </View>
+      <Skeleton width="80%" height={26} />
+      <View style={styles.divider} />
+      <View style={{ gap: space[3] }}>
+        <Skeleton width="100%" height={14} />
+        <Skeleton width="100%" height={14} />
+        <Skeleton width="95%" height={14} />
+        <Skeleton width="100%" height={14} />
+        <Skeleton width="70%" height={14} />
+      </View>
+    </View>
   );
 }
 
@@ -128,7 +158,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bg,
   },
 
-  // Top bar
   topBar: {
     height: 56,
     flexDirection: 'row',
@@ -148,14 +177,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
-  // Content
   content: {
     paddingHorizontal: layout.screenPadding,
     paddingTop: space[4],
     gap: space[4],
   },
 
-  // Meta row
   metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -177,19 +204,16 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
 
-  // Title
   title: {
     ...typography['2xl'],
     color: colors.textPrimary,
   },
 
-  // Divider
   divider: {
     height: 1,
     backgroundColor: colors.border,
   },
 
-  // Body
   body: {
     fontSize: 16,
     lineHeight: 26,
@@ -197,7 +221,6 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
 
-  // Read badge
   readBadge: {
     flexDirection: 'row',
     alignItems: 'center',

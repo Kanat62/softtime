@@ -4,6 +4,8 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { UserStatus, UserRole } from '@softtime/shared';
 import { useAuth } from '../providers/AuthProvider';
 import type { RootParamList } from '@/shared/navigation/types';
+import { navigationRef } from '@/shared/navigation/navigationRef';
+import { linking } from './linking';
 import { AuthNavigator } from './AuthNavigator';
 import { PendingStack } from './PendingStack';
 import { BlockedStack } from './BlockedStack';
@@ -15,27 +17,27 @@ const Stack = createNativeStackNavigator<RootParamList>();
 export function RootNavigator() {
   const { accessToken, userStatus, userRole, isLoading } = useAuth();
 
+  // Keep the loading blank while the stored token is read from SecureStore.
+  // This is fast (<100ms) and avoids a flash of the wrong screen.
   if (isLoading) return null;
 
-  function resolveInitial(): keyof RootParamList {
-    if (!accessToken) return 'WorkerTabs'; // DEV: skip auth
-    if (userStatus === UserStatus.PENDING) return 'Pending';
-    if (userStatus === UserStatus.BLOCKED) return 'Blocked';
-    if (userRole === UserRole.ADMIN) return 'AdminTabs';
-    return 'WorkerTabs';
-  }
-
   return (
-    <NavigationContainer theme={DefaultTheme}>
-      <Stack.Navigator
-        initialRouteName={resolveInitial()}
-        screenOptions={{ headerShown: false, animation: 'none' }}
-      >
-        <Stack.Screen name="Auth" component={AuthNavigator} />
-        <Stack.Screen name="Pending" component={PendingStack} />
-        <Stack.Screen name="Blocked" component={BlockedStack} />
-        <Stack.Screen name="WorkerTabs" component={WorkerTabs} />
-        <Stack.Screen name="AdminTabs" component={AdminTabs} />
+    <NavigationContainer ref={navigationRef} linking={linking} theme={DefaultTheme}>
+      <Stack.Navigator screenOptions={{ headerShown: false, animation: 'none' }}>
+        {!accessToken ? (
+          // No token → Auth flow (Splash → Onboarding → Login / Register)
+          <Stack.Screen name="Auth" component={AuthNavigator} />
+        ) : userStatus === UserStatus.PENDING ? (
+          // Registered but not yet approved by admin
+          <Stack.Screen name="Pending" component={PendingStack} />
+        ) : userStatus === UserStatus.BLOCKED ? (
+          // Admin blocked this account
+          <Stack.Screen name="Blocked" component={BlockedStack} />
+        ) : userRole === UserRole.ADMIN ? (
+          <Stack.Screen name="AdminTabs" component={AdminTabs} />
+        ) : (
+          <Stack.Screen name="WorkerTabs" component={WorkerTabs} />
+        )}
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -1,28 +1,22 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  loginSchema,
-  type LoginDto,
-  UserRole,
-  UserStatus,
-  CompanyStatus,
-} from '@softtime/shared';
+import { loginSchema, type LoginDto, UserRole, type CompanyStatus } from '@softtime/shared';
 import { useAuth } from '@/app/providers/AuthProvider';
+import { loginApi, getMyCompanyApi } from '@/entities/user/api/auth';
+import type { AppError } from '@/shared/api/errors';
 
-type MockError = 'invalid_credentials' | 'blocked' | 'pending';
-
-const MOCK_ERROR_MESSAGES: Record<MockError, string> = {
-  invalid_credentials: 'Неверный email или пароль',
-  blocked: 'Аккаунт заблокирован',
-  pending: 'Ожидайте подтверждения администратора',
-};
-
-function getMockError(email: string): MockError | null {
-  if (email === 'blocked@test.com') return 'blocked';
-  if (email === 'pending@test.com') return 'pending';
-  if (email !== 'worker@test.com') return 'invalid_credentials';
-  return null;
+function mapLoginError(err: AppError): string {
+  if (err.isNetworkError) return 'Нет подключения к интернету';
+  if (err.statusCode === 429) return 'Слишком много попыток. Повторите через 15 минут.';
+  if (err.statusCode === 401) return 'Неверный email или пароль';
+  if (err.statusCode === 403) {
+    if (err.message.includes('блокир') || err.message.toLowerCase().includes('block')) {
+      return 'Аккаунт заблокирован. Обратитесь к администратору.';
+    }
+    return err.message;
+  }
+  return err.message || 'Произошла ошибка. Попробуйте ещё раз.';
 }
 
 export function useLogin() {
@@ -39,25 +33,32 @@ export function useLogin() {
     setServerError(null);
     setIsLoading(true);
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    try {
+      const authResponse = await loginApi(data);
 
-    const mockError = getMockError(data.email);
+      let resolvedCompanyStatus: CompanyStatus | null = null;
+      if (authResponse.user.role === UserRole.ADMIN) {
+        try {
+          const company = await getMyCompanyApi(authResponse.accessToken);
+          resolvedCompanyStatus = company.status as CompanyStatus;
+        } catch {
+          // Company fetch failed — proceed; companyStatus will be null
+        }
+      }
 
-    if (mockError) {
-      setServerError(MOCK_ERROR_MESSAGES[mockError]);
+      await setAuth({
+        accessToken: authResponse.accessToken,
+        refreshToken: authResponse.refreshToken,
+        role: authResponse.user.role as UserRole,
+        status: authResponse.user.status as any,
+        companyStatus: resolvedCompanyStatus,
+      });
+      // RootNavigator's conditional rendering handles the navigation automatically.
+    } catch (err) {
+      setServerError(mapLoginError(err as AppError));
+    } finally {
       setIsLoading(false);
-      return;
     }
-
-    await setAuth({
-      accessToken: 'mock-access-token',
-      refreshToken: 'mock-refresh-token',
-      role: UserRole.WORKER,
-      status: UserStatus.ACTIVE,
-      companyStatus: CompanyStatus.ACTIVE,
-    });
-
-    setIsLoading(false);
   }
 
   return {

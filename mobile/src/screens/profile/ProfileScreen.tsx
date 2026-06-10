@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   Linking,
   Modal,
@@ -24,8 +25,8 @@ import {
 } from 'lucide-react-native';
 import { UserRole, Weekday } from '@softtime/shared';
 import { useAuth } from '@/app/providers/AuthProvider';
-import { mockAdmin, mockWorker } from '@/entities/user';
-import { mockSchedule } from '@/entities/schedule';
+import { useProfile } from '@/features/profile/model/useProfile';
+import { useMySchedule } from '@/features/schedule/model/useMySchedule';
 import {
   colors,
   fontFamily,
@@ -37,10 +38,9 @@ import {
   typography,
 } from '@/shared/config/theme';
 import { useNavigation } from '@react-navigation/native';
+import { OfflineBanner } from '@/shared/ui';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-
-const MOCK_COMPANY_NAME = 'SoftTime Ltd.';
 
 const WEEKDAY_LABELS: Record<Weekday, string> = {
   [Weekday.MON]: 'Пн',
@@ -217,15 +217,19 @@ export function ProfileScreen() {
   const navigation = useNavigation<any>();
   const [showPasswordModal, setShowPasswordModal] = useState(false);
 
-  const isAdmin = userRole === UserRole.ADMIN;
-  const user = isAdmin ? mockAdmin : mockWorker;
+  const { user, isLoading } = useProfile();
+  const { schedule } = useMySchedule();
 
-  const initials = user.fullName
-    .split(' ')
-    .slice(0, 2)
-    .map((w) => w[0])
-    .join('')
-    .toUpperCase();
+  const isAdmin = userRole === UserRole.ADMIN;
+
+  const initials = user
+    ? user.fullName
+        .split(' ')
+        .slice(0, 2)
+        .map((w) => w[0])
+        .join('')
+        .toUpperCase()
+    : '?';
 
   function handleLogout() {
     Alert.alert(
@@ -256,15 +260,22 @@ export function ProfileScreen() {
 
   return (
     <SafeAreaView style={s.root} edges={['top']}>
+      <OfflineBanner variant="stale" />
       <ScrollView
         contentContainerStyle={s.scroll}
         showsVerticalScrollIndicator={false}
       >
         {/* ── Header card ── */}
         <View style={s.headerCard}>
-          <AvatarBlock initials={initials} onCameraPress={handleAvatarCamera} />
-          <Text style={s.fullName}>{user.fullName}</Text>
-          <RoleBadge role={user.role} />
+          {isLoading ? (
+            <ActivityIndicator size="large" color={colors.surface} />
+          ) : (
+            <>
+              <AvatarBlock initials={initials} onCameraPress={handleAvatarCamera} />
+              <Text style={s.fullName}>{user?.fullName ?? ''}</Text>
+              <RoleBadge role={user?.role ?? (isAdmin ? UserRole.ADMIN : UserRole.WORKER)} />
+            </>
+          )}
         </View>
 
         {/* ── Info card ── */}
@@ -272,19 +283,19 @@ export function ProfileScreen() {
           <InfoRow
             icon={<Mail size={iconSize.md} color={colors.textSecondary} strokeWidth={iconStrokeWidth} />}
             label="Email"
-            value={user.email}
+            value={user?.email ?? '—'}
           />
           <View style={s.divider} />
           <InfoRow
             icon={<Building2 size={iconSize.md} color={colors.textSecondary} strokeWidth={iconStrokeWidth} />}
             label="Компания"
-            value={MOCK_COMPANY_NAME}
+            value={user?.companyId ? 'SoftTime Ltd.' : '—'}
           />
           <View style={s.divider} />
           <InfoRow
             icon={<Calendar size={iconSize.md} color={colors.textSecondary} strokeWidth={iconStrokeWidth} />}
             label="Дата найма"
-            value={formatDate(user.hiredAt)}
+            value={formatDate(user?.hiredAt ?? null)}
           />
         </View>
 
@@ -301,7 +312,7 @@ export function ProfileScreen() {
           </View>
           <View style={s.scheduleList}>
             {WEEKDAY_ORDER.map((weekday) => {
-              const entry = mockSchedule.find((e) => e.weekday === weekday);
+              const entry = schedule?.find((e) => e.weekday === weekday);
               return (
                 <ScheduleRow
                   key={weekday}

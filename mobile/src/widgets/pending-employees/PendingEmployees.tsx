@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React from 'react';
+import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { UserCheck, UserX } from 'lucide-react-native';
 import type { User } from '@softtime/shared';
 import { Avatar, EmptyState } from '@/shared/ui';
@@ -14,20 +14,18 @@ import {
 
 interface PendingEmployeesProps {
   workers: User[];
+  onAccept: (id: string) => void;
+  onReject: (id: string) => void;
+  processingId?: string | null;
 }
 
-export function PendingEmployees({ workers }: PendingEmployeesProps) {
-  const [items, setItems] = useState<User[]>(workers);
-
-  function handleAccept(id: string) {
-    setItems((prev) => prev.filter((w) => w.id !== id));
-  }
-
-  function handleReject(id: string) {
-    setItems((prev) => prev.filter((w) => w.id !== id));
-  }
-
-  if (items.length === 0) {
+export function PendingEmployees({
+  workers,
+  onAccept,
+  onReject,
+  processingId,
+}: PendingEmployeesProps) {
+  if (workers.length === 0) {
     return (
       <EmptyState
         icon={<UserCheck size={40} color={colors.textDisabled} strokeWidth={iconStrokeWidth} />}
@@ -39,13 +37,14 @@ export function PendingEmployees({ workers }: PendingEmployeesProps) {
 
   return (
     <View style={s.list}>
-      {items.map((worker, idx) => (
+      {workers.map((worker, idx) => (
         <React.Fragment key={worker.id}>
           {idx > 0 && <View style={s.divider} />}
           <PendingRow
             worker={worker}
-            onAccept={() => handleAccept(worker.id)}
-            onReject={() => handleReject(worker.id)}
+            onAccept={() => onAccept(worker.id)}
+            onReject={() => onReject(worker.id)}
+            isProcessing={processingId === worker.id}
           />
         </React.Fragment>
       ))}
@@ -59,9 +58,10 @@ interface PendingRowProps {
   worker: User;
   onAccept: () => void;
   onReject: () => void;
+  isProcessing: boolean;
 }
 
-function PendingRow({ worker, onAccept, onReject }: PendingRowProps) {
+function PendingRow({ worker, onAccept, onReject, isProcessing }: PendingRowProps) {
   return (
     <View style={s.row}>
       <Avatar uri={worker.avatarUrl} name={worker.fullName} size={44} />
@@ -71,24 +71,28 @@ function PendingRow({ worker, onAccept, onReject }: PendingRowProps) {
         <Text style={s.email} numberOfLines={1}>{worker.email}</Text>
       </View>
 
-      <View style={s.actions}>
-        <TouchableOpacity
-          style={[s.actionBtn, s.rejectBtn]}
-          onPress={onReject}
-          activeOpacity={0.85}
-          accessibilityLabel="Отклонить"
-        >
-          <UserX size={16} color={colors.surface} strokeWidth={iconStrokeWidth} />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[s.actionBtn, s.acceptBtn]}
-          onPress={onAccept}
-          activeOpacity={0.85}
-          accessibilityLabel="Принять"
-        >
-          <UserCheck size={16} color={colors.surface} strokeWidth={iconStrokeWidth} />
-        </TouchableOpacity>
-      </View>
+      {isProcessing ? (
+        <ActivityIndicator size="small" color={colors.primary} />
+      ) : (
+        <View style={s.actions}>
+          <TouchableOpacity
+            style={[s.actionBtn, s.rejectBtn]}
+            onPress={onReject}
+            activeOpacity={0.85}
+            accessibilityLabel="Отклонить"
+          >
+            <UserX size={16} color={colors.surface} strokeWidth={iconStrokeWidth} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[s.actionBtn, s.acceptBtn]}
+            onPress={onAccept}
+            activeOpacity={0.85}
+            accessibilityLabel="Принять"
+          >
+            <UserCheck size={16} color={colors.surface} strokeWidth={iconStrokeWidth} />
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 }

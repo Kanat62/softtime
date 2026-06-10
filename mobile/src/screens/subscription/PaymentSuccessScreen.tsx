@@ -8,7 +8,6 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Check } from 'lucide-react-native';
 import { useAdminProfileNavigation } from '@/shared/navigation/hooks';
-import { mockSubscription } from '@/entities/subscription';
 import { Button } from '@/shared/ui';
 import {
   colors,
@@ -77,7 +76,7 @@ export function PaymentSuccessScreen() {
     ]).start();
   }, []);
 
-  const activeUntil = addMonth(mockSubscription.periodEnd);
+  const activeUntil = addMonth(new Date());
 
   return (
     <SafeAreaView style={s.root} edges={['top', 'bottom']}>

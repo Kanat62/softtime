@@ -18,7 +18,7 @@ export const tokenStorage = {
       SecureStore.setItemAsync(KEYS.refreshToken, refreshToken),
     ]);
   },
-  async clear(): Promise<void> {
+  async clearTokens(): Promise<void> {
     await Promise.all([
       SecureStore.deleteItemAsync(KEYS.accessToken),
       SecureStore.deleteItemAsync(KEYS.refreshToken),

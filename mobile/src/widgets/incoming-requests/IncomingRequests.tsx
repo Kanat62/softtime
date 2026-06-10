@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import {
+  ActivityIndicator,
   Modal,
   Pressable,
   ScrollView,
@@ -9,14 +10,13 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { Check, FileText, X } from 'lucide-react-native';
+import { FileText, X } from 'lucide-react-native';
 import { RequestStatus, RequestType } from '@softtime/shared';
-import type { AbsenceRequest } from '@softtime/shared';
 import { Avatar, Button, EmptyState, StatusBadge } from '@/shared/ui';
+import type { RequestWithUser } from '@/entities/request/api/admin';
 import {
   colors,
   fontFamily,
-  iconSize,
   iconStrokeWidth,
   radius,
   shadows,
@@ -56,38 +56,34 @@ function formatDateRange(start: Date, end: Date | null): string {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 interface IncomingRequestsProps {
-  requests: AbsenceRequest[];
-  getUserName: (userId: string) => string;
+  requests: RequestWithUser[];
+  onApprove: (id: string) => void;
+  onReject: (id: string, note?: string | null) => void;
+  processingId?: string | null;
 }
 
-export function IncomingRequests({ requests, getUserName }: IncomingRequestsProps) {
-  const [items, setItems] = useState<AbsenceRequest[]>(requests);
+export function IncomingRequests({
+  requests,
+  onApprove,
+  onReject,
+  processingId,
+}: IncomingRequestsProps) {
   const [filter, setFilter] = useState<FilterTab>('all');
-  const [selected, setSelected] = useState<AbsenceRequest | null>(null);
+  const [selected, setSelected] = useState<RequestWithUser | null>(null);
 
-  const filtered = items.filter((r) => {
+  const filtered = requests.filter((r) => {
     if (filter === 'pending') return r.status === RequestStatus.PENDING;
     if (filter === 'resolved') return r.status !== RequestStatus.PENDING;
     return true;
   });
 
   function handleApprove(id: string) {
-    setItems((prev) =>
-      prev.map((r) =>
-        r.id === id ? { ...r, status: RequestStatus.APPROVED, decidedBy: 'user-admin-001' } : r,
-      ),
-    );
+    onApprove(id);
     setSelected(null);
   }
 
   function handleReject(id: string, note: string) {
-    setItems((prev) =>
-      prev.map((r) =>
-        r.id === id
-          ? { ...r, status: RequestStatus.REJECTED, decidedBy: 'user-admin-001', decisionNote: note }
-          : r,
-      ),
-    );
+    onReject(id, note || null);
     setSelected(null);
   }
 
@@ -122,23 +118,27 @@ export function IncomingRequests({ requests, getUserName }: IncomingRequestsProp
         />
       ) : (
         <View style={s.list}>
-          {filtered.map((req, idx) => (
-            <React.Fragment key={req.id}>
-              {idx > 0 && <View style={s.divider} />}
-              <RequestRow
-                request={req}
-                name={getUserName(req.userId)}
-                onPress={() => setSelected(req)}
-              />
-            </React.Fragment>
-          ))}
+          {filtered.map((req, idx) => {
+            const name = req.user?.fullName ?? 'Сотрудник';
+            return (
+              <React.Fragment key={req.id}>
+                {idx > 0 && <View style={s.divider} />}
+                <RequestRow
+                  request={req}
+                  name={name}
+                  onPress={() => setSelected(req)}
+                  isProcessing={processingId === req.id}
+                />
+              </React.Fragment>
+            );
+          })}
         </View>
       )}
 
       {/* Detail sheet */}
       <RequestDetailSheet
         request={selected}
-        name={selected ? getUserName(selected.userId) : ''}
+        name={selected ? (selected.user?.fullName ?? 'Сотрудник') : ''}
         onClose={() => setSelected(null)}
         onApprove={handleApprove}
         onReject={handleReject}
@@ -150,15 +150,16 @@ export function IncomingRequests({ requests, getUserName }: IncomingRequestsProp
 // ─── Request row ──────────────────────────────────────────────────────────────
 
 interface RequestRowProps {
-  request: AbsenceRequest;
+  request: RequestWithUser;
   name: string;
   onPress: () => void;
+  isProcessing: boolean;
 }
 
-function RequestRow({ request, name, onPress }: RequestRowProps) {
+function RequestRow({ request, name, onPress, isProcessing }: RequestRowProps) {
   return (
     <TouchableOpacity style={s.row} onPress={onPress} activeOpacity={0.85}>
-      <Avatar uri={null} name={name} size={40} />
+      <Avatar uri={request.user?.avatarUrl ?? null} name={name} size={40} />
 
       <View style={s.rowInfo}>
         <Text style={s.rowName} numberOfLines={1}>{name}</Text>
@@ -166,7 +167,11 @@ function RequestRow({ request, name, onPress }: RequestRowProps) {
         <Text style={s.rowDate}>{formatDateRange(request.startDate, request.endDate)}</Text>
       </View>
 
-      <StatusBadge status={request.status} />
+      {isProcessing ? (
+        <ActivityIndicator size="small" color={colors.primary} />
+      ) : (
+        <StatusBadge status={request.status} />
+      )}
     </TouchableOpacity>
   );
 }
@@ -176,7 +181,7 @@ function RequestRow({ request, name, onPress }: RequestRowProps) {
 type SheetStep = 'view' | 'reject';
 
 interface RequestDetailSheetProps {
-  request: AbsenceRequest | null;
+  request: RequestWithUser | null;
   name: string;
   onClose: () => void;
   onApprove: (id: string) => void;
@@ -238,7 +243,7 @@ function RequestDetailSheet({
             <View style={s.sheetBody}>
               {/* Employee */}
               <View style={s.detailRow}>
-                <Avatar uri={null} name={name} size={40} />
+                <Avatar uri={request.user?.avatarUrl ?? null} name={name} size={40} />
                 <View style={s.detailInfo}>
                   <Text style={s.detailName}>{name}</Text>
                   <StatusBadge status={request.status} />

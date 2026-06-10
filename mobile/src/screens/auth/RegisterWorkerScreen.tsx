@@ -15,6 +15,7 @@ import {
   Clock,
   Eye,
   EyeOff,
+  Hash,
   Lock,
   Mail,
   User,
@@ -28,13 +29,13 @@ import {
   space,
   typography,
 } from '@/shared/config/theme';
-import { Button, Input, OtpInput } from '@/shared/ui';
+import { Button, Input } from '@/shared/ui';
 import { useAuthNavigation } from '@/shared/navigation/hooks';
 import { useRegisterWorker } from '@/features/auth/register-worker/model/useRegisterWorker';
 
 export function RegisterWorkerScreen() {
   const navigation = useAuthNavigation();
-  const { form, onSubmit, isLoading, submittedEmail } = useRegisterWorker();
+  const { form, onSubmit, isLoading, submittedEmail, serverError } = useRegisterWorker();
   const [showPassword, setShowPassword] = useState(false);
 
   const {
@@ -72,6 +73,11 @@ export function RegisterWorkerScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.form}>
+            {serverError && (
+              <View style={styles.errorBanner}>
+                <Text style={styles.errorBannerText}>{serverError}</Text>
+              </View>
+            )}
             {/* ФИО */}
             <Controller
               control={control}
@@ -170,12 +176,23 @@ export function RegisterWorkerScreen() {
             <Controller
               control={control}
               name="companyCode"
-              render={({ field: { onChange, value } }) => (
-                <OtpInput
+              render={({ field: { onChange, onBlur, value } }) => (
+                <Input
                   label="Код компании"
+                  placeholder="XXXXXX"
+                  autoCapitalize="characters"
+                  maxLength={6}
                   value={value}
-                  onChange={onChange}
+                  onChangeText={(t) => onChange(t.replace(/[^A-Za-z0-9]/g, '').toUpperCase())}
+                  onBlur={onBlur}
                   error={errors.companyCode?.message}
+                  leftIcon={
+                    <Hash
+                      size={iconSize.md}
+                      color={colors.textSecondary}
+                      strokeWidth={iconStrokeWidth}
+                    />
+                  }
                 />
               )}
             />
@@ -250,6 +267,19 @@ const styles = StyleSheet.create({
   },
   form: {
     gap: space[4],
+  },
+
+  // Error banner
+  errorBanner: {
+    backgroundColor: colors.dangerLight,
+    borderRadius: 8,
+    paddingVertical: space[3],
+    paddingHorizontal: space[4],
+  },
+  errorBannerText: {
+    ...typography.sm,
+    color: colors.dangerText,
+    textAlign: 'center',
   },
 
   // Pending

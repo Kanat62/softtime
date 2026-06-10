@@ -15,7 +15,6 @@ import {
   ShieldCheck,
 } from 'lucide-react-native';
 import { useAdminProfileNavigation } from '@/shared/navigation/hooks';
-import { mockSubscription } from '@/entities/subscription';
 import { Button } from '@/shared/ui';
 import {
   colors,
@@ -77,9 +76,9 @@ export function PaymentScreen() {
 
           {/* Period */}
           <View style={s.periodRow}>
-            <PeriodItem label="Начало периода" value={formatDate(mockSubscription.periodEnd)} />
+            <PeriodItem label="Начало периода" value={formatDate(new Date())} />
             <View style={s.periodSep} />
-            <PeriodItem label="Конец периода" value={formatDatePlusMonth(mockSubscription.periodEnd)} />
+            <PeriodItem label="Конец периода" value={formatDatePlusMonth(new Date())} />
           </View>
         </View>
 

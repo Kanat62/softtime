@@ -1,4 +1,5 @@
 import { apiClient } from './client';
+import { normalizeError } from './errors';
 import { tokenStorage } from '../storage/secure';
 
 let isRefreshing = false;
@@ -9,20 +10,26 @@ function processQueue(error: unknown, token: string | null) {
   failedQueue = [];
 }
 
-export function setupInterceptors() {
+export function setupInterceptors(onAuthFailure?: () => void) {
+  // ── Request: attach access token ──────────────────────────────────────────
   apiClient.interceptors.request.use(async (config) => {
     const token = await tokenStorage.getAccessToken();
     if (token) config.headers.Authorization = `Bearer ${token}`;
     return config;
   });
 
+  // ── Response: normalize errors + silent 401 refresh ───────────────────────
+  // NOTE: The 401-refresh path is wired here so Block 3 only needs to supply
+  // the `onAuthFailure` callback (navigation to Login) — no interceptor changes needed.
   apiClient.interceptors.response.use(
     (res) => res,
     async (error) => {
       const original = error.config;
+
       if (error.response?.status !== 401 || original._retry) {
-        return Promise.reject(error);
+        return Promise.reject(normalizeError(error));
       }
+
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
@@ -31,8 +38,10 @@ export function setupInterceptors() {
           return apiClient(original);
         });
       }
+
       original._retry = true;
       isRefreshing = true;
+
       try {
         const refreshToken = await tokenStorage.getRefreshToken();
         const { data } = await apiClient.post('/auth/refresh', { refreshToken });
@@ -42,8 +51,9 @@ export function setupInterceptors() {
         return apiClient(original);
       } catch (err) {
         processQueue(err, null);
-        await tokenStorage.clear();
-        return Promise.reject(err);
+        await tokenStorage.clearTokens();
+        onAuthFailure?.();
+        return Promise.reject(normalizeError(err));
       } finally {
         isRefreshing = false;
       }

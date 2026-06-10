@@ -1,6 +1,4 @@
-import type { News } from '@softtime/shared';
-
-export type NewsWithRead = News & { isRead: boolean };
+import type { NewsWithRead } from './news';
 
 export const mockNews: NewsWithRead[] = [
   {

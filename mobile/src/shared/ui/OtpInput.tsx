@@ -24,14 +24,37 @@ export function OtpInput({ value, onChange, error, label }: OtpInputProps) {
 
   const cells = Array.from({ length: CELL_COUNT }, (_, i) => value[i] ?? '');
 
+  const buildChars = () =>
+    Array.from({ length: CELL_COUNT }, (_, i) => value[i] ?? '');
+
+  const moveFocus = (index: number) =>
+    setTimeout(() => inputRefs.current[index]?.focus(), 0);
+
   const handleChange = (text: string, index: number) => {
-    const cleaned = text.replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(-1);
-    const chars = value.split('');
-    chars[index] = cleaned;
-    const next = chars.join('').slice(0, CELL_COUNT);
-    onChange(next);
-    if (cleaned && index < CELL_COUNT - 1) {
-      inputRefs.current[index + 1]?.focus();
+    const cleaned = text.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+
+    if (cleaned === '') {
+      // Android fires onChangeText('') on backspace — handle it here
+      const chars = buildChars();
+      if (chars[index]) {
+        chars[index] = '';
+        onChange(chars.join(''));
+      } else if (index > 0) {
+        chars[index - 1] = '';
+        onChange(chars.join(''));
+        moveFocus(index - 1);
+      }
+      return;
+    }
+
+    // Take the last char (handles Android sending old+new char at once)
+    const char = cleaned.slice(-1);
+    const chars = buildChars();
+    chars[index] = char;
+    onChange(chars.join(''));
+
+    if (index < CELL_COUNT - 1) {
+      moveFocus(index + 1);
     }
   };
 
@@ -39,11 +62,12 @@ export function OtpInput({ value, onChange, error, label }: OtpInputProps) {
     e: NativeSyntheticEvent<TextInputKeyPressEventData>,
     index: number,
   ) => {
+    // iOS: onKeyPress('Backspace') is reliable; Android handled in onChangeText
     if (e.nativeEvent.key === 'Backspace' && !cells[index] && index > 0) {
-      inputRefs.current[index - 1]?.focus();
-      const chars = value.split('');
+      const chars = buildChars();
       chars[index - 1] = '';
       onChange(chars.join(''));
+      moveFocus(index - 1);
     }
   };
 
@@ -63,14 +87,16 @@ export function OtpInput({ value, onChange, error, label }: OtpInputProps) {
           return (
             <TextInput
               key={index}
-              ref={(ref) => { inputRefs.current[index] = ref; }}
+              ref={(ref) => {
+                inputRefs.current[index] = ref;
+              }}
               style={[styles.cell, { borderColor }]}
               value={char}
               onChangeText={(text) => handleChange(text, index)}
               onKeyPress={(e) => handleKeyPress(e, index)}
               onFocus={() => setFocusedIndex(index)}
               onBlur={() => setFocusedIndex(null)}
-              maxLength={1}
+              maxLength={2}
               autoCapitalize="characters"
               keyboardType="default"
               selectTextOnFocus

@@ -3,8 +3,8 @@ import { Animated, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
-import { AlertTriangle, CheckCircle, Clock } from 'lucide-react-native';
-import { CheckInStatus } from '@softtime/shared';
+import { AlertTriangle, CheckCircle, Clock, LogOut } from 'lucide-react-native';
+import { CheckInStatus, CheckOutStatus } from '@softtime/shared';
 import {
   colors,
   fontFamily,
@@ -16,58 +16,69 @@ import {
 import { Button } from '@/shared/ui';
 import { useWorkerNavigation } from '@/shared/navigation/hooks';
 import type { WorkerHomeStackParamList } from '@/shared/navigation/types';
+import { formatWorkedDuration } from '@/shared/lib/date';
 
 type ScanResultRoute = RouteProp<WorkerHomeStackParamList, 'ScanResult'>;
-
-// ─── Result config ────────────────────────────────────────────────────────────
 
 type ResultConfig = {
   icon: React.ReactNode;
   bgColor: string;
-  title: string;
   titleColor: string;
 };
 
-function getResultConfig(status: string): ResultConfig {
+function getCheckInConfig(status: string): ResultConfig {
   switch (status) {
     case CheckInStatus.LATE:
       return {
-        icon: (
-          <AlertTriangle size={44} color={colors.warning} strokeWidth={iconStrokeWidth} />
-        ),
+        icon: <AlertTriangle size={44} color={colors.warning} strokeWidth={iconStrokeWidth} />,
         bgColor: colors.warningLight,
-        title: 'Опоздание на 15 мин',
         titleColor: colors.warningText,
       };
     case CheckInStatus.EARLY_ARRIVAL:
       return {
-        icon: (
-          <Clock size={44} color={colors.primary} strokeWidth={iconStrokeWidth} />
-        ),
+        icon: <Clock size={44} color={colors.primary} strokeWidth={iconStrokeWidth} />,
         bgColor: colors.primaryLight,
-        title: 'Пришли на 20 мин раньше',
         titleColor: colors.primary,
       };
-    case CheckInStatus.ON_TIME:
     default:
       return {
-        icon: (
-          <CheckCircle size={44} color={colors.success} strokeWidth={iconStrokeWidth} />
-        ),
+        icon: <CheckCircle size={44} color={colors.success} strokeWidth={iconStrokeWidth} />,
         bgColor: colors.successLight,
-        title: 'Приход отмечен ✓',
         titleColor: colors.successText,
       };
   }
 }
 
-// ─── Screen ───────────────────────────────────────────────────────────────────
+function getCheckOutConfig(status: string): ResultConfig {
+  switch (status) {
+    case CheckOutStatus.LEFT_EARLY:
+      return {
+        icon: <AlertTriangle size={44} color={colors.warning} strokeWidth={iconStrokeWidth} />,
+        bgColor: colors.warningLight,
+        titleColor: colors.warningText,
+      };
+    case CheckOutStatus.OVERTIME:
+      return {
+        icon: <Clock size={44} color={colors.primary} strokeWidth={iconStrokeWidth} />,
+        bgColor: colors.primaryLight,
+        titleColor: colors.primary,
+      };
+    default:
+      return {
+        icon: <LogOut size={44} color={colors.success} strokeWidth={iconStrokeWidth} />,
+        bgColor: colors.successLight,
+        titleColor: colors.successText,
+      };
+  }
+}
 
 export function ScanResultScreen() {
   const navigation = useWorkerNavigation();
   const route = useRoute<ScanResultRoute>();
-  const { status, time } = route.params;
-  const config = getResultConfig(status);
+  const { type, status, time, message, workedMinutes } = route.params;
+
+  const config =
+    type === 'checkIn' ? getCheckInConfig(status) : getCheckOutConfig(status);
 
   const scaleAnim = useRef(new Animated.Value(0)).current;
 
@@ -93,11 +104,16 @@ export function ScanResultScreen() {
           {config.icon}
         </Animated.View>
 
-        <Text style={[styles.title, { color: config.titleColor }]}>
-          {config.title}
-        </Text>
+        <Text style={[styles.title, { color: config.titleColor }]}>{message}</Text>
 
         <Text style={styles.time}>{time}</Text>
+
+        {type === 'checkOut' && workedMinutes != null && workedMinutes > 0 && (
+          <View style={styles.workedRow}>
+            <Text style={styles.workedLabel}>Отработано</Text>
+            <Text style={styles.workedValue}>{formatWorkedDuration(workedMinutes)}</Text>
+          </View>
+        )}
       </View>
 
       <View style={styles.footer}>
@@ -112,8 +128,6 @@ export function ScanResultScreen() {
     </SafeAreaView>
   );
 }
-
-// ─── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
   root: {
@@ -145,6 +159,25 @@ const styles = StyleSheet.create({
     fontFamily: fontFamily.bold,
     color: colors.textPrimary,
     letterSpacing: -1,
+  },
+  workedRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[2],
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    paddingVertical: space[3],
+    paddingHorizontal: space[5],
+    marginTop: space[2],
+  },
+  workedLabel: {
+    ...typography.base,
+    color: colors.textSecondary,
+  },
+  workedValue: {
+    fontSize: 18,
+    fontFamily: fontFamily.bold,
+    color: colors.textPrimary,
   },
   footer: {
     paddingHorizontal: space[4],

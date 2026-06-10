@@ -1,5 +1,6 @@
-import React, { useCallback, useState } from 'react';
+import React, { useState } from 'react';
 import {
+  ActivityIndicator,
   FlatList,
   Modal,
   Pressable,
@@ -24,18 +25,13 @@ import {
   space,
   typography,
 } from '@/shared/config/theme';
-import { Avatar, Button, EmptyState } from '@/shared/ui';
+import { Avatar, Button, EmptyState, ErrorState, OfflineBanner, Skeleton } from '@/shared/ui';
 import { useAuth } from '@/app/providers/AuthProvider';
 import { useWorkerNavigation } from '@/shared/navigation/hooks';
-import { mockTodayInOffice, type OfficeEntry } from '@/entities/attendance';
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-function formatTime(date: Date): string {
-  const h = date.getHours().toString().padStart(2, '0');
-  const m = date.getMinutes().toString().padStart(2, '0');
-  return `${h}:${m}`;
-}
+import { formatTime } from '@/shared/lib/date';
+import type { AttendanceWithUser } from '@/entities/attendance/api/office';
+import { useOfficeData } from '@/features/office/model/useOfficeData';
+import type { AppError } from '@/shared/api/errors';
 
 // ─── Screen ──────────────────────────────────────────────────────────────────
 
@@ -44,17 +40,36 @@ export function OfficeScreen() {
   const { userRole } = useAuth();
   const isAdmin = userRole === UserRole.ADMIN;
 
-  const [items, setItems] = useState<OfficeEntry[]>(mockTodayInOffice);
-  const [refreshing, setRefreshing] = useState(false);
-  const [selectedEntry, setSelectedEntry] = useState<OfficeEntry | null>(null);
+  const { entries, isLoading, isError, isAccessDenied, refetch, checkoutMutation } =
+    useOfficeData();
 
-  const handleRefresh = useCallback(() => {
-    setRefreshing(true);
-    setTimeout(() => {
-      setItems([...mockTodayInOffice]);
-      setRefreshing(false);
-    }, 1000);
-  }, []);
+  const [selectedEntry, setSelectedEntry] = useState<AttendanceWithUser | null>(null);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
+
+  function handleCloseSheet() {
+    setSelectedEntry(null);
+    setCheckoutError(null);
+    checkoutMutation.reset();
+  }
+
+  function handleManualCheckout(checkOutAt: Date) {
+    if (!selectedEntry) return;
+    setCheckoutError(null);
+    checkoutMutation.mutate(
+      { id: selectedEntry.id, checkOutAt },
+      {
+        onSuccess: () => handleCloseSheet(),
+        onError: (err) => {
+          const appErr = err as unknown as AppError;
+          setCheckoutError(
+            appErr.isNetworkError
+              ? 'Нет подключения к интернету'
+              : appErr.message || 'Ошибка при сохранении',
+          );
+        },
+      },
+    );
+  }
 
   return (
     <SafeAreaView style={styles.root} edges={['top']}>
@@ -71,55 +86,73 @@ export function OfficeScreen() {
 
         <View style={styles.titleRow}>
           <Text style={styles.topBarTitle}>Сейчас в офисе</Text>
-          <View style={styles.countBadge}>
-            <Text style={styles.countText}>{items.length}</Text>
-          </View>
+          {!isLoading && !isError && !isAccessDenied && (
+            <View style={styles.countBadge}>
+              <Text style={styles.countText}>{entries.length}</Text>
+            </View>
+          )}
         </View>
 
         <View style={styles.backBtn} />
       </View>
+      <OfflineBanner variant="stale" />
 
-      {/* List */}
-      <FlatList
-        data={items}
-        keyExtractor={(item) => item.user.id}
-        contentContainerStyle={[
-          styles.listContent,
-          items.length === 0 && styles.listContentEmpty,
-        ]}
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
-        renderItem={({ item }) => (
-          <EmployeeRow
-            entry={item}
-            isAdmin={isAdmin}
-            onMorePress={() => setSelectedEntry(item)}
+      {/* Content */}
+      {isLoading ? (
+        <OfficeSkeleton />
+      ) : isAccessDenied ? (
+        <View style={styles.centered}>
+          <ErrorState
+            title="Нет доступа"
+            description="Просмотр офиса доступен после обновления приложения."
           />
-        )}
-        ListEmptyComponent={
-          <EmptyState
-            icon={
-              <Users size={48} color={colors.textDisabled} strokeWidth={iconStrokeWidth} />
-            }
-            title="Никого ещё нет в офисе"
-            description="Список появится после первого чекина"
-          />
-        }
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-            tintColor={colors.primary}
-            colors={[colors.primary]}
-          />
-        }
-      />
+        </View>
+      ) : isError ? (
+        <View style={styles.centered}>
+          <ErrorState onRetry={refetch} />
+        </View>
+      ) : (
+        <FlatList
+          data={entries}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={[
+            styles.listContent,
+            entries.length === 0 && styles.listContentEmpty,
+          ]}
+          ItemSeparatorComponent={() => <View style={styles.separator} />}
+          renderItem={({ item }) => (
+            <EmployeeRow
+              entry={item}
+              isAdmin={isAdmin}
+              onMorePress={() => setSelectedEntry(item)}
+            />
+          )}
+          ListEmptyComponent={
+            <EmptyState
+              icon={<Users size={48} color={colors.textDisabled} strokeWidth={iconStrokeWidth} />}
+              title="Никого ещё нет в офисе"
+              description="Список появится после первого чекина"
+            />
+          }
+          refreshControl={
+            <RefreshControl
+              refreshing={false}
+              onRefresh={refetch}
+              tintColor={colors.primary}
+              colors={[colors.primary]}
+            />
+          }
+        />
+      )}
 
       {/* Admin: checkout bottom sheet */}
       {isAdmin && (
         <CheckoutSheet
           entry={selectedEntry}
-          onClose={() => setSelectedEntry(null)}
-          onSave={() => setSelectedEntry(null)}
+          onClose={handleCloseSheet}
+          onSave={handleManualCheckout}
+          isSaving={checkoutMutation.isPending}
+          saveError={checkoutError}
         />
       )}
     </SafeAreaView>
@@ -129,19 +162,23 @@ export function OfficeScreen() {
 // ─── Employee row ─────────────────────────────────────────────────────────────
 
 interface EmployeeRowProps {
-  entry: OfficeEntry;
+  entry: AttendanceWithUser;
   isAdmin: boolean;
   onMorePress: () => void;
 }
 
 function EmployeeRow({ entry, isAdmin, onMorePress }: EmployeeRowProps) {
+  const name = entry.user?.fullName ?? 'Сотрудник';
+  const avatarUrl = entry.user?.avatarUrl ?? null;
+  const timeStr = entry.checkInAt ? formatTime(entry.checkInAt) : '--:--';
+
   return (
     <View style={styles.row}>
-      <Avatar uri={entry.user.avatarUrl} name={entry.user.fullName} size={44} />
+      <Avatar uri={avatarUrl} name={name} size={44} />
 
       <View style={styles.rowContent}>
-        <Text style={styles.rowName}>{entry.user.fullName}</Text>
-        <Text style={styles.rowTime}>с {formatTime(entry.checkInAt)}</Text>
+        <Text style={styles.rowName}>{name}</Text>
+        <Text style={styles.rowTime}>с {timeStr}</Text>
       </View>
 
       {isAdmin && (
@@ -165,32 +202,38 @@ function EmployeeRow({ entry, isAdmin, onMorePress }: EmployeeRowProps) {
 // ─── Admin: checkout bottom sheet ─────────────────────────────────────────────
 
 interface CheckoutSheetProps {
-  entry: OfficeEntry | null;
+  entry: AttendanceWithUser | null;
   onClose: () => void;
-  onSave: () => void;
+  onSave: (checkOutAt: Date) => void;
+  isSaving: boolean;
+  saveError: string | null;
 }
 
-function CheckoutSheet({ entry, onClose, onSave }: CheckoutSheetProps) {
+function CheckoutSheet({ entry, onClose, onSave, isSaving, saveError }: CheckoutSheetProps) {
   const now = new Date();
   const [hours, setHours] = useState(now.getHours().toString().padStart(2, '0'));
   const [minutes, setMinutes] = useState(now.getMinutes().toString().padStart(2, '0'));
-  const [error, setError] = useState<string | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   function handleSave() {
     const h = parseInt(hours, 10);
     const m = parseInt(minutes, 10);
     if (isNaN(h) || h < 0 || h > 23 || isNaN(m) || m < 0 || m > 59) {
-      setError('Введите корректное время (ЧЧ:ММ)');
+      setValidationError('Введите корректное время (ЧЧ:ММ)');
       return;
     }
-    setError(null);
-    onSave();
+    setValidationError(null);
+    const checkOutAt = new Date();
+    checkOutAt.setHours(h, m, 0, 0);
+    onSave(checkOutAt);
   }
 
   function handleClose() {
-    setError(null);
+    setValidationError(null);
     onClose();
   }
+
+  const displayError = validationError ?? saveError;
 
   return (
     <Modal
@@ -202,15 +245,15 @@ function CheckoutSheet({ entry, onClose, onSave }: CheckoutSheetProps) {
     >
       <Pressable style={styles.overlay} onPress={handleClose}>
         <Pressable style={styles.sheet} onPress={() => {}}>
-          {/* Handle */}
           <View style={styles.handle} />
 
-          {/* Header */}
           <View style={styles.sheetHeader}>
             <View>
               <Text style={styles.sheetTitle}>Указать время ухода</Text>
               {entry && (
-                <Text style={styles.sheetSub}>{entry.user.fullName}</Text>
+                <Text style={styles.sheetSub}>
+                  {entry.user?.fullName ?? 'Сотрудник'}
+                </Text>
               )}
             </View>
             <TouchableOpacity
@@ -221,7 +264,6 @@ function CheckoutSheet({ entry, onClose, onSave }: CheckoutSheetProps) {
             </TouchableOpacity>
           </View>
 
-          {/* Time picker */}
           <View style={styles.sheetBody}>
             <Text style={styles.timeLabel}>Время ухода</Text>
             <View style={styles.timePicker}>
@@ -230,7 +272,7 @@ function CheckoutSheet({ entry, onClose, onSave }: CheckoutSheetProps) {
                   style={styles.timeSegment}
                   value={hours}
                   onChangeText={(v) => {
-                    setError(null);
+                    setValidationError(null);
                     setHours(v.replace(/\D/g, '').slice(0, 2));
                   }}
                   keyboardType="number-pad"
@@ -238,6 +280,7 @@ function CheckoutSheet({ entry, onClose, onSave }: CheckoutSheetProps) {
                   selectTextOnFocus
                   placeholder="ЧЧ"
                   placeholderTextColor={colors.textDisabled}
+                  editable={!isSaving}
                 />
                 <Text style={styles.timeSegmentLabel}>часы</Text>
               </View>
@@ -249,7 +292,7 @@ function CheckoutSheet({ entry, onClose, onSave }: CheckoutSheetProps) {
                   style={styles.timeSegment}
                   value={minutes}
                   onChangeText={(v) => {
-                    setError(null);
+                    setValidationError(null);
                     setMinutes(v.replace(/\D/g, '').slice(0, 2));
                   }}
                   keyboardType="number-pad"
@@ -257,20 +300,46 @@ function CheckoutSheet({ entry, onClose, onSave }: CheckoutSheetProps) {
                   selectTextOnFocus
                   placeholder="ММ"
                   placeholderTextColor={colors.textDisabled}
+                  editable={!isSaving}
                 />
                 <Text style={styles.timeSegmentLabel}>минуты</Text>
               </View>
             </View>
 
-            {error && <Text style={styles.timeError}>{error}</Text>}
+            {displayError && (
+              <Text style={styles.timeError}>{displayError}</Text>
+            )}
 
-            <Button variant="primary" size="full" onPress={handleSave}>
+            <Button
+              variant="primary"
+              size="full"
+              onPress={handleSave}
+              loading={isSaving}
+            >
               Сохранить
             </Button>
           </View>
         </Pressable>
       </Pressable>
     </Modal>
+  );
+}
+
+// ─── Loading skeleton ─────────────────────────────────────────────────────────
+
+function OfficeSkeleton() {
+  return (
+    <View style={[styles.listContent, { gap: space[2] }]}>
+      {[0, 1, 2, 3].map((i) => (
+        <View key={i} style={[styles.row, { gap: space[3] }]}>
+          <Skeleton width={44} height={44} borderRadius={22} />
+          <View style={{ flex: 1, gap: space[2] }}>
+            <Skeleton width={140} height={14} />
+            <Skeleton width={80} height={12} />
+          </View>
+        </View>
+      ))}
+    </View>
   );
 }
 
@@ -281,10 +350,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.bg,
   },
+  centered: {
+    flex: 1,
+  },
 
   // Top bar
   topBar: {
-    height: 56,
+    height: layout.topBarHeight,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: space[4],
@@ -344,7 +416,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: space[3],
-
   },
   rowContent: {
     flex: 1,
@@ -366,7 +437,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
-  // Modal overlay
+  // Modal
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.4)',

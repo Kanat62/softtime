@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -12,19 +13,21 @@ import {
   colors,
   iconStrokeWidth,
   layout,
+  radius,
   space,
   typography,
 } from '@/shared/config/theme';
+import { ErrorState, OfflineBanner, Skeleton } from '@/shared/ui';
 import { ScheduleWeek } from '@/widgets/schedule-week/ScheduleWeek';
-import { mockSchedule } from '@/entities/schedule';
 import { useWorkerNavigation } from '@/shared/navigation/hooks';
+import { useMySchedule } from '@/features/schedule/model/useMySchedule';
 
 export function MyScheduleScreen() {
   const navigation = useWorkerNavigation();
+  const { schedule, isLoading, isError, refetch } = useMySchedule();
 
   return (
     <SafeAreaView style={styles.root} edges={['top']}>
-      {/* Top bar */}
       <View style={styles.topBar}>
         <TouchableOpacity
           style={styles.backBtn}
@@ -37,15 +40,60 @@ export function MyScheduleScreen() {
         <Text style={styles.title}>Мой график</Text>
         <View style={styles.backBtn} />
       </View>
+      <OfflineBanner variant="stale" />
 
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
-      >
-        <ScheduleWeek schedule={mockSchedule} />
-        <View style={styles.bottomSpacer} />
-      </ScrollView>
+      {isError ? (
+        <ErrorState onRetry={refetch} />
+      ) : (
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={false}
+              onRefresh={refetch}
+              tintColor={colors.primary}
+              colors={[colors.primary]}
+            />
+          }
+        >
+          {isLoading ? (
+            <ScheduleSkeleton />
+          ) : schedule ? (
+            <ScheduleWeek schedule={schedule} />
+          ) : null}
+          <View style={styles.bottomSpacer} />
+        </ScrollView>
+      )}
     </SafeAreaView>
+  );
+}
+
+function ScheduleSkeleton() {
+  return (
+    <View style={styles.skeletonRoot}>
+      {/* Hero card */}
+      <View style={styles.skeletonHero}>
+        <View style={{ gap: space[2] }}>
+          <Skeleton width={100} height={12} />
+          <Skeleton width={120} height={34} />
+          <Skeleton width={160} height={14} />
+        </View>
+        <Skeleton width={44} height={44} borderRadius={22} />
+      </View>
+
+      {/* Day cards */}
+      {([0, 1, 2, 3, 4, 5, 6] as const).map((i) => (
+        <View key={i} style={styles.skeletonDayCard}>
+          <Skeleton width={38} height={38} borderRadius={19} />
+          <View style={{ flex: 1, gap: space[2] }}>
+            <Skeleton width={100} height={14} />
+            <Skeleton width={70} height={12} />
+          </View>
+          <Skeleton width={40} height={12} />
+        </View>
+      ))}
+    </View>
   );
 }
 
@@ -79,5 +127,27 @@ const styles = StyleSheet.create({
   },
   bottomSpacer: {
     height: space[8],
+  },
+  skeletonRoot: {
+    gap: space[3],
+  },
+  skeletonHero: {
+    backgroundColor: colors.border,
+    borderRadius: radius.lg,
+    padding: space[5],
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  skeletonDayCard: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingVertical: space[3],
+    paddingHorizontal: space[4],
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[3],
   },
 });

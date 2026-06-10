@@ -36,7 +36,7 @@ import { useRegisterAdmin } from '@/features/auth/register-admin/model/useRegist
 
 export function RegisterAdminScreen() {
   const navigation = useAuthNavigation();
-  const { form, onSubmit, isLoading, companyCode } = useRegisterAdmin();
+  const { form, onSubmit, isLoading, companyCode, serverError } = useRegisterAdmin();
   const [showPassword, setShowPassword] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -80,6 +80,11 @@ export function RegisterAdminScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.form}>
+            {serverError && (
+              <View style={styles.errorBanner}>
+                <Text style={styles.errorBannerText}>{serverError}</Text>
+              </View>
+            )}
             {/* Название компании */}
             <Controller
               control={control}
@@ -304,6 +309,17 @@ const styles = StyleSheet.create({
   },
   form: {
     gap: space[4],
+  },
+  errorBanner: {
+    backgroundColor: colors.dangerLight,
+    borderRadius: 8,
+    paddingVertical: space[3],
+    paddingHorizontal: space[4],
+  },
+  errorBannerText: {
+    ...typography.sm,
+    color: colors.dangerText,
+    textAlign: 'center',
   },
 
   // Success

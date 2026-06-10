@@ -1,27 +1,23 @@
 import React, { useState } from 'react';
 import {
+  ActivityIndicator,
   Modal,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import {
-  ChevronLeft,
-  ChevronRight,
-  MoreHorizontal,
-  X,
-} from 'lucide-react-native';
-import { UserStatus } from '@softtime/shared';
+import { ChevronLeft, ChevronRight, MoreHorizontal, X } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
-import { mockWorkers } from '@/entities/user';
-import { mockIncomingRequests } from '@/entities/request';
-import { mockTodayInOffice, type OfficeEntry } from '@/entities/attendance';
-import { Avatar, Button } from '@/shared/ui';
+import { usePendingEmployees } from '@/features/employee/pending/model/usePendingEmployees';
+import { useAdminRequests } from '@/features/requests/admin/model/useAdminRequests';
+import { useOfficeData } from '@/features/office/model/useOfficeData';
+import type { AttendanceWithUser } from '@/entities/attendance/api/office';
+import { Avatar, Button, ErrorState, OfflineBanner } from '@/shared/ui';
 import { PendingEmployees } from '@/widgets/pending-employees/PendingEmployees';
 import { IncomingRequests } from '@/widgets/incoming-requests/IncomingRequests';
 import {
@@ -38,16 +34,6 @@ import {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const PENDING_WORKERS = mockWorkers.filter((w) => w.status === UserStatus.PENDING);
-
-const USER_NAME_MAP: Record<string, string> = Object.fromEntries(
-  mockWorkers.map((w) => [w.id, w.fullName]),
-);
-
-function getUserName(userId: string): string {
-  return USER_NAME_MAP[userId] ?? 'Сотрудник';
-}
-
 function formatTime(date: Date): string {
   const h = date.getHours().toString().padStart(2, '0');
   const m = date.getMinutes().toString().padStart(2, '0');
@@ -58,6 +44,10 @@ function formatTime(date: Date): string {
 
 export function ManagementScreen() {
   const navigation = useNavigation<any>();
+
+  const pendingEmp = usePendingEmployees();
+  const adminReqs = useAdminRequests();
+  const officeData = useOfficeData();
 
   return (
     <SafeAreaView style={s.root} edges={['top']}>
@@ -74,26 +64,55 @@ export function ManagementScreen() {
         <Text style={s.topBarTitle}>Управление</Text>
         <View style={s.backBtn} />
       </View>
+      <OfflineBanner variant="stale" />
 
       <ScrollView
         contentContainerStyle={s.scroll}
         showsVerticalScrollIndicator={false}
       >
         {/* ── Section 1: Pending employees ── */}
-        <Section title="Сотрудники" subtitle={`Ожидают подтверждения: ${PENDING_WORKERS.length}`}>
-          <PendingEmployees workers={PENDING_WORKERS} />
+        <Section
+          title="Сотрудники"
+          subtitle={`Ожидают подтверждения: ${pendingEmp.employees.length}`}
+        >
+          {pendingEmp.isError ? (
+            <ErrorState title="Не удалось загрузить" onRetry={pendingEmp.refetch} />
+          ) : (
+            <PendingEmployees
+              workers={pendingEmp.employees}
+              onAccept={pendingEmp.approve}
+              onReject={pendingEmp.reject}
+              processingId={pendingEmp.processingId}
+            />
+          )}
         </Section>
 
         {/* ── Section 2: Incoming requests ── */}
         <Section title="Заявки сотрудников">
-          <IncomingRequests
-            requests={mockIncomingRequests}
-            getUserName={getUserName}
-          />
+          {adminReqs.isError ? (
+            <ErrorState title="Не удалось загрузить" onRetry={adminReqs.refetch} />
+          ) : (
+            <IncomingRequests
+              requests={adminReqs.items}
+              onApprove={adminReqs.approve}
+              onReject={adminReqs.reject}
+              processingId={adminReqs.processingId}
+            />
+          )}
         </Section>
 
         {/* ── Section 3: Office now ── */}
-        <OfficeSection onViewAll={() => navigation.navigate('Office')} />
+        <OfficeSection
+          entries={officeData.entries}
+          isLoading={officeData.isLoading}
+          isError={officeData.isError}
+          onRefetch={officeData.refetch}
+          onCheckout={(id, checkOutAt) =>
+            officeData.checkoutMutation.mutate({ id, checkOutAt })
+          }
+          isCheckingOut={officeData.checkoutMutation.isPending}
+          onViewAll={() => navigation.navigate('Office')}
+        />
 
         <View style={s.bottomSpacer} />
       </ScrollView>
@@ -124,12 +143,26 @@ function Section({ title, subtitle, children }: SectionProps) {
 // ─── Office section ───────────────────────────────────────────────────────────
 
 interface OfficeSectionProps {
+  entries: AttendanceWithUser[];
+  isLoading: boolean;
+  isError: boolean;
+  onRefetch: () => void;
+  onCheckout: (id: string, checkOutAt: Date) => void;
+  isCheckingOut: boolean;
   onViewAll: () => void;
 }
 
-function OfficeSection({ onViewAll }: OfficeSectionProps) {
-  const [checkoutTarget, setCheckoutTarget] = useState<OfficeEntry | null>(null);
-  const preview = mockTodayInOffice.slice(0, 3);
+function OfficeSection({
+  entries,
+  isLoading,
+  isError,
+  onRefetch,
+  onCheckout,
+  isCheckingOut,
+  onViewAll,
+}: OfficeSectionProps) {
+  const [checkoutTarget, setCheckoutTarget] = useState<AttendanceWithUser | null>(null);
+  const preview = entries.slice(0, 3);
 
   return (
     <View style={s.card}>
@@ -141,7 +174,7 @@ function OfficeSection({ onViewAll }: OfficeSectionProps) {
       >
         <View>
           <Text style={s.sectionTitle}>Сейчас в офисе</Text>
-          <Text style={s.sectionSubtitle}>{mockTodayInOffice.length} человек</Text>
+          <Text style={s.sectionSubtitle}>{entries.length} человек</Text>
         </View>
         <View style={s.viewAllRow}>
           <Text style={s.viewAllText}>Все</Text>
@@ -150,20 +183,33 @@ function OfficeSection({ onViewAll }: OfficeSectionProps) {
       </TouchableOpacity>
 
       <View style={s.sectionBody}>
-        {preview.map((entry, idx) => (
-          <React.Fragment key={entry.user.id}>
-            {idx > 0 && <View style={s.divider} />}
-            <OfficeRow
-              entry={entry}
-              onMorePress={() => setCheckoutTarget(entry)}
-            />
-          </React.Fragment>
-        ))}
+        {isLoading ? (
+          <ActivityIndicator size="small" color={colors.primary} style={s.loader} />
+        ) : isError ? (
+          <ErrorState title="Не удалось загрузить" onRetry={onRefetch} />
+        ) : (
+          preview.map((entry, idx) => (
+            <React.Fragment key={entry.id}>
+              {idx > 0 && <View style={s.divider} />}
+              <OfficeRow
+                entry={entry}
+                onMorePress={() => setCheckoutTarget(entry)}
+              />
+            </React.Fragment>
+          ))
+        )}
       </View>
 
       <CheckoutSheet
         entry={checkoutTarget}
         onClose={() => setCheckoutTarget(null)}
+        onSave={(checkOutAt) => {
+          if (checkoutTarget) {
+            onCheckout(checkoutTarget.id, checkOutAt);
+            setCheckoutTarget(null);
+          }
+        }}
+        isSaving={isCheckingOut}
       />
     </View>
   );
@@ -172,17 +218,20 @@ function OfficeSection({ onViewAll }: OfficeSectionProps) {
 // ─── Office row ───────────────────────────────────────────────────────────────
 
 interface OfficeRowProps {
-  entry: OfficeEntry;
+  entry: AttendanceWithUser;
   onMorePress: () => void;
 }
 
 function OfficeRow({ entry, onMorePress }: OfficeRowProps) {
+  const name = entry.user?.fullName ?? 'Сотрудник';
   return (
     <View style={s.officeRow}>
-      <Avatar uri={entry.user.avatarUrl} name={entry.user.fullName} size={40} />
+      <Avatar uri={entry.user?.avatarUrl ?? null} name={name} size={40} />
       <View style={s.officeRowInfo}>
-        <Text style={s.officeRowName} numberOfLines={1}>{entry.user.fullName}</Text>
-        <Text style={s.officeRowTime}>с {formatTime(entry.checkInAt)}</Text>
+        <Text style={s.officeRowName} numberOfLines={1}>{name}</Text>
+        {entry.checkInAt && (
+          <Text style={s.officeRowTime}>с {formatTime(entry.checkInAt)}</Text>
+        )}
       </View>
       <TouchableOpacity
         style={s.moreBtn}
@@ -199,11 +248,13 @@ function OfficeRow({ entry, onMorePress }: OfficeRowProps) {
 // ─── Checkout sheet ───────────────────────────────────────────────────────────
 
 interface CheckoutSheetProps {
-  entry: OfficeEntry | null;
+  entry: AttendanceWithUser | null;
   onClose: () => void;
+  onSave: (checkOutAt: Date) => void;
+  isSaving: boolean;
 }
 
-function CheckoutSheet({ entry, onClose }: CheckoutSheetProps) {
+function CheckoutSheet({ entry, onClose, onSave, isSaving }: CheckoutSheetProps) {
   const now = new Date();
   const [hours, setHours] = useState(now.getHours().toString().padStart(2, '0'));
   const [minutes, setMinutes] = useState(now.getMinutes().toString().padStart(2, '0'));
@@ -217,7 +268,9 @@ function CheckoutSheet({ entry, onClose }: CheckoutSheetProps) {
       return;
     }
     setError(null);
-    onClose();
+    const checkOutAt = new Date();
+    checkOutAt.setHours(h, m, 0, 0);
+    onSave(checkOutAt);
   }
 
   function handleClose() {
@@ -240,7 +293,9 @@ function CheckoutSheet({ entry, onClose }: CheckoutSheetProps) {
           <View style={s.sheetHeader}>
             <View>
               <Text style={s.sheetTitle}>Указать время ухода</Text>
-              {entry && <Text style={s.sheetSub}>{entry.user.fullName}</Text>}
+              {entry && (
+                <Text style={s.sheetSub}>{entry.user?.fullName ?? 'Сотрудник'}</Text>
+              )}
             </View>
             <TouchableOpacity
               onPress={handleClose}
@@ -282,8 +337,13 @@ function CheckoutSheet({ entry, onClose }: CheckoutSheetProps) {
               </View>
             </View>
             {error && <Text style={s.timeError}>{error}</Text>}
-            <Button variant="primary" size="full" onPress={handleSave}>
-              Сохранить
+            <Button
+              variant="primary"
+              size="full"
+              onPress={handleSave}
+              disabled={isSaving}
+            >
+              {isSaving ? 'Сохранение…' : 'Сохранить'}
             </Button>
           </View>
         </Pressable>
@@ -336,7 +396,6 @@ const s = StyleSheet.create({
     backgroundColor: colors.surface,
     borderRadius: radius.xl,
     overflow: 'hidden',
-
   },
 
   // Section header
@@ -380,6 +439,9 @@ const s = StyleSheet.create({
   },
 
   // Office rows
+  loader: {
+    marginVertical: space[4],
+  },
   divider: {
     height: 1,
     backgroundColor: colors.border,

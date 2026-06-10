@@ -7,3 +7,4 @@ export { Input } from './Input';
 export { OtpInput } from './OtpInput';
 export { Skeleton, SkeletonGroup } from './Skeleton';
 export { StatusBadge } from './StatusBadge';
+export { OfflineBanner } from './OfflineBanner';

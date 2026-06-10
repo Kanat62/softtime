@@ -12,6 +12,50 @@ import {
   Weekday,
 } from '../enums';
 
+/** Sanitized user object returned by auth endpoints (no passwordHash / adminNote) */
+export interface AuthUser {
+  id: string;
+  fullName: string;
+  email: string;
+  role: UserRole;
+  status: UserStatus;
+  companyId: string | null;
+}
+
+/** Response shape for login and register endpoints */
+export interface AuthResponse {
+  accessToken: string;
+  refreshToken: string;
+  user: AuthUser;
+}
+
+/** Response shape for /attendance/check-in */
+export interface CheckInResult {
+  record: Attendance;
+  checkInStatus: CheckInStatus;
+  /** Signed: negative = arrived early, positive = arrived late */
+  diffMinutes: number;
+  message: string;
+}
+
+/** Response shape for /attendance/check-out */
+export interface CheckOutResult {
+  record: Attendance;
+  checkOutStatus: CheckOutStatus;
+  dayStatus: DayStatus;
+  workedMinutes: number;
+  message: string;
+}
+
+/** FCM device token record stored in the backend */
+export interface DeviceToken {
+  id: string;
+  userId: string;
+  fcmToken: string;
+  platform: 'ios' | 'android';
+  createdAt: Date;
+}
+
 /** Компания (tenant) */
 export interface Company {
   id: string;

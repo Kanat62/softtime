@@ -27,8 +27,16 @@ export type BlockedStackParamList = {
 
 export type WorkerHomeStackParamList = {
   HomeScreen: undefined;
-  QrScanner: undefined;
-  ScanResult: { status: string; time: string };
+  QrScanner: { mode: 'checkIn' | 'checkOut' };
+  ScanResult: {
+    type: 'checkIn' | 'checkOut';
+    status: string;
+    time: string;
+    message: string;
+    diffMinutes?: number;
+    workedMinutes?: number;
+    dayStatus?: string;
+  };
   AttendanceHistory: undefined;
   Office: undefined;
   MySchedule: undefined;
@@ -67,8 +75,16 @@ export type WorkerTabParamList = {
 
 export type AdminHomeStackParamList = {
   HomeScreen: undefined;
-  QrScanner: undefined;
-  ScanResult: { status: string; time: string };
+  QrScanner: { mode: 'checkIn' | 'checkOut' };
+  ScanResult: {
+    type: 'checkIn' | 'checkOut';
+    status: string;
+    time: string;
+    message: string;
+    diffMinutes?: number;
+    workedMinutes?: number;
+    dayStatus?: string;
+  };
   AttendanceHistory: undefined;
   Office: undefined;
   MySchedule: undefined;

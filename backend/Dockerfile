@@ -12,6 +12,7 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY packages/shared ./packages/shared
 COPY backend ./backend
+RUN cd packages/shared && npm run build
 RUN cd backend && npx prisma generate && npm run build
 
 # ---- runtime ----
@@ -24,9 +25,10 @@ COPY --from=build --chown=appuser:appgroup /app/node_modules ./node_modules
 COPY --from=build --chown=appuser:appgroup /app/packages/shared ./packages/shared
 COPY --from=build --chown=appuser:appgroup /app/backend/dist ./dist
 COPY --from=build --chown=appuser:appgroup /app/backend/prisma ./prisma
+COPY --from=build --chown=appuser:appgroup /app/backend/prisma.config.ts ./prisma.config.ts
 COPY --from=build --chown=appuser:appgroup /app/backend/package.json ./
 
 USER appuser
 EXPOSE 3000
 
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main"]
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/src/main"]
