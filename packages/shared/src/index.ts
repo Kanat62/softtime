@@ -5,7 +5,6 @@ export * from './schemas/schedule';
 export * from './schemas/request';
 export * from './schemas/attendance';
 export * from './schemas/device';
-export * from './schemas/profile';
 export * from './schemas/users';
 export * from './schemas/office-network';
 export * from './schemas/qr';

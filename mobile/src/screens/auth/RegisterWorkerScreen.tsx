@@ -179,11 +179,11 @@ export function RegisterWorkerScreen() {
               render={({ field: { onChange, onBlur, value } }) => (
                 <Input
                   label="Код компании"
-                  placeholder="XXXXXX"
-                  autoCapitalize="characters"
+                  placeholder="000000"
+                  keyboardType="number-pad"
                   maxLength={6}
                   value={value}
-                  onChangeText={(t) => onChange(t.replace(/[^A-Za-z0-9]/g, '').toUpperCase())}
+                  onChangeText={(t) => onChange(t.replace(/\D/g, ''))}
                   onBlur={onBlur}
                   error={errors.companyCode?.message}
                   leftIcon={

@@ -292,11 +292,7 @@ export class AuthService {
   }
 
   private generateCompanyCode(): string {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    return Array.from(
-      { length: 6 },
-      () => chars[Math.floor(Math.random() * chars.length)],
-    ).join('');
+    return String(Math.floor(100000 + Math.random() * 900000));
   }
 
   private sanitizeUser(user: {

@@ -13,7 +13,7 @@ export const registerWorkerSchema = z.object({
   fullName: z.string().min(1, 'ФИО обязательно'),
   email: z.string().email('Некорректный email'),
   password: z.string().min(8, 'Пароль должен содержать минимум 8 символов').max(72, 'Пароль не может превышать 72 символа'),
-  companyCode: z.string().length(6, 'Код компании должен содержать ровно 6 символов'),
+  companyCode: z.string().regex(/^\d{6}$/, 'Код компании должен содержать ровно 6 цифр'),
 });
 
 /** Вход в систему */

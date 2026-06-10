@@ -98,7 +98,7 @@ describe('AuthController (e2e)', () => {
 
   describe('POST /auth/register/company', () => {
     it('registers a new company and returns tokens', async () => {
-      const company = { id: COMPANY_ID, name: 'Test Corp', companyCode: 'ABC123', status: CompanyStatus.TRIAL };
+      const company = { id: COMPANY_ID, name: 'Test Corp', companyCode: '123456', status: CompanyStatus.TRIAL };
       const admin = { id: ADMIN_ID, companyId: COMPANY_ID, role: UserRole.ADMIN, status: UserStatus.ACTIVE, fullName: 'Admin User', email: 'admin@test.com', passwordHash: PASSWORD_HASH };
 
       mockPrisma.$transaction.mockImplementation(async (fn: any) =>
