@@ -158,7 +158,7 @@ model User {
 
   company Company? @relation(fields: [companyId], references: [id])
 
-  @@unique([companyId, email])
+  @@unique([email])
   @@index([companyId])
 }
 

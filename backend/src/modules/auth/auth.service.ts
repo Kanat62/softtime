@@ -62,10 +62,10 @@ export class AuthService {
         });
 
         const existingUser = await tx.user.findFirst({
-          where: { companyId: company.id, email: dto.email },
+          where: { email: dto.email },
         });
         if (existingUser) {
-          throw new ConflictException('Email уже используется в этой компании');
+          throw new ConflictException('Этот email уже зарегистрирован');
         }
 
         const user = await tx.user.create({
@@ -130,10 +130,10 @@ export class AuthService {
     }
 
     const existingUser = await this.prisma.user.findFirst({
-      where: { companyId: company.id, email: dto.email, deletedAt: null },
+      where: { email: dto.email, deletedAt: null },
     });
     if (existingUser) {
-      throw new ConflictException('Email уже используется в этой компании');
+      throw new ConflictException('Этот email уже зарегистрирован');
     }
 
     const passwordHash = await bcrypt.hash(dto.password, BCRYPT_ROUNDS);
