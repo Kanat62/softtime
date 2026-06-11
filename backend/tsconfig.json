@@ -13,13 +13,19 @@
     "incremental": true,
     "skipLibCheck": true,
     "strictNullChecks": true,
-    "types": ["jest", "node"],
+    "types": [
+      "jest",
+      "node"
+    ],
     "noImplicitAny": false,
     "strictBindCallApply": false,
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false,
     "paths": {
-      "@softtime/shared": ["../packages/shared/dist"]
+      "@softtime/shared": [
+        "../packages/shared/dist"
+      ]
     }
-  }
+  },
+  "extends": "expo/tsconfig.base"
 }
