@@ -483,8 +483,8 @@ export function EmployeesTable() {
           <AlertDialogHeader>
             <AlertDialogTitle>Удалить сотрудника?</AlertDialogTitle>
             <AlertDialogDescription>
-              Это действие нельзя отменить. Данные {action?.employee.fullName} будут скрыты из
-              системы.
+              Это действие нельзя отменить. Данные {action?.employee.fullName} будут безвозвратно
+              удалены из системы, включая историю посещаемости.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Plus, Wifi } from "lucide-react";
+import { Plus, Wifi, LocateFixed } from "lucide-react";
 import { networkApi } from "@/entities/office-network/api";
 import type { OfficeNetwork } from "@/entities/office-network/model/types";
 import { queryKeys } from "@/shared/api/query-keys";
@@ -50,6 +50,7 @@ export function OfficeNetworksTable() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<OfficeNetwork | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<OfficeNetwork | null>(null);
+  const [detecting, setDetecting] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -109,6 +110,19 @@ export function OfficeNetworksTable() {
     setDialogOpen(false);
     setEditTarget(null);
     form.reset();
+  }
+
+  async function detectNetwork() {
+    setDetecting(true);
+    try {
+      const { ip, cidr } = await networkApi.detect();
+      form.setValue("cidr", cidr, { shouldValidate: true });
+      toast.info(`Обнаружена сеть: ${ip} → ${cidr}`);
+    } catch {
+      toast.error("Не удалось определить сеть");
+    } finally {
+      setDetecting(false);
+    }
   }
 
   function onSubmit(values: FormValues) {
@@ -256,11 +270,27 @@ export function OfficeNetworksTable() {
                 name="cidr"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>IP / CIDR</FormLabel>
+                    <div className="flex items-center justify-between">
+                      <FormLabel>IP / CIDR</FormLabel>
+                      {!editTarget && (
+                        <button
+                          type="button"
+                          onClick={detectNetwork}
+                          disabled={detecting}
+                          className="flex items-center gap-1 text-xs text-primary hover:underline disabled:opacity-50"
+                        >
+                          <LocateFixed className="h-3 w-3" />
+                          {detecting ? "Определяем..." : "Определить автоматически"}
+                        </button>
+                      )}
+                    </div>
                     <FormControl>
                       <Input placeholder="192.168.1.0/24" className="font-mono" {...field} />
                     </FormControl>
                     <FormMessage />
+                    <p className="text-xs text-muted-foreground">
+                      Нажмите «Определить», находясь в офисной сети — система заполнит поле автоматически.
+                    </p>
                   </FormItem>
                 )}
               />

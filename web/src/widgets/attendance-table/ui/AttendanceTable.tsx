@@ -1,10 +1,10 @@
 import { useState, useMemo } from "react";
 import { useReactTable, getCoreRowModel, flexRender, type ColumnDef } from "@tanstack/react-table";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { DayStatus } from "@softtime/shared";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
-import { PenLine, Plus, RotateCcw, ClipboardX } from "lucide-react";
+import { PenLine, Plus, RotateCcw, ClipboardX, Trash2 } from "lucide-react";
 import { attendanceApi } from "@/entities/attendance/api";
 import type { AttendanceRow } from "@/entities/attendance/model/types";
 import { userApi } from "@/entities/user/api";
@@ -145,6 +145,7 @@ export function AttendanceTable() {
   // ── Sheet state ─────────────────────────────────────────────────────────
   const [editRow, setEditRow] = useState<AttendanceRow | null>(null);
   const [editState, setEditState] = useState<EditState>({ checkIn: "", checkOut: "", note: "" });
+  const [deleteRowId, setDeleteRowId] = useState<string | null>(null);
   const [absenceOpen, setAbsenceOpen] = useState(false);
   const [absenceState, setAbsenceState] = useState({
     userId: "",
@@ -189,6 +190,14 @@ export function AttendanceTable() {
 
   // ── Feature mutations ────────────────────────────────────────────────────
   const patchMutation = useFixAttendance(() => setEditRow(null));
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => attendanceApi.deleteRecord(id),
+    onSuccess: () => {
+      setDeleteRowId(null);
+      qc.invalidateQueries({ queryKey: ["attendance"] });
+    },
+  });
 
   const absenceMutation = useAddAbsence(() => {
     setAbsenceOpen(false);
@@ -286,15 +295,26 @@ export function AttendanceTable() {
       id: "actions",
       header: "",
       cell: ({ row }) => (
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-7 w-7"
-          onClick={() => openEdit(row.original)}
-          title="Исправить запись"
-        >
-          <PenLine className="h-3.5 w-3.5" strokeWidth={1.5} />
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={() => openEdit(row.original)}
+            title="Исправить запись"
+          >
+            <PenLine className="h-3.5 w-3.5" strokeWidth={1.5} />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 text-destructive hover:bg-destructive/10 hover:text-destructive"
+            onClick={() => setDeleteRowId(row.original.id)}
+            title="Удалить запись"
+          >
+            <Trash2 className="h-3.5 w-3.5" strokeWidth={1.5} />
+          </Button>
+        </div>
       ),
     },
   ];
@@ -621,6 +641,36 @@ export function AttendanceTable() {
           <DialogFooter>
             <Button className="w-full" disabled={patchMutation.isPending} onClick={saveEdit}>
               {patchMutation.isPending ? "Сохраняем..." : "Сохранить"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Dialog: Удалить запись ───────────────────────────────────────── */}
+      <Dialog open={!!deleteRowId} onOpenChange={(open) => !open && setDeleteRowId(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Удалить запись?</DialogTitle>
+            <DialogDescription>
+              Это действие нельзя отменить. Запись о посещаемости будет удалена безвозвратно.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              className="flex-1"
+              disabled={deleteMutation.isPending}
+              onClick={() => setDeleteRowId(null)}
+            >
+              Отмена
+            </Button>
+            <Button
+              variant="destructive"
+              className="flex-1"
+              disabled={deleteMutation.isPending}
+              onClick={() => deleteRowId && deleteMutation.mutate(deleteRowId)}
+            >
+              {deleteMutation.isPending ? "Удаляем..." : "Удалить"}
             </Button>
           </DialogFooter>
         </DialogContent>

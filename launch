@@ -1,0 +1,22 @@
+ Терминал 1 — Бэкенд (Docker):
+  docker compose up --build -d        ← первый запуск или после изменений в коде
+  docker compose up -d                ← если код не менялся (быстрый старт)
+  docker compose logs api -f          ← смотреть логи
+
+  Терминал 2 — Веб:
+  npm run web
+
+  Терминал 3 — Мобилка (Android):
+  npm run android
+
+
+DATABASE
+Adminer — http://localhost:8080
+
+Данные для входа:
+
+Система: PostgreSQL
+Сервер: postgres
+Пользователь: softtime
+Пароль: softtime
+База данных: softtime

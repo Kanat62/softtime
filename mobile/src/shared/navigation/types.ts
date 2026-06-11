@@ -5,7 +5,6 @@ import type { CompositeScreenProps } from '@react-navigation/native';
 // ─── Auth Stack ──────────────────────────────────────────────────────────────
 
 export type AuthStackParamList = {
-  Splash: undefined;
   Onboarding: undefined;
   RoleSelect: undefined;
   RegisterAdmin: undefined;

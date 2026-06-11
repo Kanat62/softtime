@@ -131,7 +131,7 @@ export class UsersService {
     return updated;
   }
 
-  // ─── Reject: soft-delete PENDING user ────────────────────────────────────────
+  // ─── Reject: hard-delete PENDING user ───────────────────────────────────────
 
   async rejectUser(id: string, actorId: string) {
     const user = await this.prisma.user.findFirst({
@@ -142,23 +142,24 @@ export class UsersService {
       throw new BadRequestException('Пользователь не в статусе PENDING');
     }
 
-    await this.prisma.user.update({
-      where: { id } as any,
-      data: { status: UserStatus.DELETED, deletedAt: new Date() },
+    // Send notification before deletion so FCM token still exists
+    await this.notifications.sendToUser(
+      id,
+      'Регистрация отклонена',
+      'Ваша заявка на регистрацию была отклонена',
+    );
+
+    await this.audit.log({
+      actorId,
+      action: 'USER_REJECTED',
+      entityType: 'User',
+      entityId: id,
     });
 
-    await Promise.all([
-      this.audit.log({
-        actorId,
-        action: 'USER_REJECTED',
-        entityType: 'User',
-        entityId: id,
-      }),
-      this.notifications.sendToUser(
-        id,
-        'Регистрация отклонена',
-        'Ваша заявка на регистрацию была отклонена',
-      ),
+    await this.prisma.$transaction([
+      this.prisma.deviceToken.deleteMany({ where: { userId: id } }),
+      this.prisma.newsRead.deleteMany({ where: { userId: id } }),
+      this.prisma.user.delete({ where: { id } }),
     ]);
   }
 
@@ -220,7 +221,7 @@ export class UsersService {
     return updated;
   }
 
-  // ─── Soft delete ──────────────────────────────────────────────────────────────
+  // ─── Hard delete ─────────────────────────────────────────────────────────────
 
   async deleteUser(id: string, actorId: string) {
     if (id === actorId) {
@@ -232,18 +233,23 @@ export class UsersService {
     });
     if (!user) throw new NotFoundException('Пользователь не найден');
 
-    await this.prisma.user.update({
-      where: { id } as any,
-      data: { status: UserStatus.DELETED, deletedAt: new Date() },
-    });
-
+    // Audit log before deletion — user record won't exist after
     await this.audit.log({
       actorId,
       action: 'USER_DELETED',
       entityType: 'User',
       entityId: id,
-      meta: { previousStatus: user.status },
+      meta: { previousStatus: user.status, fullName: user.fullName },
     });
+
+    await this.prisma.$transaction([
+      this.prisma.deviceToken.deleteMany({ where: { userId: id } }),
+      this.prisma.newsRead.deleteMany({ where: { userId: id } }),
+      this.prisma.absenceRequest.deleteMany({ where: { userId: id } }),
+      this.prisma.employeeSchedule.deleteMany({ where: { userId: id } }),
+      this.prisma.attendance.deleteMany({ where: { userId: id } }),
+      this.prisma.user.delete({ where: { id } }),
+    ]);
   }
 
   // ─── Own profile ──────────────────────────────────────────────────────────────

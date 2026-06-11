@@ -1,5 +1,4 @@
 // Auth
-export { SplashScreen } from './auth/SplashScreen';
 export { OnboardingScreen } from './auth/OnboardingScreen';
 export { RoleSelectScreen } from './auth/RoleSelectScreen';
 export { RegisterAdminScreen } from './auth/RegisterAdminScreen';

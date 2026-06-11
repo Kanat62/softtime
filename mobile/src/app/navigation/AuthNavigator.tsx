@@ -1,7 +1,6 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { AuthStackParamList } from '@/shared/navigation/types';
-import { SplashScreen } from '@/screens/auth/SplashScreen';
 import { OnboardingScreen } from '@/screens/auth/OnboardingScreen';
 import { RoleSelectScreen } from '@/screens/auth/RoleSelectScreen';
 import { RegisterAdminScreen } from '@/screens/auth/RegisterAdminScreen';
@@ -13,10 +12,9 @@ const Stack = createNativeStackNavigator<AuthStackParamList>();
 export function AuthNavigator() {
   return (
     <Stack.Navigator
-      initialRouteName="Splash"
+      initialRouteName="Onboarding"
       screenOptions={{ headerShown: false, animation: 'slide_from_right' }}
     >
-      <Stack.Screen name="Splash" component={SplashScreen} />
       <Stack.Screen name="Onboarding" component={OnboardingScreen} />
       <Stack.Screen name="RoleSelect" component={RoleSelectScreen} />
       <Stack.Screen name="RegisterAdmin" component={RegisterAdminScreen} />

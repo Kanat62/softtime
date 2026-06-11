@@ -3,6 +3,7 @@ import {
   Post,
   Get,
   Patch,
+  Delete,
   Param,
   Body,
   Query,
@@ -107,6 +108,15 @@ export class AttendanceController {
     return this.attendanceService.checkOut(user.userId, body.qrToken, ip);
   }
 
+  // ── DELETE /today/me ───────────────────────────────────────────────────────
+
+  @Delete('today/me')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Удалить запись посещаемости за сегодня (для тестирования)' })
+  clearToday(@CurrentUser() user: TenantPayload) {
+    return this.attendanceService.clearToday(user.userId);
+  }
+
   // ── GET /me ────────────────────────────────────────────────────────────────
 
   @Get('me')
@@ -169,6 +179,16 @@ export class AttendanceController {
     @CurrentUser() user: TenantPayload,
   ) {
     return this.attendanceService.patchAttendance(id, body, user.userId);
+  }
+
+  // ── DELETE /:id ────────────────────────────────────────────────────────────
+
+  @Delete(':id')
+  @Roles('ADMIN')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Удалить запись посещаемости (ADMIN)' })
+  deleteAttendance(@Param('id') id: string) {
+    return this.attendanceService.deleteAttendance(id);
   }
 }
 

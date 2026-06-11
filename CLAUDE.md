@@ -3,7 +3,7 @@
 ## Структура
 - /backend   — NestJS API (разраб: ты)
 - /mobile    — React Native (разраб: ты)
-- /web       — React веб-панель (разраб: другой, НЕ ТРОГАТЬ)
+- /web       — React веб-панель (разраб: ты)
 - /packages/shared — общие типы и Zod-схемы (используют все)
 - /docs      — все ТЗ
 

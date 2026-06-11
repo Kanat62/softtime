@@ -12,7 +12,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Controller } from 'react-hook-form';
 import {
   ChevronLeft,
-  Clock,
   Eye,
   EyeOff,
   Hash,
@@ -22,10 +21,8 @@ import {
 } from 'lucide-react-native';
 import {
   colors,
-  fontFamily,
   iconSize,
   iconStrokeWidth,
-  radius,
   space,
   typography,
 } from '@/shared/config/theme';
@@ -35,17 +32,13 @@ import { useRegisterWorker } from '@/features/auth/register-worker/model/useRegi
 
 export function RegisterWorkerScreen() {
   const navigation = useAuthNavigation();
-  const { form, onSubmit, isLoading, submittedEmail, serverError } = useRegisterWorker();
+  const { form, onSubmit, isLoading, serverError } = useRegisterWorker();
   const [showPassword, setShowPassword] = useState(false);
 
   const {
     control,
     formState: { errors },
   } = form;
-
-  if (submittedEmail) {
-    return <PendingView email={submittedEmail} />;
-  }
 
   return (
     <SafeAreaView style={styles.root}>
@@ -207,25 +200,6 @@ export function RegisterWorkerScreen() {
   );
 }
 
-// ─── Pending view (inline после отправки) ─────────────────────────────────────
-
-function PendingView({ email }: { email: string }) {
-  return (
-    <SafeAreaView style={styles.root}>
-      <View style={styles.pendingContainer}>
-        <View style={styles.clockWrap}>
-          <Clock size={40} color={colors.warning} strokeWidth={iconStrokeWidth} />
-        </View>
-        <Text style={styles.pendingTitle}>Заявка отправлена</Text>
-        <Text style={styles.pendingSubtitle}>
-          Ждите подтверждения администратора
-        </Text>
-        <Text style={styles.pendingEmail}>{email}</Text>
-      </View>
-    </SafeAreaView>
-  );
-}
-
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
@@ -282,38 +256,4 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
-  // Pending
-  pendingContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: space[6],
-    gap: space[3],
-  },
-  clockWrap: {
-    width: 80,
-    height: 80,
-    borderRadius: radius.full,
-    backgroundColor: colors.warningLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: space[2],
-  },
-  pendingTitle: {
-    ...typography['2xl'],
-    color: colors.textPrimary,
-    textAlign: 'center',
-  },
-  pendingSubtitle: {
-    ...typography.base,
-    color: colors.textSecondary,
-    textAlign: 'center',
-  },
-  pendingEmail: {
-    ...typography.sm,
-    fontFamily: fontFamily.medium,
-    color: colors.textDisabled,
-    textAlign: 'center',
-    marginTop: space[1],
-  },
 });

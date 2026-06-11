@@ -71,6 +71,11 @@ export async function checkInApi(dto: CheckInRequestDto): Promise<CheckInResult>
   };
 }
 
+/** DELETE /attendance/today/me — удалить запись за сегодня */
+export async function clearTodayAttendanceApi(): Promise<void> {
+  await apiClient.delete('/attendance/today/me');
+}
+
 /** POST /attendance/check-out */
 export async function checkOutApi(dto: CheckInRequestDto): Promise<CheckOutResult> {
   const res = await apiClient.post<CheckOutResult>('/attendance/check-out', dto);

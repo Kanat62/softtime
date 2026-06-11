@@ -12,6 +12,9 @@ export const networkApi = {
   list: () =>
     apiClient.get<OfficeNetwork[]>("/office-networks").then((r) => r.data),
 
+  detect: () =>
+    apiClient.get<{ ip: string; cidr: string }>("/office-networks/detect").then((r) => r.data),
+
   create: (dto: CreateNetworkDto) =>
     apiClient.post<OfficeNetwork>("/office-networks", dto).then((r) => r.data),
 

@@ -40,4 +40,8 @@ export const attendanceApi = {
   /** POST /attendance/manual — create absence or manual record */
   manualCreate: (dto: ManualAttendanceDto) =>
     request<AttendanceRow>({ method: "POST", url: "/attendance/manual", data: dto }),
+
+  /** DELETE /attendance/:id — remove record (ADMIN) */
+  deleteRecord: (id: string) =>
+    request<void>({ method: "DELETE", url: `/attendance/${id}` }),
 };

@@ -6,6 +6,7 @@ import {
   Delete,
   Param,
   Body,
+  Req,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
@@ -47,6 +48,17 @@ class UpdateNetworkDto extends createZodDto(updateNetworkSchema) {}
 export class OfficeNetworksController {
   constructor(private readonly officeNetworksService: OfficeNetworksService) {}
 
+  // ── GET /detect ───────────────────────────────────────────────────────────
+
+  @Get('detect')
+  @ApiOperation({ summary: 'Определить IP и предложить CIDR /24 (ADMIN)' })
+  detect(@Req() req: any) {
+    const ip = extractIp(req);
+    const parts = ip.split('.');
+    const cidr = parts.length === 4 ? `${parts[0]}.${parts[1]}.${parts[2]}.0/24` : ip;
+    return { ip, cidr };
+  }
+
   // ── GET / ──────────────────────────────────────────────────────────────────
 
   @Get()
@@ -83,4 +95,11 @@ export class OfficeNetworksController {
   remove(@Param('id') id: string, @CurrentUser() user: TenantPayload) {
     return this.officeNetworksService.remove(id, user.userId);
   }
+}
+
+// ─── Helper ───────────────────────────────────────────────────────────────────
+
+function extractIp(req: any): string {
+  const forwarded = req.headers?.['x-forwarded-for'] as string | undefined;
+  return forwarded?.split(',')[0]?.trim() ?? req.ip ?? '0.0.0.0';
 }

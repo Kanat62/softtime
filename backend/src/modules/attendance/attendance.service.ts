@@ -249,6 +249,15 @@ export class AttendanceService {
     return { record: updated, checkOutStatus, dayStatus, workedMinutes, message };
   }
 
+  // ─── Clear today (DEV) ──────────────────────────────────────────────────────
+
+  async clearToday(userId: string): Promise<void> {
+    const today = startOfDayUtc(new Date());
+    await this.prisma.attendance.deleteMany({
+      where: { userId, date: today } as any,
+    });
+  }
+
   // ─── My history ─────────────────────────────────────────────────────────────
 
   async getMyHistory(
@@ -315,6 +324,16 @@ export class AttendanceService {
     ]);
 
     return { data, meta: { total, page: query.page, limit: query.limit, pages: Math.ceil(total / query.limit) } };
+  }
+
+  // ─── Delete record (ADMIN) ─────────────────────────────────────────────────
+
+  async deleteAttendance(id: string): Promise<void> {
+    const existing = await this.prisma.attendance.findFirst({
+      where: { id } as any,
+    });
+    if (!existing) throw new NotFoundException('Запись не найдена');
+    await this.prisma.attendance.delete({ where: { id } as any });
   }
 
   // ─── Manual patch (ADMIN) ───────────────────────────────────────────────────

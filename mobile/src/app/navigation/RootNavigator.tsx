@@ -25,7 +25,7 @@ export function RootNavigator() {
     <NavigationContainer ref={navigationRef} linking={linking} theme={DefaultTheme}>
       <Stack.Navigator screenOptions={{ headerShown: false, animation: 'none' }}>
         {!accessToken ? (
-          // No token → Auth flow (Splash → Onboarding → Login / Register)
+          // No token → Auth flow (Onboarding → Login / Register)
           <Stack.Screen name="Auth" component={AuthNavigator} />
         ) : userStatus === UserStatus.PENDING ? (
           // Registered but not yet approved by admin

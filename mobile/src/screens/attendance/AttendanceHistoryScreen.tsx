@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Alert,
   Modal,
   Pressable,
   RefreshControl,
@@ -10,7 +11,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Calendar, ChevronLeft, ChevronRight, X } from 'lucide-react-native';
+import { Calendar, ChevronLeft, ChevronRight, Trash2, X } from 'lucide-react-native';
 import type { Attendance } from '@softtime/shared';
 import {
   colors,
@@ -30,6 +31,7 @@ import {
   useAttendanceHistory,
   type Period,
 } from '@/features/attendance/history/model/useAttendanceHistory';
+import { clearTodayAttendanceApi } from '@/entities/attendance';
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
 
@@ -85,6 +87,28 @@ export function AttendanceHistoryScreen() {
   const { items, totalMinutes, lateCount, absentCount, isLoading, isError, refetch } =
     useAttendanceHistory(period, { customRange });
 
+  function handleClearToday() {
+    Alert.alert(
+      'Очистить данные',
+      'Удалить приход и уход за сегодня?',
+      [
+        { text: 'Отмена', style: 'cancel' },
+        {
+          text: 'Удалить',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await clearTodayAttendanceApi();
+              refetch();
+            } catch {
+              Alert.alert('Ошибка', 'Не удалось очистить данные');
+            }
+          },
+        },
+      ],
+    );
+  }
+
   const rangeLabel = useMemo(() => {
     if (customFrom && customTo) {
       return `${formatDateShort(customFrom)} — ${formatDateShort(customTo)}`;
@@ -105,7 +129,14 @@ export function AttendanceHistoryScreen() {
           <ChevronLeft size={24} color={colors.textPrimary} strokeWidth={iconStrokeWidth} />
         </TouchableOpacity>
         <Text style={styles.topBarTitle}>История посещаемости</Text>
-        <View style={styles.backBtn} />
+        <TouchableOpacity
+          style={styles.backBtn}
+          onPress={handleClearToday}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          accessibilityLabel="Очистить данные за сегодня"
+        >
+          <Trash2 size={20} color={colors.danger} strokeWidth={iconStrokeWidth} />
+        </TouchableOpacity>
       </View>
       <OfflineBanner variant="stale" />
 

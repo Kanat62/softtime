@@ -26,7 +26,12 @@ export function setupInterceptors(onAuthFailure?: () => void) {
     async (error) => {
       const original = error.config;
 
-      if (error.response?.status !== 401 || original._retry) {
+      // Never retry the refresh endpoint itself — it would deadlock.
+      if (
+        error.response?.status !== 401 ||
+        original._retry ||
+        original.url?.includes('/auth/refresh')
+      ) {
         return Promise.reject(normalizeError(error));
       }
 
