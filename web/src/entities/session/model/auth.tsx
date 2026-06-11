@@ -15,6 +15,12 @@ import { setupInterceptors } from "@/shared/api/interceptors";
 // Register interceptors once at module load time
 setupInterceptors();
 
+// Prevents React Strict Mode from running the hydration effect twice.
+// Both invocations read the same refresh token from sessionStorage, but the
+// backend deletes the token after the first use, so the second call gets a 401
+// and calls setUser(null), kicking the user to /login.
+let _hydrateStarted = false;
+
 // Re-export so existing imports `import { UserRole } from "@/entities/session"` keep working
 export { UserRole };
 
@@ -57,6 +63,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Backend sends both tokens in the JSON body; we persist the refresh token in
   // sessionStorage so it survives page reloads within the same tab.
   useEffect(() => {
+    if (_hydrateStarted) return;
+    _hydrateStarted = true;
+
     const storedRefresh = refreshTokenStore.get();
 
     if (!storedRefresh) {

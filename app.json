@@ -1,1 +1,20 @@
-{}
+{
+  "extra": {
+    "eas": {
+      "projectId": "2eab1e92-daac-4edb-96a1-7a9c0966d375"
+    }
+  },
+  "expo": {
+    "ios": {
+      "bundleIdentifier": "com.emilbek.softtime",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "2eab1e92-daac-4edb-96a1-7a9c0966d375"
+      }
+    }
+  }
+}

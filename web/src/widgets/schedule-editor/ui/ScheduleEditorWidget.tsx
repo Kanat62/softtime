@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback, type ChangeEvent } from "react";
 import { useReactTable, getCoreRowModel, flexRender, type ColumnDef } from "@tanstack/react-table";
 import { useQuery, useQueries, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -8,6 +8,7 @@ import {
   Controller,
   type Control,
   type FieldErrors,
+  type UseFormSetValue,
 } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -25,7 +26,6 @@ import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { Skeleton } from "@/shared/ui/skeleton";
-import { Checkbox } from "@/shared/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -157,40 +157,47 @@ function initials(name: string) {
 
 function DayRow({
   index,
+  isWorking,
   control,
+  setValue,
   errors,
 }: {
   index: number;
+  isWorking: boolean;
   control: Control<ScheduleFormValues>;
+  setValue: UseFormSetValue<ScheduleFormValues>;
   errors: FieldErrors<ScheduleFormValues>;
 }) {
-  const isWorking = useWatch({ control, name: `days.${index}.isWorkingDay` });
   const dayErr = errors.days?.[index];
+
+  const handleWorkingChange = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      setValue(`days.${index}.isWorkingDay`, e.target.checked, {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+    },
+    [index, setValue],
+  );
 
   return (
     <div className="flex flex-wrap items-start gap-3 rounded-xl bg-muted/30 px-4 py-3">
-      {/* Day label */}
       <span className="w-5 pt-0.5 text-sm font-semibold text-foreground">
         {WEEKDAY_LABEL[WEEKDAY_ORDER[index]]}
       </span>
 
-      {/* Working checkbox */}
-      <Controller
-        control={control}
-        name={`days.${index}.isWorkingDay`}
-        render={({ field }) => (
-          <div className="flex items-center gap-2">
-            <Checkbox
-              id={`working-${index}`}
-              checked={field.value}
-              onCheckedChange={(v) => field.onChange(!!v)}
-            />
-            <Label htmlFor={`working-${index}`} className="cursor-pointer text-sm">
-              Рабочий
-            </Label>
-          </div>
-        )}
-      />
+      <div className="flex items-center gap-2">
+        <input
+          type="checkbox"
+          id={`working-${index}`}
+          checked={isWorking}
+          onChange={handleWorkingChange}
+          className="h-4 w-4 cursor-pointer rounded-sm border border-primary accent-primary"
+        />
+        <Label htmlFor={`working-${index}`} className="cursor-pointer text-sm">
+          Рабочий
+        </Label>
+      </div>
 
       {isWorking ? (
         <div className="flex flex-1 flex-wrap items-center gap-2">
@@ -263,9 +270,13 @@ function DayRow({
 
 function ScheduleEditor({
   control,
+  setValue,
+  dayValues,
   errors,
 }: {
   control: Control<ScheduleFormValues>;
+  setValue: UseFormSetValue<ScheduleFormValues>;
+  dayValues: ScheduleFormValues["days"];
   errors: FieldErrors<ScheduleFormValues>;
 }) {
   const { fields } = useFieldArray({ control, name: "days" });
@@ -273,7 +284,14 @@ function ScheduleEditor({
   return (
     <div className="space-y-2">
       {fields.map((field, index) => (
-        <DayRow key={field.id} index={index} control={control} errors={errors} />
+        <DayRow
+          key={field.id}
+          index={index}
+          isWorking={dayValues[index]?.isWorkingDay ?? false}
+          control={control}
+          setValue={setValue}
+          errors={errors}
+        />
       ))}
     </div>
   );
@@ -330,12 +348,11 @@ export function ScheduleEditorWidget() {
     defaultValues: { days: makeDefaultDays() },
   });
 
-  // Populate individual form when an employee is selected for editing
-  useEffect(() => {
-    if (!editEmployee) return;
-    const existing = scheduleMap.get(editEmployee.id);
-    individualForm.reset(existing ? scheduleToFormValues(existing) : { days: makeDefaultDays() });
-  }, [editEmployee, scheduleMap]);
+  // Watch day values HERE (outside the portal) — useWatch inside createPortal doesn't
+  // fire in React 19, so we derive values at the widget level and pass them as props.
+  const individualDays = useWatch({ control: individualForm.control, name: "days" }) ?? makeDefaultDays();
+  const templateDays = useWatch({ control: templateForm.control, name: "days" }) ?? makeDefaultDays();
+
 
   // ── Mutations ────────────────────────────────────────────────────────────
   const saveMutation = useMutation({
@@ -381,39 +398,46 @@ export function ScheduleEditorWidget() {
     applyMutation.mutate({ days, userIds });
   }
 
-  function toggleSelect(id: string) {
+  const toggleSelect = useCallback((id: string) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
       return next;
     });
-  }
+  }, []);
 
-  function toggleSelectAll() {
-    if (selectedIds.size === employees.length) {
-      setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(employees.map((e) => e.id)));
-    }
-  }
+  const toggleSelectAll = useCallback(() => {
+    setSelectedIds((prev) =>
+      prev.size === employees.length
+        ? new Set()
+        : new Set(employees.map((e) => e.id)),
+    );
+  }, [employees]);
 
   // ── Table ─────────────────────────────────────────────────────────────────
-  const columns: ColumnDef<Employee>[] = [
+  // columns must be memoized — flexRender treats functions as React components
+  // (React.createElement), so a new function reference causes unmount+remount,
+  // which triggers the @radix-ui/react-checkbox React 19 ref cleanup bug.
+  const columns = useMemo<ColumnDef<Employee>[]>(() => [
     {
       id: "select",
       header: () => (
-        <Checkbox
+        <input
+          type="checkbox"
           checked={employees.length > 0 && selectedIds.size === employees.length}
-          onCheckedChange={toggleSelectAll}
+          onChange={toggleSelectAll}
           aria-label="Выбрать всех"
+          className="h-4 w-4 cursor-pointer rounded-sm accent-primary"
         />
       ),
       cell: ({ row }) => (
-        <Checkbox
+        <input
+          type="checkbox"
           checked={selectedIds.has(row.original.id)}
-          onCheckedChange={() => toggleSelect(row.original.id)}
+          onChange={() => toggleSelect(row.original.id)}
           aria-label="Выбрать"
+          className="h-4 w-4 cursor-pointer rounded-sm accent-primary"
         />
       ),
     },
@@ -481,14 +505,22 @@ export function ScheduleEditorWidget() {
           variant="ghost"
           size="sm"
           className="h-7 gap-1.5 text-xs"
-          onClick={() => setEditEmployee(row.original)}
+          onClick={() => {
+            const existing = scheduleMap.get(row.original.id);
+            individualForm.reset(
+              existing?.length
+                ? scheduleToFormValues(existing)
+                : { days: makeDefaultDays() },
+            );
+            setEditEmployee(row.original);
+          }}
         >
           <PenLine className="h-3.5 w-3.5" strokeWidth={1.5} />
           Редактировать
         </Button>
       ),
     },
-  ];
+  ], [employees, selectedIds, schedulesLoading, scheduleMap, toggleSelect, toggleSelectAll, setEditEmployee, individualForm]);
 
   const table = useReactTable({
     data: employees,
@@ -623,6 +655,8 @@ export function ScheduleEditorWidget() {
             <div className="flex-1 overflow-y-auto pr-1">
               <ScheduleEditor
                 control={individualForm.control}
+                setValue={individualForm.setValue}
+                dayValues={individualDays}
                 errors={individualForm.formState.errors}
               />
             </div>
@@ -655,6 +689,8 @@ export function ScheduleEditorWidget() {
             <div className="flex-1 overflow-y-auto pr-1">
               <ScheduleEditor
                 control={templateForm.control}
+                setValue={templateForm.setValue}
+                dayValues={templateDays}
                 errors={templateForm.formState.errors}
               />
             </div>

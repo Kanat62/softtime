@@ -166,6 +166,10 @@ export class UsersService {
   // ─── Change status (ACTIVE / BLOCKED / WARNING) ───────────────────────────────
 
   async setUserStatus(id: string, status: UserStatus, actorId: string) {
+    if (id === actorId) {
+      throw new BadRequestException('Нельзя изменить статус самому себе');
+    }
+
     const allowed: UserStatus[] = [
       UserStatus.ACTIVE,
       UserStatus.BLOCKED,
