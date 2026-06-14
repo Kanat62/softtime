@@ -284,3 +284,16 @@ model DeviceToken {
   platform  String
   createdAt DateTime @default(now())
 }
+
+model CompanyDefaultSchedule {
+  id                 String  @id @default(uuid())
+  companyId          String
+  weekday            Weekday
+  isWorkingDay       Boolean @default(true)
+  startTime          String?
+  endTime            String?
+  autoCheckoutBuffer Int     @default(60)
+
+  @@unique([companyId, weekday])
+  @@index([companyId])
+}

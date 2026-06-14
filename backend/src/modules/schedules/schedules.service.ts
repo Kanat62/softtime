@@ -99,11 +99,12 @@ export class SchedulesService {
 
     const users = await this.prisma.user.findMany({
       where: userWhere,
-      select: { id: true },
+      select: { id: true, companyId: true },
     });
     if (!users.length) return { applied: 0 };
 
     const targetIds = users.map((u) => u.id);
+    const companyId = users[0].companyId;
 
     // Two-step bulk replace inside one companyId scope
     await this.prisma.employeeSchedule.deleteMany({
@@ -113,6 +114,23 @@ export class SchedulesService {
       data: targetIds.flatMap((uid) => days.map((d) => toScheduleData(d, uid))) as any,
     });
 
+    // Persist as company-wide default so new workers get it automatically
+    if (companyId && !userIds?.length) {
+      await this.prisma.companyDefaultSchedule.deleteMany({
+        where: { companyId } as any,
+      });
+      await this.prisma.companyDefaultSchedule.createMany({
+        data: days.map((d) => ({
+          companyId,
+          weekday: d.weekday,
+          isWorkingDay: d.isWorkingDay,
+          startTime: d.startTime ?? null,
+          endTime: d.endTime ?? null,
+          autoCheckoutBuffer: d.autoCheckoutBuffer,
+        })) as any,
+      });
+    }
+
     await this.audit.log({
       actorId,
       action: 'SCHEDULE_APPLY_ALL',
@@ -121,6 +139,27 @@ export class SchedulesService {
     });
 
     return { applied: targetIds.length };
+  }
+
+  // ─── Apply company default schedule to a newly approved user ─────────────────
+
+  async applyDefaultToUser(userId: string, companyId: string) {
+    const defaults = await this.prisma.companyDefaultSchedule.findMany({
+      where: { companyId } as any,
+    });
+    if (!defaults.length) return;
+
+    await this.prisma.employeeSchedule.deleteMany({ where: { userId } as any });
+    await this.prisma.employeeSchedule.createMany({
+      data: defaults.map((d: any) => ({
+        userId,
+        weekday: d.weekday,
+        isWorkingDay: d.isWorkingDay,
+        startTime: d.startTime,
+        endTime: d.endTime,
+        autoCheckoutBuffer: d.autoCheckoutBuffer,
+      })) as any,
+    });
   }
 
   // ─── Shared validation ────────────────────────────────────────────────────────

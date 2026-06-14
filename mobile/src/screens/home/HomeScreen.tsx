@@ -38,6 +38,7 @@ export function HomeScreen() {
     useHomeData();
 
   const isSuspended = companyStatus === CompanyStatus.SUSPENDED;
+  const noSchedule = schedule !== null && schedule.length === 0;
   const todaySchedule = getTodaySchedule(schedule);
 
   if (isLoading) {
@@ -105,11 +106,12 @@ export function HomeScreen() {
           checkInAt={todayAttendance?.checkInAt ?? null}
           checkOutAt={todayAttendance?.checkOutAt ?? null}
           isSuspended={isSuspended}
+          noSchedule={noSchedule}
           onCheckIn={() => navigation.navigate('QrScanner', { mode: 'checkIn' })}
           onCheckOut={() => navigation.navigate('QrScanner', { mode: 'checkOut' })}
         />
 
-        {schedule && (
+        {schedule && schedule.length > 0 && (
           <ScheduleMini
             schedule={schedule}
             onMorePress={() => navigation.navigate('MySchedule')}

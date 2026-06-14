@@ -10,6 +10,7 @@ import { UserStatus, UserRole } from '@softtime/shared';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { SchedulesService } from '../schedules/schedules.service';
 
 const BCRYPT_ROUNDS = 12;
 
@@ -33,6 +34,7 @@ export class UsersService {
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
     private readonly notifications: NotificationsService,
+    private readonly schedules: SchedulesService,
   ) {}
 
   // ─── List employees ───────────────────────────────────────────────────────────
@@ -126,6 +128,9 @@ export class UsersService {
         'Регистрация одобрена',
         'Ваша регистрация в компании одобрена',
       ),
+      user.companyId
+        ? this.schedules.applyDefaultToUser(id, user.companyId)
+        : Promise.resolve(),
     ]);
 
     return updated;

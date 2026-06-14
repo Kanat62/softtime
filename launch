@@ -9,6 +9,16 @@
   Терминал 3 — Мобилка (Android):
   npm run android
 
+  Терминал 3 — Мобилка (iOS, физический iPhone через кабель):
+  Шаг 1 (только первый раз или после нативных изменений):
+    open mobile/ios/SoftTime.xcworkspace
+    → выбрать iPhone вверху → нажать Play ▶ (установит приложение)
+
+  Шаг 2 (каждый раз):
+    cd mobile && npx expo start
+    → открыть приложение SoftTime на iPhone
+    → ввести URL вручную: http://192.168.50.154:8081
+
 
 DATABASE
 Adminer — http://localhost:8080

@@ -25,6 +25,7 @@ interface AttendanceCardProps {
   checkInAt: Date | null;
   checkOutAt: Date | null;
   isSuspended?: boolean;
+  noSchedule?: boolean;
   onCheckIn: () => void;
   onCheckOut: () => void;
 }
@@ -35,14 +36,15 @@ export function AttendanceCard({
   checkInAt,
   checkOutAt,
   isSuspended = false,
+  noSchedule = false,
   onCheckIn,
   onCheckOut,
 }: AttendanceCardProps) {
   const hasCheckedIn = checkInAt !== null;
   const hasCheckedOut = checkOutAt !== null;
 
-  const checkInActive = !isSuspended && !hasCheckedIn;
-  const checkOutActive = !isSuspended && hasCheckedIn && !hasCheckedOut;
+  const checkInActive = !isSuspended && !noSchedule && !hasCheckedIn;
+  const checkOutActive = !isSuspended && !noSchedule && hasCheckedIn && !hasCheckedOut;
 
   return (
     <View style={styles.card}>
@@ -79,6 +81,10 @@ export function AttendanceCard({
           </View>
         </View>
       </View>
+
+      {noSchedule && (
+        <Text style={styles.noScheduleText}>Администратор не создал вам расписание</Text>
+      )}
 
       {isSuspended && (
         <Text style={styles.suspendedText}>Подписка не оплачена</Text>
@@ -164,6 +170,12 @@ const styles = StyleSheet.create({
     fontFamily: fontFamily.bold,
     lineHeight: 20,
     letterSpacing: 0.5,
+  },
+  noScheduleText: {
+    ...typography.sm,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    fontFamily: fontFamily.medium,
   },
   suspendedText: {
     ...typography.sm,
