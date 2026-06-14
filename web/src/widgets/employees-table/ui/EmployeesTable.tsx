@@ -150,14 +150,7 @@ export function EmployeesTable() {
       header: "Статус",
       cell: ({ row }) => <StatusBadge status={row.original.status} />,
     },
-    {
-      id: "hiredAt",
-      header: "Дата найма",
-      cell: ({ row }) => (
-        <span className="text-sm text-muted-foreground">{formatDate(row.original.hiredAt)}</span>
-      ),
-    },
-    {
+{
       id: "lastActivity",
       header: "Последняя активность",
       cell: ({ row }) => (

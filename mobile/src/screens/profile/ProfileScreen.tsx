@@ -13,7 +13,6 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   Building2,
-  Calendar,
   Camera,
   ChevronRight,
   CreditCard,
@@ -22,6 +21,7 @@ import {
   Lock,
   LogOut,
   Mail,
+  ShieldCheck,
 } from 'lucide-react-native';
 import { UserRole, Weekday } from '@softtime/shared';
 import { useAuth } from '@/app/providers/AuthProvider';
@@ -101,6 +101,7 @@ function RoleBadge({ role }: { role: UserRole }) {
   const label = role === UserRole.ADMIN ? 'Администратор' : 'Сотрудник';
   return (
     <View style={s.roleBadge}>
+      <ShieldCheck size={14} color={colors.primary} strokeWidth={iconStrokeWidth} />
       <Text style={s.roleBadgeText}>{label}</Text>
     </View>
   );
@@ -268,12 +269,14 @@ export function ProfileScreen() {
         {/* ── Header card ── */}
         <View style={s.headerCard}>
           {isLoading ? (
-            <ActivityIndicator size="large" color={colors.surface} />
+            <ActivityIndicator size="small" color={colors.primary} />
           ) : (
             <>
               <AvatarBlock initials={initials} onCameraPress={handleAvatarCamera} />
-              <Text style={s.fullName}>{user?.fullName ?? ''}</Text>
-              <RoleBadge role={user?.role ?? (isAdmin ? UserRole.ADMIN : UserRole.WORKER)} />
+              <View style={s.headerInfo}>
+                <Text style={s.fullName}>{user?.fullName ?? ''}</Text>
+                <RoleBadge role={user?.role ?? (isAdmin ? UserRole.ADMIN : UserRole.WORKER)} />
+              </View>
             </>
           )}
         </View>
@@ -291,19 +294,13 @@ export function ProfileScreen() {
             label="Компания"
             value={user?.companyId ? 'SoftTime Ltd.' : '—'}
           />
-          <View style={s.divider} />
-          <InfoRow
-            icon={<Calendar size={iconSize.md} color={colors.textSecondary} strokeWidth={iconStrokeWidth} />}
-            label="Дата найма"
-            value={formatDate(user?.hiredAt ?? null)}
-          />
         </View>
 
         {/* ── Schedule card ── */}
         <TouchableOpacity
           style={s.card}
           activeOpacity={0.9}
-          onPress={() => navigation.navigate('MySchedule')}
+          onPress={() => navigation.navigate('Home', { screen: 'MySchedule' } as any)}
           accessibilityLabel="Мой график"
         >
           <View style={s.scheduleHeader}>
@@ -391,61 +388,69 @@ const s = StyleSheet.create({
 
   // Header card
   headerCard: {
-    backgroundColor: colors.primary,
-    borderRadius: radius.lg,
-    paddingVertical: space[6],
+    backgroundColor: colors.surface,
+    borderRadius: radius.xl,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingVertical: space[4],
     paddingHorizontal: space[4],
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: space[4],
+  },
+  headerInfo: {
+    flex: 1,
     gap: space[2],
   },
   avatarWrapper: {
     position: 'relative',
-    marginBottom: space[1],
   },
   avatar: {
-    width: 72,
-    height: 72,
+    width: 64,
+    height: 64,
     borderRadius: radius.full,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: colors.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.4)',
   },
   avatarInitial: {
-    fontSize: 28,
-    lineHeight: 34,
+    fontSize: 24,
+    lineHeight: 30,
     fontFamily: fontFamily.bold,
-    color: colors.surface,
+    color: colors.primary,
   },
   cameraBtn: {
     position: 'absolute',
     bottom: 0,
-    right: 0,
-    width: 26,
-    height: 26,
+    left: 0,
+    width: 24,
+    height: 24,
     borderRadius: radius.full,
     backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: colors.border,
   },
   fullName: {
-    ...typography.xl,
-    color: colors.surface,
+    ...typography.lg,
+    fontFamily: fontFamily.bold,
+    color: colors.textPrimary,
   },
   roleBadge: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    paddingHorizontal: space[3],
-    paddingVertical: space[1],
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 4,
+    paddingHorizontal: space[2],
+    paddingVertical: 4,
     borderRadius: radius.full,
   },
   roleBadgeText: {
-    fontSize: 12,
-    lineHeight: 16,
+    fontSize: 13,
+    lineHeight: 18,
     fontFamily: fontFamily.medium,
-    color: colors.surface,
+    color: colors.primary,
   },
 
   // Card

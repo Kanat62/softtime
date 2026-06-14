@@ -45,20 +45,10 @@ export interface AttendanceTodaySummary {
   total: number;
 }
 
-/**
- * ADMIN-only: GET /attendance?from=today&to=today
- * Derives inOffice (checked in, not checked out) and left (checked out) counts.
- * Returns 403 for WORKER — callers must handle the error.
- */
+/** GET /attendance/today/summary — WORKER + ADMIN */
 export async function getAttendanceTodaySummaryApi(): Promise<AttendanceTodaySummary> {
-  const today = todayIso();
-  const res = await apiClient.get<PaginatedAttendance>('/attendance', {
-    params: { from: today, to: today, limit: 200 },
-  });
-  const records = res.data.data;
-  const inOffice = records.filter((r) => r.checkInAt && !r.checkOutAt).length;
-  const left = records.filter((r) => r.checkInAt && r.checkOutAt).length;
-  return { inOffice, left, total: inOffice + left };
+  const res = await apiClient.get<AttendanceTodaySummary>('/attendance/today/summary');
+  return res.data;
 }
 
 /** POST /attendance/check-in */

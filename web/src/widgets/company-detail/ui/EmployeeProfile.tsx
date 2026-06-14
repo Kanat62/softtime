@@ -253,8 +253,7 @@ export function EmployeeProfile() {
         </div>
       ) : employee ? (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <InfoCard label="Дата найма" value={fmt(employee.hiredAt)} />
-          <InfoCard label="Последняя активность" value={fmt(employee.lastActivityAt)} />
+<InfoCard label="Последняя активность" value={fmt(employee.lastActivityAt)} />
           <InfoCard label="Статус" value={<StatusBadge status={employee.status} />} />
           <InfoCard label="Email" value={employee.email} />
         </div>

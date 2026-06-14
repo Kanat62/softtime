@@ -19,11 +19,11 @@ import {
 } from '@/shared/config/theme';
 import { ErrorState, OfflineBanner, Skeleton } from '@/shared/ui';
 import { ScheduleWeek } from '@/widgets/schedule-week/ScheduleWeek';
-import { useWorkerNavigation } from '@/shared/navigation/hooks';
+import { useNavigation } from '@react-navigation/native';
 import { useMySchedule } from '@/features/schedule/model/useMySchedule';
 
 export function MyScheduleScreen() {
-  const navigation = useWorkerNavigation();
+  const navigation = useNavigation<any>();
   const { schedule, isLoading, isError, refetch } = useMySchedule();
 
   return (

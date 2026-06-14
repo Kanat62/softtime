@@ -144,6 +144,14 @@ export class AttendanceController {
     return this.attendanceService.createManual(body, user.userId);
   }
 
+  // ── GET /today/summary ────────────────────────────────────────────────────
+
+  @Get('today/summary')
+  @ApiOperation({ summary: 'Сводка за сегодня: inOffice / left / total (WORKER + ADMIN)' })
+  getTodaySummary() {
+    return this.attendanceService.getTodaySummary();
+  }
+
   // ── GET /today ─────────────────────────────────────────────────────────────
 
   @Get('today')

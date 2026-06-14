@@ -1,6 +1,4 @@
 import { useQuery } from '@tanstack/react-query';
-import { UserRole } from '@softtime/shared';
-import { useAuth } from '@/app/providers/AuthProvider';
 import { getProfileApi } from '@/entities/user/api/profile';
 import { getMyScheduleApi } from '@/entities/schedule/api/schedule';
 import {
@@ -10,8 +8,6 @@ import {
 import { queryKeys } from '@/shared/api/queryKeys';
 
 export function useHomeData() {
-  const { userRole } = useAuth();
-  const isAdmin = userRole === UserRole.ADMIN;
 
   const profileQuery = useQuery({
     queryKey: queryKeys.profile.me(),
@@ -31,7 +27,6 @@ export function useHomeData() {
   const employeesTodayQuery = useQuery({
     queryKey: queryKeys.attendance.todayAll(),
     queryFn: getAttendanceTodaySummaryApi,
-    enabled: isAdmin,
     retry: false,
   });
 
@@ -49,14 +44,14 @@ export function useHomeData() {
     profileQuery.refetch();
     scheduleQuery.refetch();
     todayAttendanceQuery.refetch();
-    if (isAdmin) employeesTodayQuery.refetch();
+    employeesTodayQuery.refetch();
   }
 
   return {
     profile: profileQuery.data ?? null,
     schedule: scheduleQuery.data ?? null,
     todayAttendance: todayAttendanceQuery.data ?? null,
-    employeesToday: isAdmin ? (employeesTodayQuery.data ?? null) : null,
+    employeesToday: employeesTodayQuery.data ?? null,
     isLoading,
     isError,
     refetchAll,

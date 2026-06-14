@@ -296,6 +296,21 @@ export class AttendanceService {
     });
   }
 
+  // ─── Today summary (WORKER + ADMIN) ─────────────────────────────────────────
+
+  async getTodaySummary(): Promise<{ inOffice: number; left: number; total: number }> {
+    const today = startOfDayUtc(new Date());
+    const [inOffice, left] = await Promise.all([
+      this.prisma.attendance.count({
+        where: { date: today, checkInAt: { not: null }, checkOutAt: null } as any,
+      }),
+      this.prisma.attendance.count({
+        where: { date: today, checkInAt: { not: null }, checkOutAt: { not: null } } as any,
+      }),
+    ]);
+    return { inOffice, left, total: inOffice + left };
+  }
+
   // ─── Company attendance list (ADMIN) ────────────────────────────────────────
 
   async getCompanyAttendance(query: {
