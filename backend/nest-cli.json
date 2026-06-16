@@ -5,6 +5,10 @@
   "entryFile": "src/main",
   "compilerOptions": {
     "deleteOutDir": true,
-    "plugins": ["@nestjs/swagger"]
+    "plugins": ["@nestjs/swagger"],
+    "assets": [
+      { "include": "modules/reports/pdf/templates/**/*", "watchAssets": true },
+      { "include": "modules/reports/pdf/fonts/**/*", "watchAssets": true }
+    ]
   }
 }

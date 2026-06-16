@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { DayStatus } from '@softtime/shared';
 import { PrismaService } from '../../prisma/prisma.service';
 import { startOfDayUtc } from '../attendance/attendance.service';
+import { Sti161OverlayService, Sti161PdfInput, DocumentType } from './pdf/sti161-overlay.service';
 
 const ABSENT_STATUSES: string[] = [DayStatus.ABSENT, DayStatus.INCOMPLETE];
 
@@ -17,9 +18,21 @@ export interface ReportRow {
   latestCheckOut: Date | null;
 }
 
+const WORKED_STATUSES: string[] = [
+  DayStatus.PRESENT,
+  DayStatus.LATE,
+  DayStatus.EARLY_LEAVE,
+  DayStatus.OVERTIME,
+  DayStatus.MANUAL,
+  DayStatus.INCOMPLETE,
+]
+
 @Injectable()
 export class ReportsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly sti161Overlay: Sti161OverlayService,
+  ) {}
 
   // ─── Build aggregated report ───────────────────────────────────────────────────
 
@@ -130,5 +143,66 @@ export class ReportsService {
     );
 
     return [header, ...lines].join('\r\n');
+  }
+
+  // ─── STI-161 PDF ──────────────────────────────────────────────────────────────
+
+  async buildSti161Pdf(
+    companyId: string,
+    documentType: DocumentType,
+    periodMonth: number,
+    periodYear: number,
+  ): Promise<Buffer> {
+    const from = new Date(periodYear, periodMonth - 1, 1)
+    const to = new Date(periodYear, periodMonth, 0)
+
+    const [company, employees, attendanceRecords] = await Promise.all([
+      this.prisma.company.findUnique({ where: { id: companyId } }),
+      this.prisma.user.findMany({
+        where: { companyId, deletedAt: null } as any,
+        select: { id: true, fullName: true },
+      }),
+      this.prisma.attendance.findMany({
+        where: {
+          companyId,
+          date: { gte: from, lte: to },
+          status: { in: WORKED_STATUSES },
+        } as any,
+        select: { userId: true },
+      }),
+    ])
+
+    const daysWorkedMap = new Map<string, number>()
+    for (const rec of attendanceRecords as any[]) {
+      daysWorkedMap.set(rec.userId, (daysWorkedMap.get(rec.userId) ?? 0) + 1)
+    }
+
+    const input: Sti161PdfInput = {
+      documentType,
+      companyName: (company as any)?.name ?? '',
+      taxId: (company as any)?.taxId ?? null,
+      taxAuthorityCode: (company as any)?.taxAuthorityCode ?? null,
+      taxAuthorityName: null,
+      okpoCode: (company as any)?.okpoCode ?? null,
+      socialFundRegNumber: (company as any)?.socialFundRegNumber ?? null,
+      highlandCoefficient: (company as any)?.highlandCoefficient
+        ? String((company as any).highlandCoefficient)
+        : null,
+      socialTariffType: null,
+      smz: null,
+      usmz: null,
+      periodMonth,
+      periodYear,
+      employees: (employees as any[]).map((emp) => ({
+        inn: null,
+        fullName: emp.fullName ?? '',
+        daysWorked: daysWorkedMap.get(emp.id) ?? 0,
+        totalIncome: null,
+        incomeTax: null,
+        socialContributions: null,
+      })),
+    }
+
+    return this.sti161Overlay.generatePdf(input)
   }
 }

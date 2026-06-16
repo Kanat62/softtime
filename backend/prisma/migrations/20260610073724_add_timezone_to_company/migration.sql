@@ -1,2 +1,2 @@
 -- AlterTable
-ALTER TABLE "Company" ADD COLUMN     "timezone" TEXT NOT NULL DEFAULT 'Asia/Bishkek';
+ALTER TABLE "Company" ADD COLUMN IF NOT EXISTS "timezone" TEXT NOT NULL DEFAULT 'Asia/Bishkek';

@@ -24,6 +24,8 @@ RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 COPY --from=build --chown=appuser:appgroup /app/node_modules ./node_modules
 COPY --from=build --chown=appuser:appgroup /app/packages/shared ./packages/shared
 COPY --from=build --chown=appuser:appgroup /app/backend/dist ./dist
+COPY --from=build --chown=appuser:appgroup /app/backend/src/modules/reports/pdf/templates ./dist/src/modules/reports/pdf/templates
+COPY --from=build --chown=appuser:appgroup /app/backend/src/modules/reports/pdf/fonts ./dist/src/modules/reports/pdf/fonts
 COPY --from=build --chown=appuser:appgroup /app/backend/prisma ./prisma
 COPY --from=build --chown=appuser:appgroup /app/backend/prisma.config.ts ./prisma.config.ts
 COPY --from=build --chown=appuser:appgroup /app/backend/package.json ./

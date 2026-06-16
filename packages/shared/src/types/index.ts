@@ -57,6 +57,22 @@ export interface Company {
   status: CompanyStatus;
   createdAt: Date;
   deletedAt: Date | null;
+
+  // Налоговые реквизиты (для СТИ-161-6); заполняются в Настройках, не при регистрации
+  taxId: string | null;
+  taxAuthorityCode: string | null;
+  okpoCode: string | null;
+  passportNumber: string | null;
+  postalCode: string | null;
+  phone: string | null;
+  addressRegion: string | null;
+  addressStreet: string | null;
+  billingEmail: string | null;
+  socialFundRegNumber: string | null;
+  highlandCoefficient: number | null;
+  soateCode: string | null;
+  gkedCode: string | null;
+  legalForm: string | null;
 }
 
 /** Ответ GET /companies/me — компания + вложенная подписка */

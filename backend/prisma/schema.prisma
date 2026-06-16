@@ -105,6 +105,22 @@ model Company {
   deletedAt   DateTime?
   timezone    String        @default("Asia/Bishkek")
 
+  // Налоговые реквизиты (СТИ-161-6); NULL до заполнения в Настройках
+  taxId               String?  @map("tax_id")
+  taxAuthorityCode    String?  @map("tax_authority_code")
+  okpoCode            String?  @map("okpo_code")
+  passportNumber      String?  @map("passport_number")
+  postalCode          String?  @map("postal_code")
+  phone               String?  @map("phone")
+  addressRegion       String?  @map("address_region")
+  addressStreet       String?  @map("address_street")
+  billingEmail        String?  @map("billing_email")
+  socialFundRegNumber String?  @map("social_fund_reg_number")
+  highlandCoefficient Decimal? @map("highland_coefficient")
+  soateCode           String?  @map("soate_code")
+  gkedCode            String?  @map("gked_code")
+  legalForm           String?  @map("legal_form")
+
   // relations shown in ТЗ section 5.2
   users        User[]
   subscription Subscription?

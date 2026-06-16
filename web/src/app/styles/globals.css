@@ -148,6 +148,19 @@
   --sidebar-ring: oklch(0.551 0.027 264.364);
 }
 
+@keyframes sti-shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-sti-shimmer {
+  animation: sti-shimmer 1.4s ease-in-out infinite;
+}
+
 @layer base {
   * {
     border-color: var(--color-border);
