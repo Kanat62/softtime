@@ -123,7 +123,7 @@ export function QrPanel() {
         </div>
       ) : qrQuery.isLoading ? (
         <Skeleton className="h-80 w-full rounded-2xl" />
-      ) : token === null ? (
+      ) : !token ? (
         <div className="rounded-2xl bg-card p-12 shadow-sm">
           <EmptyState
             icon={<QrIcon className="h-10 w-10" />}
