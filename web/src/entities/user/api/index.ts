@@ -47,4 +47,8 @@ export const userApi = {
   /** PATCH /users/:id/note — обновить комментарий администратора */
   updateNote: (id: string, note: string) =>
     request<Employee>({ method: "PATCH", url: `/users/${id}/note`, data: { note } }),
+
+  /** PATCH /users/:id/salary — установить оклад сотруднику (только ADMIN) */
+  setSalary: (id: string, salary: number | null) =>
+    request<Employee>({ method: "PATCH", url: `/users/${id}/salary`, data: { salary } }),
 };

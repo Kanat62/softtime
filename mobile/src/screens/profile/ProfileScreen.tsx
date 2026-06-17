@@ -17,16 +17,19 @@ import {
   ChevronRight,
   CreditCard,
   ExternalLink,
+  FileText,
   KeyRound,
   Lock,
   LogOut,
   Mail,
+  Pencil,
   ShieldCheck,
 } from 'lucide-react-native';
 import { UserRole, Weekday } from '@softtime/shared';
 import { useAuth } from '@/app/providers/AuthProvider';
 import { useProfile } from '@/features/profile/model/useProfile';
 import { useMySchedule } from '@/features/schedule/model/useMySchedule';
+import { TaxInfoForm } from '@/features/profile/edit-tax-info';
 import {
   colors,
   fontFamily,
@@ -217,6 +220,7 @@ export function ProfileScreen() {
   const { userRole, logout } = useAuth();
   const navigation = useNavigation<any>();
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showTaxForm, setShowTaxForm] = useState(false);
 
   const { user, isLoading } = useProfile();
   const { schedule } = useMySchedule();
@@ -323,6 +327,47 @@ export function ProfileScreen() {
           </View>
         </TouchableOpacity>
 
+        {/* ── Tax info (WORKER + ADMIN) ── */}
+        <View style={s.card}>
+          <View style={s.taxHeader}>
+            <View style={s.taxHeaderLeft}>
+              <FileText size={iconSize.md} color={colors.textSecondary} strokeWidth={iconStrokeWidth} />
+              <Text style={s.cardTitle}>Налоговые данные</Text>
+            </View>
+            <TouchableOpacity
+              onPress={() => setShowTaxForm(true)}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              accessibilityLabel="Редактировать налоговые данные"
+            >
+              <Pencil size={iconSize.md} color={colors.primary} strokeWidth={iconStrokeWidth} />
+            </TouchableOpacity>
+          </View>
+          <View style={s.divider} />
+          <InfoRow
+            icon={<Text style={s.taxFieldIcon}>ИНН</Text>}
+            label="ИНН"
+            value={user?.inn ?? '—'}
+          />
+          <View style={s.divider} />
+          <InfoRow
+            icon={<Text style={s.taxFieldIcon}>КГ</Text>}
+            label="Гражданство"
+            value={user?.citizenship ?? '—'}
+          />
+          <View style={s.divider} />
+          <InfoRow
+            icon={<Text style={s.taxFieldIcon}>{user?.isResident ? '✓' : '✗'}</Text>}
+            label="Резидент КР"
+            value={user?.isResident ? 'Да' : 'Нет'}
+          />
+          <View style={s.divider} />
+          <InfoRow
+            icon={<Text style={s.taxFieldIcon}>📅</Text>}
+            label="Дата начала работы"
+            value={formatDate(user?.hiredAt ? new Date(user.hiredAt) : null)}
+          />
+        </View>
+
         {/* ── Admin-only actions ── */}
         {isAdmin && (
           <View style={s.card}>
@@ -368,6 +413,12 @@ export function ProfileScreen() {
       <ChangePasswordModal
         visible={showPasswordModal}
         onClose={() => setShowPasswordModal(false)}
+      />
+
+      <TaxInfoForm
+        visible={showTaxForm}
+        user={user}
+        onClose={() => setShowTaxForm(false)}
       />
     </SafeAreaView>
   );
@@ -642,5 +693,25 @@ const s = StyleSheet.create({
 
   bottomSpacer: {
     height: space[4],
+  },
+
+  // Tax info section
+  taxHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: space[3],
+  },
+  taxHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[2],
+  },
+  taxFieldIcon: {
+    fontSize: 11,
+    fontFamily: fontFamily.medium,
+    color: colors.textSecondary,
+    width: 20,
+    textAlign: 'center',
   },
 });

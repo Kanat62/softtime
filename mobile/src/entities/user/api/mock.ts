@@ -1,6 +1,13 @@
 import { UserRole, UserStatus } from '@softtime/shared';
 import type { User } from '@softtime/shared';
 
+const TAX_DEFAULTS = {
+  inn: null,
+  citizenship: null,
+  isResident: true,
+  salary: null,
+} as const;
+
 export const mockWorker: User = {
   id: 'user-worker-001',
   companyId: 'company-001',
@@ -8,12 +15,12 @@ export const mockWorker: User = {
   status: UserStatus.ACTIVE,
   fullName: 'Иван Петров',
   email: 'ivan.petrov@example.com',
-  passwordHash: '',
   avatarUrl: null,
   hiredAt: new Date('2024-03-01'),
   adminNote: null,
   deletedAt: null,
   createdAt: new Date('2024-03-01'),
+  ...TAX_DEFAULTS,
 };
 
 export const mockAdmin: User = {
@@ -23,12 +30,12 @@ export const mockAdmin: User = {
   status: UserStatus.ACTIVE,
   fullName: 'Анна Смирнова',
   email: 'anna.smirnova@example.com',
-  passwordHash: '',
   avatarUrl: null,
   hiredAt: new Date('2023-01-15'),
   adminNote: null,
   deletedAt: null,
   createdAt: new Date('2023-01-15'),
+  ...TAX_DEFAULTS,
 };
 
 export const mockWorkers: User[] = [
@@ -40,12 +47,12 @@ export const mockWorkers: User[] = [
     status: UserStatus.ACTIVE,
     fullName: 'Алексей Козлов',
     email: 'alexey.kozlov@example.com',
-    passwordHash: '',
     avatarUrl: null,
     hiredAt: new Date('2024-06-01'),
     adminNote: null,
     deletedAt: null,
     createdAt: new Date('2024-06-01'),
+    ...TAX_DEFAULTS,
   },
   {
     id: 'user-worker-003',
@@ -54,12 +61,12 @@ export const mockWorkers: User[] = [
     status: UserStatus.PENDING,
     fullName: 'Мария Иванова',
     email: 'maria.ivanova@example.com',
-    passwordHash: '',
     avatarUrl: null,
     hiredAt: null,
     adminNote: null,
     deletedAt: null,
     createdAt: new Date('2026-06-01'),
+    ...TAX_DEFAULTS,
   },
   {
     id: 'user-worker-004',
@@ -68,11 +75,11 @@ export const mockWorkers: User[] = [
     status: UserStatus.PENDING,
     fullName: 'Дмитрий Орлов',
     email: 'dmitry.orlov@example.com',
-    passwordHash: '',
     avatarUrl: null,
     hiredAt: null,
     adminNote: null,
     deletedAt: null,
     createdAt: new Date('2026-06-05'),
+    ...TAX_DEFAULTS,
   },
 ];

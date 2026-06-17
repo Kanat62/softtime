@@ -143,6 +143,11 @@ export interface User {
   adminNote: string | null;
   deletedAt: Date | null;
   createdAt: Date;
+  // Налоговые поля (для СТИ-161 Раздел III)
+  inn: string | null;
+  citizenship: string | null;
+  isResident: boolean;
+  salary: number | null;
 }
 
 /** Ответ GET /users/:id — профиль + история посещаемости + заявки */

@@ -160,7 +160,15 @@ export class ReportsService {
       this.prisma.company.findUnique({ where: { id: companyId } }),
       this.prisma.user.findMany({
         where: { companyId, deletedAt: null } as any,
-        select: { id: true, fullName: true },
+        select: {
+          id: true,
+          fullName: true,
+          inn: true,
+          citizenship: true,
+          isResident: true,
+          salary: true,
+          hiredAt: true,
+        },
       }),
       this.prisma.attendance.findMany({
         where: {
@@ -194,10 +202,13 @@ export class ReportsService {
       periodMonth,
       periodYear,
       employees: (employees as any[]).map((emp) => ({
-        inn: null,
+        inn: emp.inn ?? null,
         fullName: emp.fullName ?? '',
+        citizenship: emp.citizenship ?? null,
+        isResident: emp.isResident ?? true,
+        workStartDate: emp.hiredAt ? new Date(emp.hiredAt) : null,
         daysWorked: daysWorkedMap.get(emp.id) ?? 0,
-        totalIncome: null,
+        totalIncome: emp.salary != null ? Number(emp.salary) : null,
         incomeTax: null,
         socialContributions: null,
       })),

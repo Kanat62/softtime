@@ -12,6 +12,9 @@ export type DocumentType = 'INITIAL' | 'REVISED' | 'LIQUIDATION'
 export interface Sti161Employee {
   inn: string | null
   fullName: string
+  citizenship: string | null
+  isResident: boolean
+  workStartDate: Date | null
   daysWorked: number
   totalIncome: number | null
   incomeTax: number | null
@@ -80,10 +83,11 @@ const COLS: Record<string, { start: number; w: number }> = {
   inn:         { start: 40.42,  w: 86.96 }, // 2. ИНН
   name:        { start: 127.38, w: 59.53 }, // 3. Ф.И.О.
   category:    { start: 186.91, w: 36.84 }, // 4. Категория
-  citizenship: { start: 223.75, w: 28.33 }, // 5. Гражданство
-  residency:   { start: 252.08, w: 36.87 }, // 6. Резидентство
-  // 7 и 8 — даты начала/окончания (не заполняем)
-  daysWorked:  { start: 358.20, w: 24.30 }, // 9. Дней факт
+  citizenship:   { start: 223.75, w: 28.33 }, // 5. Гражданство
+  residency:     { start: 252.08, w: 36.87 }, // 6. Резидентство
+  workStartDate: { start: 288.95, w: 35.22 }, // 7. Дата начала работы
+  // 8 — дата окончания (не заполняем)
+  daysWorked:    { start: 358.20, w: 24.30 }, // 9. Дней факт
   incomeCode:  { start: 382.50, w: 22.67 }, // 10. Код дохода
   totalIncome: { start: 405.17, w: 39.66 }, // 11. Сумма начисленных доходов
   // 12-17 — не заполняем (нет данных)
@@ -385,14 +389,23 @@ export class Sti161OverlayService {
       }
 
       const rowTop = cursor
-      drawCell(page, String(idx + 1),       COLS.num,         rowTop, rowH)
-      drawCell(page, emp.inn,                COLS.inn,         rowTop, rowH)
-      drawLines(page, nameFit.lines,         COLS.name,        rowTop, rowH, nameFit.size)
-      drawCell(page, '1',                    COLS.category,    rowTop, rowH)
-      drawCell(page, 'КГ',                   COLS.citizenship, rowTop, rowH)
-      drawCell(page, '1',                    COLS.residency,   rowTop, rowH)
-      drawCell(page, String(emp.daysWorked), COLS.daysWorked,  rowTop, rowH)
-      drawCell(page, '2000',                 COLS.incomeCode,  rowTop, rowH)
+      const workStartStr = emp.workStartDate
+        ? [
+            String(emp.workStartDate.getDate()).padStart(2, '0'),
+            String(emp.workStartDate.getMonth() + 1).padStart(2, '0'),
+            String(emp.workStartDate.getFullYear()).slice(2),
+          ].join('.')
+        : null
+
+      drawCell(page, String(idx + 1),                   COLS.num,           rowTop, rowH)
+      drawCell(page, emp.inn,                            COLS.inn,           rowTop, rowH)
+      drawLines(page, nameFit.lines,                     COLS.name,          rowTop, rowH, nameFit.size)
+      drawCell(page, '1',                                COLS.category,      rowTop, rowH)
+      drawCell(page, emp.citizenship ?? 'КГ',            COLS.citizenship,   rowTop, rowH)
+      drawCell(page, emp.isResident ? '1' : '0',        COLS.residency,     rowTop, rowH)
+      drawCell(page, workStartStr,                       COLS.workStartDate, rowTop, rowH)
+      drawCell(page, String(emp.daysWorked),             COLS.daysWorked,    rowTop, rowH)
+      drawCell(page, '2000',                             COLS.incomeCode,    rowTop, rowH)
       drawCell(page, emp.totalIncome != null ? String(emp.totalIncome) : null, COLS.totalIncome, rowTop, rowH)
       drawCell(page, emp.incomeTax != null ? String(emp.incomeTax) : null,     COLS.taxTotal,    rowTop, rowH)
       drawCell(page, emp.socialContributions != null ? String(emp.socialContributions) : null, COLS.socialContr, rowTop, rowH)

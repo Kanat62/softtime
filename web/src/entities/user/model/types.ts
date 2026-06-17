@@ -14,6 +14,10 @@ export interface Employee {
   adminNote: string | null;
   companyId: string;
   createdAt: string;
+  inn: string | null;
+  citizenship: string | null;
+  isResident: boolean;
+  salary: number | string | null;
 }
 
 /** Детальный профиль (те же поля что у Employee) */
