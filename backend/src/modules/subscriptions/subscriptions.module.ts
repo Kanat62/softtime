@@ -9,9 +9,10 @@ import { PAYMENT_PROVIDER } from '../../common/interfaces/payment-provider.inter
 import { PrismaModule } from '../../prisma/prisma.module';
 import { AuditModule } from '../audit/audit.module';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { ReportsModule } from '../reports/reports.module';
 
 @Module({
-  imports: [PrismaModule, AuditModule, NotificationsModule, ConfigModule],
+  imports: [PrismaModule, AuditModule, NotificationsModule, ConfigModule, ReportsModule],
   controllers: [SubscriptionsController, PaymentsController, WebhooksController],
   providers: [
     SubscriptionsService,

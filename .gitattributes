@@ -1,0 +1,26 @@
+# Нормализация переносов строк: в репозитории всегда LF.
+# Это убирает конфликты между Windows (CRLF) и macOS/Linux (LF).
+* text=auto eol=lf
+
+# Скрипты, которые должны оставаться LF даже на Windows
+*.sh   text eol=lf
+gradlew text eol=lf
+
+# Бинарные файлы — git не трогает переносы строк
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.webp binary
+*.pdf  binary
+*.ttf  binary
+*.otf  binary
+*.woff binary
+*.woff2 binary
+*.keystore binary
+*.jks  binary
+
+# Lockfile: помечаем, чтобы git показывал понятный конфликт,
+# а не пытался хитро мёржить (всё равно лучше перегенерировать).
+package-lock.json -diff

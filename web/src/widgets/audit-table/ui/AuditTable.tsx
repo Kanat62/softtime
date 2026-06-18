@@ -16,40 +16,52 @@ const PAGE_SIZE = 20;
 
 const ACTION_LABELS: Record<string, string> = {
   LOGIN: "Вход в систему",
-  APPROVE_REQUEST: "Одобрение заявки",
-  REQUEST_APPROVED: "Одобрение заявки",
-  REJECT_REQUEST: "Отклонение заявки",
-  REQUEST_REJECTED: "Отклонение заявки",
-  CREATE_SCHEDULE: "Создание расписания",
-  UPDATE_SCHEDULE: "Изменение расписания",
-  CREATE_EMPLOYEE: "Добавление сотрудника",
-  UPDATE_EMPLOYEE: "Изменение сотрудника",
-  BLOCK_EMPLOYEE: "Блокировка сотрудника",
-  PUBLISH_NEWS: "Публикация новости",
-  CREATE_NEWS: "Публикация новости",
-  UPDATE_NETWORK: "Изменение сети",
-  QR_REGENERATED: "Обновление QR-кода",
-  REGENERATE_QR: "Обновление QR-кода",
-  MANUAL_CHECKOUT: "Ручная отметка ухода",
-  ATTENDANCE_MANUAL_FIX: "Ручная правка посещаемости",
-  SETTINGS_UPDATED: "Изменение настроек",
+  // Сотрудники
+  USER_APPROVED: "Сотрудник принят",
+  USER_REJECTED: "Сотрудник отклонён",
+  USER_DELETED: "Сотрудник удалён",
+  USER_STATUS_CHANGED: "Изменён статус сотрудника",
+  USER_NOTE_UPDATED: "Изменён комментарий к сотруднику",
+  EMPLOYEE_SALARY_SET: "Установлен оклад сотруднику",
+  // Заявки
+  REQUEST_APPROVED: "Заявка одобрена",
+  REQUEST_REJECTED: "Заявка отклонена",
+  // Расписание
+  SCHEDULE_UPDATED: "Изменено расписание",
+  SCHEDULE_APPLY_ALL: "Расписание применено ко всем",
+  // Посещаемость
+  ATTENDANCE_MANUAL_CREATE: "Посещаемость добавлена вручную",
+  ATTENDANCE_MANUAL_EDIT: "Посещаемость изменена вручную",
+  // Офисные сети / QR
+  OFFICE_NETWORK_CREATED: "Добавлена офисная сеть",
+  OFFICE_NETWORK_UPDATED: "Изменена офисная сеть",
+  OFFICE_NETWORK_DELETED: "Удалена офисная сеть",
+  QR_REGENERATED: "Обновлён QR-код",
+  // Новости
+  NEWS_CREATED: "Опубликована новость",
+  // Компания / настройки / подписка
+  UPDATE_COMPANY_REQUISITES: "Изменены реквизиты компании",
+  COMPANY_ACTIVATED: "Компания активирована",
+  COMPANY_SUSPENDED: "Компания приостановлена",
+  SETTINGS_UPDATED: "Изменены настройки",
+  SUBSCRIPTION_CANCELLED: "Подписка отменена",
 };
 
 const ACTION_OPTIONS = [
   { value: "_all", label: "Все действия" },
-  { value: "LOGIN", label: "Вход в систему" },
-  { value: "APPROVE_REQUEST", label: "Одобрение заявки" },
-  { value: "REJECT_REQUEST", label: "Отклонение заявки" },
-  { value: "CREATE_SCHEDULE", label: "Создание расписания" },
-  { value: "UPDATE_SCHEDULE", label: "Изменение расписания" },
-  { value: "CREATE_EMPLOYEE", label: "Добавление сотрудника" },
-  { value: "UPDATE_EMPLOYEE", label: "Изменение сотрудника" },
-  { value: "BLOCK_EMPLOYEE", label: "Блокировка сотрудника" },
-  { value: "CREATE_NEWS", label: "Публикация новости" },
-  { value: "QR_REGENERATED", label: "Обновление QR-кода" },
-  { value: "ATTENDANCE_MANUAL_FIX", label: "Ручная правка посещаемости" },
-  { value: "SETTINGS_UPDATED", label: "Изменение настроек" },
+  ...Object.entries(ACTION_LABELS)
+    .filter(([value]) => value !== "LOGIN")
+    .map(([value, label]) => ({ value, label })),
 ];
+
+const ENTITY_LABELS: Record<string, string> = {
+  Company: "Компания",
+  EmployeeSchedule: "Расписание",
+  News: "Новость",
+  OfficeNetwork: "Офисная сеть",
+  QrToken: "QR-код",
+  User: "Сотрудник",
+};
 
 function fmtDateTime(iso: string) {
   try {
@@ -59,11 +71,26 @@ function fmtDateTime(iso: string) {
   }
 }
 
+const DESTRUCTIVE_ACTIONS = [
+  "USER_REJECTED",
+  "USER_DELETED",
+  "USER_STATUS_CHANGED",
+  "REQUEST_REJECTED",
+  "OFFICE_NETWORK_DELETED",
+  "COMPANY_SUSPENDED",
+  "SUBSCRIPTION_CANCELLED",
+];
+const SUCCESS_ACTIONS = [
+  "USER_APPROVED",
+  "REQUEST_APPROVED",
+  "NEWS_CREATED",
+  "OFFICE_NETWORK_CREATED",
+  "COMPANY_ACTIVATED",
+];
+
 function actionTone(action: string): string {
-  if (["BLOCK_EMPLOYEE", "REJECT_REQUEST", "REQUEST_REJECTED"].includes(action))
-    return "text-destructive bg-destructive/10";
-  if (["APPROVE_REQUEST", "REQUEST_APPROVED", "CREATE_EMPLOYEE", "PUBLISH_NEWS", "CREATE_NEWS"].includes(action))
-    return "text-success bg-success/10";
+  if (DESTRUCTIVE_ACTIONS.includes(action)) return "text-destructive bg-destructive/10";
+  if (SUCCESS_ACTIONS.includes(action)) return "text-success bg-success/10";
   if (action === "LOGIN") return "text-muted-foreground bg-muted";
   return "text-primary bg-primary-light";
 }
@@ -74,11 +101,14 @@ export function AuditTable() {
   const [dateTo, setDateTo] = useState("");
   const [action, setAction] = useState("");
 
+  // Date inputs are calendar dates ("YYYY-MM-DD"). Expand them to full local-day
+  // bounds so the range is inclusive: `from` = start of day, `to` = end of day.
+  // Without this, `to` would be parsed as midnight and exclude the whole day.
   const params = {
     page: page + 1,
     limit: PAGE_SIZE,
-    from: dateFrom || undefined,
-    to: dateTo || undefined,
+    from: dateFrom ? new Date(`${dateFrom}T00:00:00`).toISOString() : undefined,
+    to: dateTo ? new Date(`${dateTo}T23:59:59.999`).toISOString() : undefined,
     action: action || undefined,
   };
 
@@ -225,9 +255,11 @@ export function AuditTable() {
                           </span>
                         </td>
                         <td className="px-4 py-3 text-muted-foreground">
-                          <span className="font-mono text-xs">{log.entityType}</span>
+                          <span className="text-sm">
+                            {ENTITY_LABELS[log.entityType] ?? log.entityType}
+                          </span>
                           {log.entityId && (
-                            <span className="ml-1 text-xs text-muted-foreground/60">
+                            <span className="ml-1 font-mono text-xs text-muted-foreground/60">
                               #{log.entityId.slice(0, 8)}
                             </span>
                           )}

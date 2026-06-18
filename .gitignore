@@ -23,18 +23,22 @@ mobile/.env
 .expo/
 mobile/.expo/
 
-# Android build
+# Native projects — Expo regenerates them via `npx expo prebuild`.
+# NEVER commit ios/ or android/: each dev generates their own per-OS.
+# Source of truth is app.json, not these folders.
+android/
+mobile/android/
+ios/
+mobile/ios/
+
+# Native build artifacts / caches
 **/.gradle/
 /.gradle/
 **/.cxx/
 /.cxx/
 **/build/
-android/
 mobile/android/build/
 android/build/
-
-# iOS
-ios/
 **/ios/Pods/
 **/ios/build/
 

@@ -3,13 +3,17 @@ import {
   Get,
   Post,
   Query,
+  Param,
+  Res,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { createZodDto } from 'nestjs-zod';
 import { z } from 'zod';
+import { FastifyReply } from 'fastify';
 import { SubscriptionsService } from './subscriptions.service';
+import { PaymentReceiptService } from '../reports/pdf/payment-receipt.service';
 import { Roles, CurrentUser, ApiStandardErrors } from '../../common/decorators';
 import { TenantPayload } from '../../common/tenant/tenant.context';
 
@@ -67,7 +71,10 @@ export class SubscriptionsController {
 @Controller('payments')
 @Roles('ADMIN')
 export class PaymentsController {
-  constructor(private readonly subscriptionsService: SubscriptionsService) {}
+  constructor(
+    private readonly subscriptionsService: SubscriptionsService,
+    private readonly paymentReceiptService: PaymentReceiptService,
+  ) {}
 
   // ── GET /payments ─────────────────────────────────────────────────────────
 
@@ -77,5 +84,24 @@ export class PaymentsController {
   @ApiQuery({ name: 'limit', required: false, type: Number })
   getPayments(@Query() query: PaymentsQueryDto, @CurrentUser() user: TenantPayload) {
     return this.subscriptionsService.getPayments(user.companyId!, query);
+  }
+
+  // ── GET /payments/:id/receipt ─────────────────────────────────────────────
+
+  @Get(':id/receipt')
+  @ApiOperation({ summary: 'Скачать PDF-чек по платежу (ADMIN своей компании)' })
+  async downloadReceipt(
+    @Param('id') id: string,
+    @CurrentUser() user: TenantPayload,
+    @Res() res: FastifyReply,
+  ) {
+    // Tenant-изоляция: companyId актора передаётся в сервис, который проверяет
+    // принадлежность платежа компании (иначе 404).
+    const buffer = await this.paymentReceiptService.generateReceiptPdf(id, user.companyId!);
+
+    res.header('Content-Type', 'application/pdf');
+    res.header('Content-Disposition', `attachment; filename="receipt-${id}.pdf"`);
+    res.header('Content-Length', String(buffer.length));
+    return res.send(buffer);
   }
 }
