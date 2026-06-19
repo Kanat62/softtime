@@ -13,7 +13,10 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.softtime.mobile"
+      "bundleIdentifier": "com.softtime.mobile",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Allow $(PRODUCT_NAME) to access your camera"
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -21,12 +24,21 @@
         "backgroundColor": "#1877F2"
       },
       "package": "com.softtime.mobile",
-      "userInterfaceStyle": "light"
+      "userInterfaceStyle": "light",
+      "permissions": [
+        "android.permission.CAMERA"
+      ]
     },
     "plugins": [
       "react-native-vision-camera",
       "expo-font",
       "expo-secure-store"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "dfb11165-7bbf-4f41-aace-b9094af57364"
+      }
+    },
+    "owner": "kanat62"
   }
 }
