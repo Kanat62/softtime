@@ -270,10 +270,18 @@ export class UsersService {
   async getMyProfile(userId: string) {
     const user = await this.prisma.user.findFirst({
       where: { id: userId, deletedAt: null } as any,
-      select: USER_SELECT,
+      select: {
+        ...USER_SELECT,
+        company: { select: { name: true, companyCode: true } },
+      },
     });
     if (!user) throw new NotFoundException('Пользователь не найден');
-    return user;
+    const { company, ...rest } = user as any;
+    return {
+      ...rest,
+      companyName: company?.name ?? null,
+      companyCode: company?.companyCode ?? null,
+    };
   }
 
   // ─── Update own profile ───────────────────────────────────────────────────────

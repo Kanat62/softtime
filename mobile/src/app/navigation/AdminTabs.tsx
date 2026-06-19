@@ -1,5 +1,6 @@
 import React from 'react';
 import { Platform, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { House, Newspaper, FileText, User } from 'lucide-react-native';
@@ -22,6 +23,7 @@ import { NewsFeedScreen } from '@/screens/news/NewsFeedScreen';
 import { NewsDetailScreen } from '@/screens/news/NewsDetailScreen';
 import { RequestsScreen } from '@/screens/requests/RequestsScreen';
 import { ProfileScreen } from '@/screens/profile/ProfileScreen';
+import { TaxDataScreen } from '@/screens/profile/TaxDataScreen';
 import { ManagementScreen } from '@/screens/management/ManagementScreen';
 import { SubscriptionScreen } from '@/screens/subscription/SubscriptionScreen';
 import { PaymentScreen } from '@/screens/subscription/PaymentScreen';
@@ -73,6 +75,7 @@ function AdminProfileStack() {
   return (
     <ProfileStack.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
       <ProfileStack.Screen name="Profile" component={ProfileScreen} />
+      <ProfileStack.Screen name="TaxData" component={TaxDataScreen} />
       <ProfileStack.Screen name="Management" component={ManagementScreen} />
       <ProfileStack.Screen name="Subscription" component={SubscriptionScreen} />
       <ProfileStack.Screen name="Payment" component={PaymentScreen} />
@@ -86,11 +89,12 @@ function AdminProfileStack() {
 const Tab = createBottomTabNavigator<AdminTabParamList>();
 
 export function AdminTabs() {
+  const insets = useSafeAreaInsets();
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarStyle: styles.tabBar,
+        tabBarStyle: [styles.tabBar, { height: layout.tabBarHeight + insets.bottom, paddingBottom: insets.bottom }],
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textDisabled,
         tabBarLabelStyle: styles.tabLabel,
@@ -116,7 +120,6 @@ export function AdminTabs() {
 
 const styles = StyleSheet.create({
   tabBar: {
-    height: layout.tabBarHeight + (Platform.OS === 'ios' ? 0 : 8),
     backgroundColor: colors.surface,
     borderTopWidth: 1,
     borderTopColor: colors.border,

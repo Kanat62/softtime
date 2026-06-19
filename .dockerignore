@@ -6,9 +6,13 @@ node_modules
 **/.git
 **/.gitignore
 
-# Mobile and web are not part of the API image
+# Mobile and web sources are not part of the API image,
+# but their package.json files are needed so npm ci can
+# validate the root package-lock.json (which covers all workspaces).
 mobile
 web
+!mobile/package.json
+!web/package.json
 
 # Dev/test artefacts
 **/coverage

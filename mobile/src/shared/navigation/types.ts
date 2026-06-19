@@ -59,6 +59,7 @@ export type RequestsStackParamList = {
 
 export type WorkerProfileStackParamList = {
   Profile: undefined;
+  TaxData: undefined;
 };
 
 // ─── Worker Tabs ─────────────────────────────────────────────────────────────
@@ -94,6 +95,7 @@ export type AdminHomeStackParamList = {
 
 export type AdminProfileStackParamList = {
   Profile: undefined;
+  TaxData: undefined;
   Management: undefined;
   Subscription: undefined;
   Payment: undefined;

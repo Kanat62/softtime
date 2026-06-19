@@ -15,6 +15,7 @@ import {
   iconStrokeWidth,
   layout,
   radius,
+  shadows,
   space,
   typography,
 } from '@/shared/config/theme';
@@ -212,7 +213,7 @@ const s = StyleSheet.create({
     paddingHorizontal: space[5],
     paddingVertical: space[2],
     width: '100%',
-
+    ...(shadows.card as object),
   },
   detailRow: {
     flexDirection: 'row',

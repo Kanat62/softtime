@@ -1,11 +1,11 @@
 import React from 'react';
-import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CompanyStatus, Weekday } from '@softtime/shared';
 import type { EmployeeSchedule } from '@softtime/shared';
 import { useAuth } from '@/app/providers/AuthProvider';
 import { useWorkerNavigation } from '@/shared/navigation/hooks';
-import { colors, layout, radius, space } from '@/shared/config/theme';
+import { colors, fontFamily, layout, radius, space, typography } from '@/shared/config/theme';
 import { ErrorState, OfflineBanner, Skeleton } from '@/shared/ui';
 import { HomeHeader } from '@/widgets/home-header/HomeHeader';
 import { EmployeesToday } from '@/widgets/employees-today/EmployeesToday';
@@ -41,9 +41,13 @@ export function HomeScreen() {
   const noSchedule = schedule !== null && schedule.length === 0;
   const todaySchedule = getTodaySchedule(schedule);
 
-  if (isLoading) {
-    return (
-      <SafeAreaView style={styles.root} edges={['top']}>
+  return (
+    <SafeAreaView style={styles.root} edges={['top']}>
+      <View style={styles.pageHeader}>
+        <Text style={styles.pageTitle}>Главная</Text>
+      </View>
+
+      {isLoading ? (
         <ScrollView
           style={styles.scroll}
           contentContainerStyle={styles.content}
@@ -51,75 +55,70 @@ export function HomeScreen() {
         >
           <HomeSkeleton />
         </ScrollView>
-      </SafeAreaView>
-    );
-  }
-
-  if (isError) {
-    return (
-      <SafeAreaView style={styles.root} edges={['top']}>
-        <ErrorState
-          title="Не удалось загрузить данные"
-          description="Проверьте подключение к интернету и повторите."
-          onRetry={refetchAll}
-        />
-      </SafeAreaView>
-    );
-  }
-
-  return (
-    <SafeAreaView style={styles.root} edges={['top']}>
-      <OfflineBanner variant="stale" />
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={false}
-            onRefresh={refetchAll}
-            tintColor={colors.primary}
-            colors={[colors.primary]}
+      ) : isError ? (
+        <>
+          <OfflineBanner variant="stale" />
+          <ErrorState
+            title="Не удалось загрузить данные"
+            description="Проверьте подключение к интернету и повторите."
+            onRetry={refetchAll}
           />
-        }
-      >
-        <HomeHeader
-          name={profile?.fullName ?? ''}
-          avatarUrl={profile?.avatarUrl ?? null}
-          onAvatarPress={() => navigation.getParent()?.navigate('Profile' as never)}
-        />
+        </>
+      ) : (
+        <>
+          <OfflineBanner variant="stale" />
+          <ScrollView
+            style={styles.scroll}
+            contentContainerStyle={styles.content}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={false}
+                onRefresh={refetchAll}
+                tintColor={colors.primary}
+                colors={[colors.primary]}
+              />
+            }
+          >
+            <HomeHeader
+              name={profile?.fullName ?? ''}
+              avatarUrl={profile?.avatarUrl ?? null}
+              onAvatarPress={() => navigation.getParent()?.navigate('Profile' as never)}
+            />
 
-        {employeesToday !== null && (
-          <EmployeesToday
-            total={employeesToday.total}
-            inOffice={employeesToday.inOffice}
-            left={employeesToday.left}
-            absent={0}
-            topEmployees={[]}
-            onPress={() => navigation.navigate('Office')}
-          />
-        )}
+            {employeesToday !== null && (
+              <EmployeesToday
+                total={employeesToday.total}
+                inOffice={employeesToday.inOffice}
+                left={employeesToday.left}
+                absent={employeesToday.absent ?? 0}
+                topEmployees={[]}
+                onPress={() => navigation.navigate('Office')}
+              />
+            )}
 
-        <AttendanceCard
-          scheduleStart={todaySchedule.startTime}
-          scheduleEnd={todaySchedule.endTime}
-          checkInAt={todayAttendance?.checkInAt ?? null}
-          checkOutAt={todayAttendance?.checkOutAt ?? null}
-          isSuspended={isSuspended}
-          noSchedule={noSchedule}
-          onCheckIn={() => navigation.navigate('QrScanner', { mode: 'checkIn' })}
-          onCheckOut={() => navigation.navigate('QrScanner', { mode: 'checkOut' })}
-        />
+            <AttendanceCard
+              scheduleStart={todaySchedule.startTime}
+              scheduleEnd={todaySchedule.endTime}
+              checkInAt={todayAttendance?.checkInAt ?? null}
+              checkOutAt={todayAttendance?.checkOutAt ?? null}
+              isSuspended={isSuspended}
+              noSchedule={noSchedule}
+              onCheckIn={() => navigation.navigate('QrScanner', { mode: 'checkIn' })}
+              onCheckOut={() => navigation.navigate('QrScanner', { mode: 'checkOut' })}
+            />
 
-        {schedule && schedule.length > 0 && (
-          <ScheduleMini
-            schedule={schedule}
-            onMorePress={() => navigation.navigate('MySchedule')}
-          />
-        )}
+            {schedule && schedule.length > 0 && (
+              <ScheduleMini
+                schedule={schedule}
+                onMorePress={() => navigation.navigate('MySchedule')}
+              />
+            )}
 
-        <View style={styles.bottomSpacer} />
-      </ScrollView>
+            <View style={styles.bottomSpacer} />
+          </ScrollView>
+        </>
+      )}
     </SafeAreaView>
   );
 }
@@ -183,12 +182,21 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.bg,
   },
+  pageHeader: {
+    height: 56,
+    justifyContent: 'center',
+    paddingHorizontal: layout.screenPadding,
+  },
+  pageTitle: {
+    ...typography.xl,
+    fontFamily: fontFamily.bold,
+    color: colors.textPrimary,
+  },
   scroll: {
     flex: 1,
   },
   content: {
     paddingHorizontal: layout.screenPadding,
-    paddingTop: space[4],
     gap: space[4],
   },
   bottomSpacer: {

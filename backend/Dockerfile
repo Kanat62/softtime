@@ -1,13 +1,17 @@
 # ---- deps ----
-FROM node:20-alpine AS deps
+FROM node:22-alpine AS deps
 WORKDIR /app
+# Copy ALL workspace package.json files so npm ci can validate
+# the root package-lock.json (which covers every workspace).
 COPY package*.json ./
 COPY packages/shared/package.json ./packages/shared/
 COPY backend/package.json ./backend/
-RUN npm ci --workspace=backend --workspace=packages/shared --ignore-scripts
+COPY mobile/package.json ./mobile/
+COPY web/package.json ./web/
+RUN npm install --workspace=backend --workspace=packages/shared --ignore-scripts
 
 # ---- build ----
-FROM node:20-alpine AS build
+FROM node:22-alpine AS build
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY packages/shared ./packages/shared
@@ -16,7 +20,7 @@ RUN cd packages/shared && npm run build
 RUN cd backend && npx prisma generate && npm run build
 
 # ---- runtime ----
-FROM node:20-alpine AS runtime
+FROM node:22-alpine AS runtime
 WORKDIR /app
 
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup

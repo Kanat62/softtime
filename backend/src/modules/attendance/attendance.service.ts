@@ -10,6 +10,7 @@ import {
   DayStatus,
   RequestStatus,
   RequestType,
+  UserStatus,
   Weekday,
 } from '@softtime/shared';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -282,11 +283,11 @@ export class AttendanceService {
     return { data, meta: { total, page: query.page, limit: query.limit, pages: Math.ceil(total / query.limit) } };
   }
 
-  // ─── Today in office (ADMIN) ────────────────────────────────────────────────
+  // ─── Today in office (WORKER + ADMIN) ──────────────────────────────────────
 
   async getTodayInOffice() {
     const today = startOfDayUtc(new Date());
-    return this.prisma.attendance.findMany({
+    const attendances = await this.prisma.attendance.findMany({
       where: {
         date: today,
         checkInAt: { not: null },
@@ -294,21 +295,39 @@ export class AttendanceService {
       } as any,
       orderBy: { checkInAt: 'asc' },
     });
+
+    if (attendances.length === 0) return [];
+
+    const userIds = (attendances as any[]).map((a) => a.userId);
+    const users = await this.prisma.user.findMany({
+      where: { id: { in: userIds }, deletedAt: null } as any,
+      select: { id: true, fullName: true, avatarUrl: true },
+    });
+
+    const userMap = new Map((users as any[]).map((u) => [u.id, u]));
+    return (attendances as any[]).map((a) => ({
+      ...a,
+      user: userMap.get(a.userId) ?? null,
+    }));
   }
 
   // ─── Today summary (WORKER + ADMIN) ─────────────────────────────────────────
 
-  async getTodaySummary(): Promise<{ inOffice: number; left: number; total: number }> {
+  async getTodaySummary(): Promise<{ inOffice: number; left: number; total: number; absent: number }> {
     const today = startOfDayUtc(new Date());
-    const [inOffice, left] = await Promise.all([
+    const [inOffice, left, total] = await Promise.all([
       this.prisma.attendance.count({
         where: { date: today, checkInAt: { not: null }, checkOutAt: null } as any,
       }),
       this.prisma.attendance.count({
         where: { date: today, checkInAt: { not: null }, checkOutAt: { not: null } } as any,
       }),
+      this.prisma.user.count({
+        where: { deletedAt: null, status: UserStatus.ACTIVE } as any,
+      }),
     ]);
-    return { inOffice, left, total: inOffice + left };
+    const absent = Math.max(0, total - inOffice - left);
+    return { inOffice, left, total, absent };
   }
 
   // ─── Company attendance list (ADMIN) ────────────────────────────────────────

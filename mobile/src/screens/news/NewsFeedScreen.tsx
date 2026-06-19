@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import {
   FlatList,
+  Image,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -14,7 +15,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Newspaper, Plus, X } from 'lucide-react-native';
+import { ImageIcon, Newspaper, Plus, X } from 'lucide-react-native';
 import { UserRole } from '@softtime/shared';
 import type { AppError } from '@/shared/api/errors';
 import {
@@ -37,10 +38,7 @@ import { useCreateNews } from '@/features/news/create/model/useCreateNews';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const MONTHS_SHORT = [
-  'янв', 'фев', 'мар', 'апр', 'май', 'июн',
-  'июл', 'авг', 'сен', 'окт', 'ноя', 'дек',
-];
+const MONTHS_SHORT = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
 
 function formatShortDate(date: Date): string {
   return `${date.getDate()} ${MONTHS_SHORT[date.getMonth()]} ${date.getFullYear()}`;
@@ -65,6 +63,7 @@ export function NewsFeedScreen() {
   const [sheetVisible, setSheetVisible] = useState(false);
   const [titleInput, setTitleInput]     = useState('');
   const [bodyInput, setBodyInput]       = useState('');
+  const [photoUrlInput, setPhotoUrlInput] = useState('');
   const isOnline = useIsOnline();
 
   const canPublish = isOnline && titleInput.trim().length > 0 && bodyInput.trim().length > 0 && !createMutation.isPending;
@@ -78,13 +77,18 @@ export function NewsFeedScreen() {
     setSheetVisible(false);
     setTitleInput('');
     setBodyInput('');
+    setPhotoUrlInput('');
     createMutation.reset();
   }
 
   function handlePublish() {
     if (!canPublish) return;
     createMutation.mutate(
-      { title: titleInput.trim(), body: bodyInput.trim() },
+      {
+        title: titleInput.trim(),
+        body: bodyInput.trim(),
+        photoUrl: photoUrlInput.trim() || null,
+      },
       { onSuccess: handleCloseSheet },
     );
   }
@@ -95,7 +99,6 @@ export function NewsFeedScreen() {
 
   return (
     <SafeAreaView style={styles.root} edges={['top']}>
-      {/* Page header */}
       <View style={styles.pageHeader}>
         <Text style={styles.pageTitle}>Новости</Text>
       </View>
@@ -119,9 +122,7 @@ export function NewsFeedScreen() {
           ListEmptyComponent={
             isLoading ? null : (
               <EmptyState
-                icon={
-                  <Newspaper size={48} color={colors.textDisabled} strokeWidth={iconStrokeWidth} />
-                }
+                icon={<Newspaper size={48} color={colors.textDisabled} strokeWidth={iconStrokeWidth} />}
                 title="Новостей пока нет"
                 description="Новости компании появятся здесь"
               />
@@ -151,14 +152,16 @@ export function NewsFeedScreen() {
         </TouchableOpacity>
       )}
 
-      {/* Create news sheet (admin only) */}
+      {/* Create news modal (admin only) — centered so keyboard doesn't cover inputs */}
       {isAdmin && (
-        <CreateNewsSheet
+        <CreateNewsModal
           visible={sheetVisible}
           titleValue={titleInput}
           bodyValue={bodyInput}
+          photoUrlValue={photoUrlInput}
           onTitleChange={(v) => { setTitleInput(v); if (createMutation.isError) createMutation.reset(); }}
           onBodyChange={(v) => { setBodyInput(v); if (createMutation.isError) createMutation.reset(); }}
+          onPhotoUrlChange={setPhotoUrlInput}
           canPublish={canPublish}
           publishing={createMutation.isPending}
           publishError={publishError}
@@ -174,19 +177,36 @@ export function NewsFeedScreen() {
 
 function NewsCard({ item, onPress }: { item: NewsWithRead; onPress: () => void }) {
   return (
-    <TouchableOpacity
-      style={[styles.card, !item.isRead && styles.cardUnread]}
-      onPress={onPress}
-      activeOpacity={0.8}
-    >
+    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.8}>
+      {/* Photo (task 6) */}
+      {item.photoUrl ? (
+        <Image
+          source={{ uri: item.photoUrl }}
+          style={styles.cardImage}
+          resizeMode="cover"
+        />
+      ) : null}
+
       <View style={styles.cardMeta}>
         <View style={styles.newsBadge}>
           <Text style={styles.newsBadgeText}>Новость</Text>
         </View>
-        <Text style={styles.cardDate}>{formatShortDate(item.createdAt)}</Text>
+        {/* Task 8: unread → primary dot instead of date */}
+        {item.isRead ? (
+          <Text style={styles.cardDate}>{formatShortDate(item.createdAt)}</Text>
+        ) : (
+          <View style={styles.unreadDot} />
+        )}
       </View>
+
       <Text style={styles.cardTitle} numberOfLines={2}>{item.title}</Text>
       <Text style={styles.cardBody} numberOfLines={2}>{item.body}</Text>
+
+      {/* Task 8: date below card for unread */}
+      {!item.isRead && (
+        <Text style={styles.cardDateBelow}>{formatShortDate(item.createdAt)}</Text>
+      )}
+
       <Text style={styles.readMore}>Читать далее →</Text>
     </TouchableOpacity>
   );
@@ -212,14 +232,16 @@ function FeedSkeleton() {
   );
 }
 
-// ─── Create news sheet ────────────────────────────────────────────────────────
+// ─── Create news modal (centered) — task 2 ────────────────────────────────────
 
-interface CreateNewsSheetProps {
+interface CreateNewsModalProps {
   visible: boolean;
   titleValue: string;
   bodyValue: string;
+  photoUrlValue: string;
   onTitleChange: (v: string) => void;
   onBodyChange: (v: string) => void;
+  onPhotoUrlChange: (v: string) => void;
   canPublish: boolean;
   publishing: boolean;
   publishError: string | null;
@@ -227,43 +249,44 @@ interface CreateNewsSheetProps {
   onPublish: () => void;
 }
 
-function CreateNewsSheet({
+function CreateNewsModal({
   visible,
   titleValue,
   bodyValue,
+  photoUrlValue,
   onTitleChange,
   onBodyChange,
+  onPhotoUrlChange,
   canPublish,
   publishing,
   publishError,
   onClose,
   onPublish,
-}: CreateNewsSheetProps) {
+}: CreateNewsModalProps) {
   return (
     <Modal
       visible={visible}
       transparent
-      animationType="slide"
+      animationType="fade"
       statusBarTranslucent
       onRequestClose={onClose}
     >
-      <Pressable style={styles.overlay} onPress={onClose}>
-        <Pressable style={styles.sheet} onPress={() => {}}>
-          <View style={styles.handle} />
+      <KeyboardAvoidingView
+        style={styles.modalKAV}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <Pressable style={styles.modalOverlay} onPress={onClose}>
+          <Pressable style={styles.modalBox} onPress={() => {}}>
+            {/* Header */}
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Создать новость</Text>
+              <TouchableOpacity onPress={onClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <X size={20} color={colors.textSecondary} strokeWidth={iconStrokeWidth} />
+              </TouchableOpacity>
+            </View>
 
-          <View style={styles.sheetHeader}>
-            <Text style={styles.sheetTitle}>Создать новость</Text>
-            <TouchableOpacity
-              onPress={onClose}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <X size={20} color={colors.textSecondary} strokeWidth={iconStrokeWidth} />
-            </TouchableOpacity>
-          </View>
-
-          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
             <ScrollView
-              contentContainerStyle={styles.sheetBody}
+              contentContainerStyle={styles.modalBody}
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
             >
@@ -281,9 +304,32 @@ function CreateNewsSheet({
                 placeholder="Текст новости..."
                 placeholderTextColor={colors.textDisabled}
                 multiline
-                numberOfLines={6}
+                numberOfLines={5}
                 textAlignVertical="top"
               />
+
+              {/* Task 7: image URL input */}
+              <View style={styles.photoInputWrap}>
+                <ImageIcon size={16} color={colors.textSecondary} strokeWidth={iconStrokeWidth} />
+                <TextInput
+                  style={styles.photoInput}
+                  value={photoUrlValue}
+                  onChangeText={onPhotoUrlChange}
+                  placeholder="URL картинки (необязательно)"
+                  placeholderTextColor={colors.textDisabled}
+                  autoCapitalize="none"
+                  keyboardType="url"
+                />
+              </View>
+
+              {/* Preview image if URL provided */}
+              {photoUrlValue.trim().length > 0 && (
+                <Image
+                  source={{ uri: photoUrlValue.trim() }}
+                  style={styles.photoPreview}
+                  resizeMode="cover"
+                />
+              )}
 
               {publishError ? (
                 <View style={styles.publishError}>
@@ -300,11 +346,10 @@ function CreateNewsSheet({
               >
                 Опубликовать
               </Button>
-              <View style={styles.sheetBottom} />
             </ScrollView>
-          </KeyboardAvoidingView>
+          </Pressable>
         </Pressable>
-      </Pressable>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
@@ -312,48 +357,34 @@ function CreateNewsSheet({
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: colors.bg,
-  },
+  root: { flex: 1, backgroundColor: colors.bg },
 
-  pageHeader: {
-    height: 56,
-    justifyContent: 'center',
-    paddingHorizontal: layout.screenPadding,
-  },
-  pageTitle: {
-    ...typography.xl,
-    fontFamily: fontFamily.bold,
-    color: colors.textPrimary,
-  },
+  pageHeader: { height: 56, justifyContent: 'center', paddingHorizontal: layout.screenPadding },
+  pageTitle: { ...typography.xl, fontFamily: fontFamily.bold, color: colors.textPrimary },
 
-  list: {
-    paddingHorizontal: layout.screenPadding,
-    paddingBottom: space[8],
-  },
-  listEmpty: {
-    flex: 1,
-  },
-  separator: {
-    height: space[3],
-  },
+  list: { paddingHorizontal: layout.screenPadding, paddingBottom: space[8] },
+  listEmpty: { flex: 1 },
+  separator: { height: space[3] },
 
   card: {
     backgroundColor: colors.surface,
     borderRadius: radius.xl,
-    padding: space[4],
+    overflow: 'hidden',
     gap: space[2],
+    paddingBottom: space[4],
   },
-  cardUnread: {
-    backgroundColor: colors.warningLight,
-    borderWidth: 1,
-    borderColor: '#F0C050',
+  cardImage: {
+    width: '100%',
+    height: 180,
+    borderTopLeftRadius: radius.xl,
+    borderTopRightRadius: radius.xl,
   },
   cardMeta: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    paddingHorizontal: space[4],
+    paddingTop: space[4],
   },
   newsBadge: {
     paddingHorizontal: 10,
@@ -361,29 +392,36 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primaryLight,
     borderRadius: radius.full,
   },
-  newsBadgeText: {
-    fontSize: 11,
-    fontFamily: fontFamily.semiBold,
-    color: colors.primary,
-  },
-  cardDate: {
-    ...typography.sm,
-    color: colors.textSecondary,
+  newsBadgeText: { fontSize: 11, fontFamily: fontFamily.semiBold, color: colors.primary },
+  cardDate: { ...typography.sm, color: colors.textSecondary },
+  unreadDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: colors.primary,
   },
   cardTitle: {
     ...typography.base,
     fontFamily: fontFamily.semiBold,
     color: colors.textPrimary,
+    paddingHorizontal: space[4],
   },
   cardBody: {
     ...typography.sm,
     color: colors.textSecondary,
     lineHeight: 20,
+    paddingHorizontal: space[4],
+  },
+  cardDateBelow: {
+    ...typography.xs,
+    color: colors.textDisabled,
+    paddingHorizontal: space[4],
   },
   readMore: {
     ...typography.sm,
     fontFamily: fontFamily.medium,
     color: colors.primary,
+    paddingHorizontal: space[4],
   },
 
   fab: {
@@ -398,31 +436,25 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     ...(shadows.lg as object),
   },
-  fabDisabled: {
-    backgroundColor: colors.textDisabled,
-  },
+  fabDisabled: { backgroundColor: colors.textDisabled },
 
-  overlay: {
+  // Centered modal (task 2)
+  modalKAV: { flex: 1 },
+  modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: space[4],
   },
-  sheet: {
+  modalBox: {
     backgroundColor: colors.surface,
-    borderTopLeftRadius: radius.xl,
-    borderTopRightRadius: radius.xl,
+    borderRadius: radius.xl,
+    width: '100%',
+    maxHeight: '85%',
     ...(shadows.lg as object),
   },
-  handle: {
-    width: 40,
-    height: 4,
-    borderRadius: radius.full,
-    backgroundColor: colors.borderStrong,
-    alignSelf: 'center',
-    marginTop: space[3],
-    marginBottom: space[2],
-  },
-  sheetHeader: {
+  modalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -431,15 +463,14 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
-  sheetTitle: {
-    ...typography.lg,
-    color: colors.textPrimary,
-  },
-  sheetBody: {
+  modalTitle: { ...typography.lg, color: colors.textPrimary },
+  modalBody: {
     paddingHorizontal: space[5],
     paddingTop: space[4],
+    paddingBottom: space[5],
     gap: space[3],
   },
+
   sheetInput: {
     height: 48,
     backgroundColor: colors.bg,
@@ -458,11 +489,36 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     paddingHorizontal: space[4],
     paddingVertical: space[3],
-    minHeight: 130,
+    minHeight: 110,
     ...typography.base,
     fontFamily: fontFamily.regular,
     color: colors.textPrimary,
   },
+
+  // Task 7: photo URL input
+  photoInputWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[2],
+    backgroundColor: colors.bg,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: space[3],
+    height: 44,
+  },
+  photoInput: {
+    flex: 1,
+    ...typography.sm,
+    fontFamily: fontFamily.regular,
+    color: colors.textPrimary,
+  },
+  photoPreview: {
+    width: '100%',
+    height: 140,
+    borderRadius: radius.md,
+  },
+
   publishError: {
     backgroundColor: colors.dangerLight,
     borderRadius: radius.md,
@@ -473,8 +529,5 @@ const styles = StyleSheet.create({
     ...typography.sm,
     color: colors.dangerText,
     fontFamily: fontFamily.medium,
-  },
-  sheetBottom: {
-    height: space[4],
   },
 });

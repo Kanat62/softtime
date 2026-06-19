@@ -133,6 +133,10 @@ export interface User {
   id: string;
   /** null только у PROVIDER */
   companyId: string | null;
+  /** Название компании — возвращается из GET /profile */
+  companyName: string | null;
+  /** Код компании — возвращается из GET /profile */
+  companyCode: string | null;
   role: UserRole;
   status: UserStatus;
   fullName: string;

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import {
   Animated,
+  Image,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -104,6 +105,15 @@ export function NewsDetailScreen() {
           </View>
 
           <Text style={styles.title}>{item.title}</Text>
+
+          {/* Photo (task 6) */}
+          {item.photoUrl ? (
+            <Image
+              source={{ uri: item.photoUrl }}
+              style={styles.photo}
+              resizeMode="cover"
+            />
+          ) : null}
 
           <View style={styles.divider} />
 
@@ -214,6 +224,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.border,
   },
 
+  photo: {
+    width: '100%',
+    height: 200,
+    borderRadius: radius.xl,
+  },
   body: {
     fontSize: 16,
     lineHeight: 26,

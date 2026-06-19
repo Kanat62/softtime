@@ -6,7 +6,8 @@
       "Bash(git:*)",
       "Bash(node:*)",
       "Write(**)",
-      "Read(**)"
+      "Read(**)",
+      "Bash(npx expo *)"
     ],
     "deny": [
       "Bash(rm -rf /*)",

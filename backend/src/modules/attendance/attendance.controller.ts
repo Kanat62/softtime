@@ -155,8 +155,7 @@ export class AttendanceController {
   // ── GET /today ─────────────────────────────────────────────────────────────
 
   @Get('today')
-  @Roles('ADMIN')
-  @ApiOperation({ summary: 'Кто сейчас в офисе (checkIn без checkOut)' })
+  @ApiOperation({ summary: 'Кто сейчас в офисе (checkIn без checkOut) — WORKER + ADMIN' })
   getTodayInOffice() {
     return this.attendanceService.getTodayInOffice();
   }
