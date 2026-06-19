@@ -14,13 +14,13 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://ЗАМЕНИ_НА_RAILWAY_URL"
+        "EXPO_PUBLIC_API_URL": "https://backend-production-46b22.up.railway.app"
       }
     },
     "production": {
       "autoIncrement": true,
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://ЗАМЕНИ_НА_RAILWAY_URL"
+        "EXPO_PUBLIC_API_URL": "https://backend-production-46b22.up.railway.app"
       }
     }
   },
