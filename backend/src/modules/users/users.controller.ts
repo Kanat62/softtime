@@ -8,13 +8,12 @@ import {
   Query,
   HttpCode,
   HttpStatus,
-  ForbiddenException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { ApiStandardErrors } from '../../common/decorators/api-responses.decorator';
 import { createZodDto } from 'nestjs-zod';
 import { z } from 'zod';
-import { UserStatus, UserRole, employeeTaxInfoSchema, employeeSalarySchema } from '@softtime/shared';
+import { UserStatus } from '@softtime/shared';
 import { UsersService } from './users.service';
 import { Roles, CurrentUser } from '../../common/decorators';
 import { TenantPayload } from '../../common/tenant/tenant.context';
@@ -51,8 +50,6 @@ class ListUsersQueryDto extends createZodDto(listUsersQuerySchema) {}
 class SetStatusDto extends createZodDto(setStatusSchema) {}
 class SetNoteDto extends createZodDto(setNoteSchema) {}
 class UpdateProfileDto extends createZodDto(updateProfileSchema) {}
-class UpdateTaxInfoDto extends createZodDto(employeeTaxInfoSchema) {}
-class SetSalaryDto extends createZodDto(employeeSalarySchema) {}
 
 // ─── /users ───────────────────────────────────────────────────────────────────
 
@@ -119,17 +116,6 @@ export class UsersController {
     return this.usersService.setAdminNote(id, dto.note, user.userId);
   }
 
-  @Patch(':id/salary')
-  @ApiOperation({ summary: 'Установить оклад сотруднику (только ADMIN своей компании)' })
-  setEmployeeSalary(
-    @Param('id') id: string,
-    @Body() dto: SetSalaryDto,
-    @CurrentUser() actor: TenantPayload,
-  ) {
-    if (!actor.companyId) throw new ForbiddenException('Нет компании');
-    return this.usersService.setEmployeeSalary(actor.userId, id, actor.companyId, dto.salary);
-  }
-
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Soft delete пользователя (deletedAt)' })
@@ -163,17 +149,5 @@ export class ProfileController {
     @CurrentUser() user: TenantPayload,
   ) {
     return this.usersService.updateMyProfile(user.userId, dto);
-  }
-
-  @Patch('tax-info')
-  @ApiOperation({ summary: 'Сохранить налоговые данные сотрудника (ИНН, гражданство, резидентство, дата найма)' })
-  updateMyTaxInfo(
-    @Body() dto: UpdateTaxInfoDto,
-    @CurrentUser() user: TenantPayload,
-  ) {
-    if (user.role === UserRole.PROVIDER) {
-      throw new ForbiddenException('PROVIDER не имеет налоговых данных сотрудника');
-    }
-    return this.usersService.updateMyTaxInfo(user.userId, dto);
   }
 }

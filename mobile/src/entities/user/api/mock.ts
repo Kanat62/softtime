@@ -1,16 +1,11 @@
 import { UserRole, UserStatus } from '@softtime/shared';
 import type { User } from '@softtime/shared';
 
-const TAX_DEFAULTS = {
-  inn: null,
-  citizenship: null,
-  isResident: true,
-  salary: null,
-} as const;
-
 export const mockWorker: User = {
   id: 'user-worker-001',
   companyId: 'company-001',
+  companyName: null,
+  companyCode: null,
   role: UserRole.WORKER,
   status: UserStatus.ACTIVE,
   fullName: 'Иван Петров',
@@ -20,12 +15,13 @@ export const mockWorker: User = {
   adminNote: null,
   deletedAt: null,
   createdAt: new Date('2024-03-01'),
-  ...TAX_DEFAULTS,
 };
 
 export const mockAdmin: User = {
   id: 'user-admin-001',
   companyId: 'company-001',
+  companyName: null,
+  companyCode: null,
   role: UserRole.ADMIN,
   status: UserStatus.ACTIVE,
   fullName: 'Анна Смирнова',
@@ -35,7 +31,6 @@ export const mockAdmin: User = {
   adminNote: null,
   deletedAt: null,
   createdAt: new Date('2023-01-15'),
-  ...TAX_DEFAULTS,
 };
 
 export const mockWorkers: User[] = [
@@ -43,6 +38,8 @@ export const mockWorkers: User[] = [
   {
     id: 'user-worker-002',
     companyId: 'company-001',
+    companyName: null,
+    companyCode: null,
     role: UserRole.WORKER,
     status: UserStatus.ACTIVE,
     fullName: 'Алексей Козлов',
@@ -52,11 +49,12 @@ export const mockWorkers: User[] = [
     adminNote: null,
     deletedAt: null,
     createdAt: new Date('2024-06-01'),
-    ...TAX_DEFAULTS,
   },
   {
     id: 'user-worker-003',
     companyId: 'company-001',
+    companyName: null,
+    companyCode: null,
     role: UserRole.WORKER,
     status: UserStatus.PENDING,
     fullName: 'Мария Иванова',
@@ -66,11 +64,12 @@ export const mockWorkers: User[] = [
     adminNote: null,
     deletedAt: null,
     createdAt: new Date('2026-06-01'),
-    ...TAX_DEFAULTS,
   },
   {
     id: 'user-worker-004',
     companyId: 'company-001',
+    companyName: null,
+    companyCode: null,
     role: UserRole.WORKER,
     status: UserStatus.PENDING,
     fullName: 'Дмитрий Орлов',
@@ -80,6 +79,5 @@ export const mockWorkers: User[] = [
     adminNote: null,
     deletedAt: null,
     createdAt: new Date('2026-06-05'),
-    ...TAX_DEFAULTS,
   },
 ];

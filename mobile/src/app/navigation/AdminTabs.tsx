@@ -23,7 +23,6 @@ import { NewsFeedScreen } from '@/screens/news/NewsFeedScreen';
 import { NewsDetailScreen } from '@/screens/news/NewsDetailScreen';
 import { RequestsScreen } from '@/screens/requests/RequestsScreen';
 import { ProfileScreen } from '@/screens/profile/ProfileScreen';
-import { TaxDataScreen } from '@/screens/profile/TaxDataScreen';
 import { ManagementScreen } from '@/screens/management/ManagementScreen';
 import { SubscriptionScreen } from '@/screens/subscription/SubscriptionScreen';
 import { PaymentScreen } from '@/screens/subscription/PaymentScreen';
@@ -75,7 +74,6 @@ function AdminProfileStack() {
   return (
     <ProfileStack.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
       <ProfileStack.Screen name="Profile" component={ProfileScreen} />
-      <ProfileStack.Screen name="TaxData" component={TaxDataScreen} />
       <ProfileStack.Screen name="Management" component={ManagementScreen} />
       <ProfileStack.Screen name="Subscription" component={SubscriptionScreen} />
       <ProfileStack.Screen name="Payment" component={PaymentScreen} />

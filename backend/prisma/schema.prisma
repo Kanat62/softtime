@@ -172,12 +172,6 @@ model User {
   deletedAt    DateTime?
   createdAt    DateTime   @default(now())
 
-  // Налоговые поля сотрудника (для СТИ-161 Раздел III)
-  inn         String?  @map("inn")
-  salary      Decimal? @map("salary")
-  citizenship String?  @map("citizenship")
-  isResident  Boolean  @default(true) @map("is_resident")
-
   company Company? @relation(fields: [companyId], references: [id])
 
   @@unique([email])

@@ -17,7 +17,6 @@ import {
   ChevronRight,
   CreditCard,
   ExternalLink,
-  FileText,
   KeyRound,
   Lock,
   LogOut,
@@ -156,9 +155,6 @@ export function ProfileScreen() {
     ? user.fullName.split(' ').slice(0, 2).map((w) => w[0]).join('').toUpperCase()
     : '?';
 
-  // Tax data is incomplete if INN or citizenship is missing
-  const taxIncomplete = !user?.inn || !user?.citizenship;
-
   function handleLogout() {
     Alert.alert('Выход', 'Вы уверены, что хотите выйти из аккаунта?', [
       { text: 'Отмена', style: 'cancel' },
@@ -240,21 +236,6 @@ export function ProfileScreen() {
             label="Сменить пароль"
             onPress={() => setShowPasswordModal(true)}
             showChevron
-          />
-          <View style={s.divider} />
-          {/* Tax data button (task 9) — red border if incomplete */}
-          <ActionRow
-            icon={
-              <FileText
-                size={iconSize.md}
-                color={taxIncomplete ? colors.danger : colors.textPrimary}
-                strokeWidth={iconStrokeWidth}
-              />
-            }
-            label="Налоговые данные"
-            onPress={() => navigation.navigate('TaxData')}
-            showChevron
-            borderColor={taxIncomplete ? colors.danger : undefined}
           />
         </View>
 

@@ -66,8 +66,6 @@ export function EmployeeProfile() {
   const [reqPage, setReqPage] = useState(0);
   const [note, setNote] = useState<string | undefined>(undefined);
   const [noteDirty, setNoteDirty] = useState(false);
-  const [salary, setSalary] = useState<string | undefined>(undefined);
-  const [salaryDirty, setSalaryDirty] = useState(false);
 
   const ATT_LIMIT = 10;
   const REQ_LIMIT = 10;
@@ -81,7 +79,6 @@ export function EmployeeProfile() {
   });
 
   const resolvedNote = note ?? employee?.adminNote ?? "";
-  const resolvedSalary = salary ?? (employee?.salary != null ? String(employee.salary) : "");
 
   const attParams = { userId: id, page: attPage + 1, limit: ATT_LIMIT };
   const { data: attData, isLoading: attLoading } = useQuery({
@@ -107,16 +104,6 @@ export function EmployeeProfile() {
       qc.invalidateQueries({ queryKey: queryKeys.employee(id) });
     },
     onError: () => toast.error("Не удалось сохранить комментарий"),
-  });
-
-  const salaryMutation = useMutation({
-    mutationFn: (val: number | null) => userApi.setSalary(id, val),
-    onSuccess: () => {
-      toast.success("Оклад сохранён");
-      setSalaryDirty(false);
-      qc.invalidateQueries({ queryKey: queryKeys.employee(id) });
-    },
-    onError: () => toast.error("Не удалось сохранить оклад"),
   });
 
   // ─── Attendance table ──────────────────────────────────────────────────
@@ -310,40 +297,6 @@ export function EmployeeProfile() {
           }
         />
       </Section>
-
-      {/* ── Salary ─────────────────────────────────────────────────────── */}
-      <div className="rounded-2xl bg-card p-6 shadow-sm">
-        <h2 className="mb-1 text-base font-semibold text-foreground">Оклад</h2>
-        <p className="mb-3 text-xs text-muted-foreground">В сомах. Используется в СТИ-161.</p>
-        <div className="flex items-center gap-3">
-          <input
-            type="number"
-            min={0}
-            placeholder="0"
-            value={resolvedSalary}
-            onChange={(e) => {
-              setSalary(e.target.value);
-              setSalaryDirty(true);
-            }}
-            className="h-9 w-40 rounded-md border border-border bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-          />
-          <Button
-            size="sm"
-            disabled={!salaryDirty || salaryMutation.isPending}
-            onClick={() => {
-              const val = resolvedSalary === "" ? null : Number(resolvedSalary);
-              if (val !== null && (isNaN(val) || val < 0)) {
-                toast.error("Введите корректное значение оклада");
-                return;
-              }
-              salaryMutation.mutate(val);
-            }}
-          >
-            <Save className="mr-2 h-4 w-4" strokeWidth={1.5} />
-            {salaryMutation.isPending ? "Сохраняем..." : "Сохранить"}
-          </Button>
-        </div>
-      </div>
 
       {/* ── Admin note ─────────────────────────────────────────────────── */}
       <div className="rounded-2xl bg-card p-6 shadow-sm">

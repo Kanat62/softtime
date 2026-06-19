@@ -26,10 +26,6 @@ const USER_SELECT = {
   adminNote: true,
   createdAt: true,
   companyId: true,
-  inn: true,
-  citizenship: true,
-  isResident: true,
-  salary: true,
 } as const;
 
 @Injectable()
@@ -327,61 +323,4 @@ export class UsersService {
     });
   }
 
-  // ─── Update own tax info (WORKER/ADMIN self-service) ─────────────────────────
-
-  async updateMyTaxInfo(
-    userId: string,
-    dto: {
-      inn: string | null;
-      citizenship: string | null;
-      isResident: boolean;
-      hiredAt: Date | null;
-    },
-  ) {
-    const user = await this.prisma.user.findFirst({
-      where: { id: userId, deletedAt: null } as any,
-    });
-    if (!user) throw new NotFoundException('Пользователь не найден');
-
-    return this.prisma.user.update({
-      where: { id: userId } as any,
-      data: {
-        inn: dto.inn,
-        citizenship: dto.citizenship,
-        isResident: dto.isResident,
-        hiredAt: dto.hiredAt,
-      },
-      select: USER_SELECT,
-    });
-  }
-
-  // ─── Set employee salary (ADMIN only) ────────────────────────────────────────
-
-  async setEmployeeSalary(
-    actorId: string,
-    targetId: string,
-    companyId: string,
-    salary: number | null,
-  ) {
-    const target = await this.prisma.user.findFirst({
-      where: { id: targetId, companyId, deletedAt: null } as any,
-    });
-    if (!target) throw new NotFoundException('Сотрудник не найден в вашей компании');
-
-    const updated = await this.prisma.user.update({
-      where: { id: targetId } as any,
-      data: { salary },
-      select: USER_SELECT,
-    });
-
-    await this.audit.log({
-      actorId,
-      action: 'EMPLOYEE_SALARY_SET',
-      entityType: 'User',
-      entityId: targetId,
-      meta: { salary },
-    });
-
-    return updated;
-  }
 }

@@ -23,7 +23,6 @@ import { NewsFeedScreen } from '@/screens/news/NewsFeedScreen';
 import { NewsDetailScreen } from '@/screens/news/NewsDetailScreen';
 import { RequestsScreen } from '@/screens/requests/RequestsScreen';
 import { ProfileScreen } from '@/screens/profile/ProfileScreen';
-import { TaxDataScreen } from '@/screens/profile/TaxDataScreen';
 
 // ─── Nested Stacks ────────────────────────────────────────────────────────────
 
@@ -70,7 +69,6 @@ function WorkerProfileStack() {
   return (
     <ProfileStack.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
       <ProfileStack.Screen name="Profile" component={ProfileScreen} />
-      <ProfileStack.Screen name="TaxData" component={TaxDataScreen} />
     </ProfileStack.Navigator>
   );
 }
