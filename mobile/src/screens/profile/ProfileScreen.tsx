@@ -311,7 +311,7 @@ const s = StyleSheet.create({
     alignItems: 'center',
     alignSelf: 'flex-start',
     gap: 4,
-    paddingHorizontal: space[2],
+    paddingRight: space[2],
     paddingVertical: 4,
     borderRadius: radius.full,
   },

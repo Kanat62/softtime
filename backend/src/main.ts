@@ -20,6 +20,17 @@ async function bootstrap() {
   );
 
   app.useLogger(app.get(Logger));
+
+  const allowedOrigins = (process.env.ALLOWED_ORIGIN ?? 'http://localhost:5173')
+    .split(',')
+    .map((o) => o.trim());
+  app.enableCors({
+    origin: allowedOrigins,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  });
+
   app.setGlobalPrefix('api/v1');
 
   // Validate all incoming DTOs via Zod schemas from @softtime/shared (ТЗ §9)

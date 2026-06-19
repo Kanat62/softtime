@@ -1,5 +1,6 @@
 import { DashboardMetrics } from "@/widgets/dashboard-metrics";
 import { SubscriptionWidget } from "@/widgets/subscription-card";
+import { InsightsWidget } from "@/widgets/insights-widget";
 import { PageHeader } from "@/shared/ui";
 
 export function DashboardPage() {
@@ -8,6 +9,7 @@ export function DashboardPage() {
       <PageHeader title="Дашборд" />
       <SubscriptionWidget />
       <DashboardMetrics />
+      <InsightsWidget />
     </div>
   );
 }

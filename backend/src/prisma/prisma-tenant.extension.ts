@@ -14,6 +14,7 @@ const TENANT_MODELS = new Set<string>([
   'News',
   'AuditLog',
   'WorkSettings',
+  'AiInsight',
 ]);
 
 export const tenantExtension = Prisma.defineExtension((client) =>

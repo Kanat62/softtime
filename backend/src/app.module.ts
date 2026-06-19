@@ -22,6 +22,7 @@ import { ReportsModule } from './modules/reports/reports.module';
 import { SettingsModule } from './modules/settings/settings.module';
 import { ProviderModule } from './modules/provider/provider.module';
 import { DevicesModule } from './modules/devices/devices.module';
+import { InsightsModule } from './modules/insights/insights.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 import { StatusGuard } from './common/guards/status.guard';
@@ -89,6 +90,7 @@ import { StatusGuard } from './common/guards/status.guard';
     SettingsModule,
     ProviderModule,
     DevicesModule,
+    InsightsModule,
   ],
   providers: [
     // Global guard chain (order = declaration order):

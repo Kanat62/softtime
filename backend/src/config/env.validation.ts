@@ -18,6 +18,9 @@ const envSchema = z.object({
   BRUTE_FORCE_BLOCK_MINUTES: z.coerce.number().int().positive().default(15),
 
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+
+  OPENAI_API_KEY: z.string().min(1).optional(),
+  OPENAI_MODEL: z.string().default('gpt-4o-mini'),
 });
 
 export type Env = z.infer<typeof envSchema>;

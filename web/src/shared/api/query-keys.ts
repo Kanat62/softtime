@@ -19,4 +19,5 @@ export const queryKeys = {
   providerCompanies: (params?: unknown) => ["provider-companies", params] as const,
   providerCompany: (id: string) => ["provider-company", id] as const,
   providerPayments: (params?: unknown) => ["provider-payments", params] as const,
+  insight: ["insight"] as const,
 };
