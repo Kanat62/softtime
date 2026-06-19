@@ -1,5 +1,5 @@
 {
-  "buildCommand": "npm run build -w packages/shared && npm run build -w web",
+  "buildCommand": "(cd packages/shared && npm run build) && (cd web && npm run build)",
   "outputDirectory": "web/dist",
   "installCommand": "npm install",
   "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
