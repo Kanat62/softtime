@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Delete,
   Param,
   Body,
   Query,
@@ -85,5 +86,15 @@ export class NewsController {
   @ApiOperation({ summary: 'Явная отметка прочтения новости' })
   markRead(@Param('id') id: string, @CurrentUser() user: TenantPayload) {
     return this.newsService.markRead(id, user.userId);
+  }
+
+  // ── DELETE /:id — delete news (ADMIN) ─────────────────────────────────────
+
+  @Delete(':id')
+  @Roles('ADMIN')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Удалить новость (ADMIN)' })
+  deleteNews(@Param('id') id: string, @CurrentUser() user: TenantPayload) {
+    return this.newsService.deleteNews(id, user.userId);
   }
 }

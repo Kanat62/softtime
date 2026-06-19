@@ -107,6 +107,26 @@ export class NewsService {
     return news;
   }
 
+  // ─── Delete news (ADMIN) ─────────────────────────────────────────────────────
+
+  async deleteNews(newsId: string, adminId: string) {
+    const news = await this.prisma.news.findFirst({ where: { id: newsId } as any });
+    if (!news) throw new NotFoundException('Новость не найдена');
+
+    await this.prisma.newsRead.deleteMany({ where: { newsId } });
+    await this.prisma.news.delete({ where: { id: newsId } as any });
+
+    await this.audit.log({
+      actorId: adminId,
+      action: 'NEWS_DELETED',
+      entityType: 'News',
+      entityId: newsId,
+      meta: { title: (news as any).title },
+    });
+
+    return { ok: true };
+  }
+
   // ─── Read stats (ADMIN) ───────────────────────────────────────────────────────
 
   async getReadStats(newsId: string) {

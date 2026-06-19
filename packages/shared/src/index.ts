@@ -9,4 +9,3 @@ export * from './schemas/users';
 export * from './schemas/office-network';
 export * from './schemas/qr';
 export * from './schemas/settings';
-export * from './schemas/company';

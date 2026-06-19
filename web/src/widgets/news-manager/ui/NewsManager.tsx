@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import { toast } from "sonner";
-import { Eye, Newspaper, Plus } from "lucide-react";
+import { Eye, Newspaper, Plus, Trash2 } from "lucide-react";
 import { newsApi } from "@/entities/news/api";
 import type { News } from "@/entities/news/model/types";
 import { queryKeys } from "@/shared/api/query-keys";
@@ -37,6 +37,7 @@ export function NewsManager() {
   const qc = useQueryClient();
   const [mode, setMode] = useState<DialogMode>(null);
   const [activeNews, setActiveNews] = useState<News | null>(null);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
   const [formTitle, setFormTitle] = useState("");
   const [formBody, setFormBody] = useState("");
@@ -54,6 +55,17 @@ export function NewsManager() {
   });
 
   const invalidate = () => qc.invalidateQueries({ queryKey: queryKeys.news });
+
+  const deleteMutation = useMutation({
+    mutationFn: newsApi.delete,
+    onSuccess: () => {
+      toast.success("Новость удалена");
+      setDeleteTargetId(null);
+      setMode(null);
+      invalidate();
+    },
+    onError: () => toast.error("Ошибка при удалении"),
+  });
 
   const createMutation = useMutation({
     mutationFn: newsApi.create,
@@ -159,17 +171,30 @@ export function NewsManager() {
                           </span>
                         </td>
                         <td className="px-4 py-3 text-right">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 text-xs"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              openView(n);
-                            }}
-                          >
-                            Подробнее
-                          </Button>
+                          <div className="flex items-center justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 text-xs"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openView(n);
+                              }}
+                            >
+                              Подробнее
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDeleteTargetId(n.id);
+                              }}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -281,6 +306,36 @@ export function NewsManager() {
               </Tabs>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Dialog: Подтверждение удаления ───────────────────────────────── */}
+      <Dialog open={!!deleteTargetId} onOpenChange={(open) => !open && setDeleteTargetId(null)}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Удалить новость?</DialogTitle>
+            <DialogDescription>
+              Это действие необратимо. Новость и история прочтений будут удалены.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:flex-row">
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => setDeleteTargetId(null)}
+              disabled={deleteMutation.isPending}
+            >
+              Отмена
+            </Button>
+            <Button
+              variant="destructive"
+              className="flex-1"
+              disabled={deleteMutation.isPending}
+              onClick={() => deleteTargetId && deleteMutation.mutate(deleteTargetId)}
+            >
+              {deleteMutation.isPending ? "Удаляем..." : "Удалить"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 

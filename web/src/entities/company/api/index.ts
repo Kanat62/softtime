@@ -1,5 +1,4 @@
 import { apiClient } from "@/shared/api/client";
-import type { CompanyRequisites } from "@softtime/shared";
 
 export interface CompanySettings {
   id: string;
@@ -21,10 +20,4 @@ export const companyApi = {
 
   changePassword: (currentPassword: string, newPassword: string) =>
     apiClient.patch("/profile", { currentPassword, newPassword }).then((r) => r.data),
-
-  getRequisites: () =>
-    apiClient.get<CompanyRequisites>("/companies/me/requisites").then((r) => r.data),
-
-  updateRequisites: (dto: CompanyRequisites) =>
-    apiClient.patch<CompanyRequisites>("/companies/me/requisites", dto).then((r) => r.data),
 };

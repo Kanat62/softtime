@@ -22,4 +22,7 @@ export const newsApi = {
 
   markRead: (id: string) =>
     apiClient.post<{ ok: boolean }>(`/news/${id}/read`).then((r) => r.data),
+
+  delete: (id: string) =>
+    apiClient.delete<{ ok: boolean }>(`/news/${id}`).then((r) => r.data),
 };
