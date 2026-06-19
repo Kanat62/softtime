@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useReactTable, getCoreRowModel, flexRender, type ColumnDef } from "@tanstack/react-table";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -106,8 +106,14 @@ export function EmployeesTable() {
   const [search, setSearch] = useState("");
   const [action, setAction] = useState<PendingAction | null>(null);
 
-  // Debounce search via a separate state updated on blur / Enter
-  const commitSearch = useCallback(() => setSearch(searchRaw), [searchRaw]);
+  // Debounce search: commit `searchRaw` → `search` 300ms after the user stops typing.
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setSearch(searchRaw.trim());
+      setPage(0);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [searchRaw]);
 
   const queryParams = { page: page + 1, limit: PAGE_SIZE, status: statusFilter, search };
 
@@ -208,8 +214,6 @@ export function EmployeesTable() {
             className="pl-9"
             value={searchRaw}
             onChange={(e) => setSearchRaw(e.target.value)}
-            onBlur={commitSearch}
-            onKeyDown={(e) => e.key === "Enter" && commitSearch()}
           />
         </div>
 

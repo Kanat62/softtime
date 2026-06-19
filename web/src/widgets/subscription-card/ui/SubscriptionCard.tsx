@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import { toast } from "sonner";
-import { AlertTriangle, Check, CreditCard, ExternalLink } from "lucide-react";
+import { AlertTriangle, Check, CreditCard, Download, ExternalLink, Loader2 } from "lucide-react";
 import { subscriptionApi } from "@/entities/subscription/api";
 import { paymentApi } from "@/entities/payment/api";
 import { queryKeys } from "@/shared/api/query-keys";
@@ -77,6 +77,21 @@ export function SubscriptionCard() {
       qc.invalidateQueries({ queryKey: queryKeys.subscription });
     },
     onError: () => toast.error("Ошибка при отмене"),
+  });
+
+  const receiptMutation = useMutation({
+    mutationFn: (id: string) => paymentApi.downloadReceipt(id),
+    onSuccess: (blob, id) => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `receipt-${id}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    },
+    onError: () => toast.error("Не удалось скачать чек"),
   });
 
   const sub = subQuery.data;
@@ -205,7 +220,7 @@ export function SubscriptionCard() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border bg-muted/40">
-              {["Дата", "Период", "Сумма", "Провайдер", "Референс", "Статус"].map((h) => (
+              {["Дата", "Период", "Сумма", "Провайдер", "Референс", "Статус", "Чек"].map((h) => (
                 <th
                   key={h}
                   className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
@@ -219,7 +234,7 @@ export function SubscriptionCard() {
             {paymentsQuery.isLoading ? (
               Array.from({ length: 3 }).map((_, i) => (
                 <tr key={i} className="border-b border-border last:border-0">
-                  {Array.from({ length: 6 }).map((__, j) => (
+                  {Array.from({ length: 7 }).map((__, j) => (
                     <td key={j} className="px-4 py-3">
                       <Skeleton className="h-4 w-20 rounded" />
                     </td>
@@ -228,7 +243,7 @@ export function SubscriptionCard() {
               ))
             ) : payments.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-10 text-center text-sm text-muted-foreground">
+                <td colSpan={7} className="px-4 py-10 text-center text-sm text-muted-foreground">
                   История оплат пуста.
                 </td>
               </tr>
@@ -246,6 +261,25 @@ export function SubscriptionCard() {
                   </td>
                   <td className="px-4 py-3">
                     <StatusBadge status={p.status} />
+                  </td>
+                  <td className="px-4 py-3">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      title="Скачать чек"
+                      disabled={
+                        receiptMutation.isPending && receiptMutation.variables === p.id
+                      }
+                      onClick={() => receiptMutation.mutate(p.id)}
+                    >
+                      {receiptMutation.isPending && receiptMutation.variables === p.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Download className="h-4 w-4" strokeWidth={1.5} />
+                      )}
+                      <span className="sr-only">Скачать чек</span>
+                    </Button>
                   </td>
                 </tr>
               ))

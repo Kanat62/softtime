@@ -14,4 +14,10 @@ export interface PaginatedPayments {
 export const paymentApi = {
   list: (params?: PaymentParams) =>
     apiClient.get<PaginatedPayments>("/payments", { params }).then((r) => r.data),
+
+  /** GET /payments/:id/receipt — PDF-чек (blob) */
+  downloadReceipt: (id: string) =>
+    apiClient
+      .get(`/payments/${id}/receipt`, { responseType: "blob" })
+      .then((r) => r.data as Blob),
 };

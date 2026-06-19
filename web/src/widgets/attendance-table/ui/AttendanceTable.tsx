@@ -80,9 +80,12 @@ function isoToTimeInput(iso: string | null | undefined): string {
   }
 }
 
-/** Convert date "YYYY-MM-DD" + time input "HH:mm" → ISO datetime string */
+/** Convert date + time input "HH:mm" → ISO datetime string.
+ *  `date` may arrive as "YYYY-MM-DD" or a full ISO datetime ("...T00:00:00.000Z"),
+ *  so we take only the calendar-date part to avoid building an invalid string. */
 function toISO(date: string, time: string): string {
-  return new Date(`${date}T${time}:00`).toISOString();
+  const datePart = date.slice(0, 10);
+  return new Date(`${datePart}T${time}:00`).toISOString();
 }
 
 function fmtMinutes(min: number | null): string {
@@ -221,7 +224,7 @@ export function AttendanceTable() {
       dto: {
         checkInAt: editState.checkIn ? toISO(editRow.date, editState.checkIn) : null,
         checkOutAt: editState.checkOut ? toISO(editRow.date, editState.checkOut) : null,
-        note: editState.note || null,
+        note: editState.note,
       },
     });
   }
