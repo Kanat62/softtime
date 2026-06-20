@@ -7,6 +7,7 @@ import {
   Inbox,
   Newspaper,
   BarChart3,
+  Sparkles,
   Settings,
   LogOut,
   Building2,
@@ -18,6 +19,7 @@ import { useAuth, type UserRole } from "@/entities/session";
 import { cn } from "@/shared/lib";
 import { Button } from "@/shared/ui/button";
 import { Skeleton } from "@/shared/ui/skeleton";
+import logoUrl from "@/assets/softtime.png";
 
 function PageFallback() {
   return (
@@ -55,6 +57,7 @@ const ADMIN_NAV: NavGroup[] = [
       { to: "/admin/requests", label: "Заявки", icon: Inbox },
       { to: "/admin/news", label: "Новости", icon: Newspaper },
       { to: "/admin/reports", label: "Отчёты", icon: BarChart3 },
+      { to: "/admin/assistant", label: "ИИ-аналитик", icon: Sparkles },
     ],
   },
   {
@@ -84,9 +87,11 @@ function Sidebar({ role }: { role: UserRole }) {
   return (
     <aside className="flex h-screen w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar">
       <div className="flex items-center gap-2 px-5 py-5">
-        <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary text-primary-foreground">
-          <span className="text-sm font-bold">ST</span>
-        </div>
+        <img
+          src={logoUrl}
+          alt="SoftTime"
+          className="h-9 w-9 rounded-md object-contain"
+        />
         <div className="text-sm font-semibold text-sidebar-foreground">SoftTime</div>
       </div>
 

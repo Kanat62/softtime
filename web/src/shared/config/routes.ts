@@ -11,6 +11,7 @@ export const ROUTES = {
     networks: "/admin/networks",
     qr: "/admin/qr",
     reports: "/admin/reports",
+    assistant: "/admin/assistant",
     subscription: "/admin/subscription",
     audit: "/admin/audit",
     settings: "/admin/settings",

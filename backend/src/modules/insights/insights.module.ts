@@ -15,5 +15,6 @@ import { InsightsController } from './insights.controller';
     InsightsService,
     InsightsCronService,
   ],
+  exports: [InsightsAnalyticsService, InsightsLlmService],
 })
 export class InsightsModule {}

@@ -22,7 +22,7 @@ export class InsightsLlmService {
     const model = this.config.get<string>('OPENAI_MODEL') ?? 'gpt-4o-mini';
 
     // Privacy: only anonymized aggregates — no names, no IDs
-    const dataBlock = JSON.stringify(this.sanitize(aggregates), null, 2);
+    const dataBlock = JSON.stringify(this.sanitizeAggregates(aggregates), null, 2);
 
     const systemPrompt = `Ты — аналитик посещаемости для малого и среднего бизнеса.
 Ты получаешь анонимизированные агрегированные показатели посещаемости компании.
@@ -91,8 +91,9 @@ export class InsightsLlmService {
     return INSUFFICIENT_DATA_MSG;
   }
 
-  // Sanitize: ensure no employee-level data is sent to LLM
-  private sanitize(agg: CompanyAggregates): Omit<CompanyAggregates, 'periodFrom' | 'periodTo'> & { period: string } {
+  // Sanitize: ensure no employee-level data is sent to LLM.
+  // Public so other LLM-backed features (e.g. Assistant) reuse the exact same anonymization.
+  sanitizeAggregates(agg: CompanyAggregates): Omit<CompanyAggregates, 'periodFrom' | 'periodTo'> & { period: string } {
     return {
       period: `${agg.periodFrom} — ${agg.periodTo} (${agg.periodDays} дней)`,
       periodDays: agg.periodDays,
