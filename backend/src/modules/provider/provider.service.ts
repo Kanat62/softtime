@@ -196,6 +196,58 @@ export class ProviderService {
     return { ok: true };
   }
 
+  // ─── Hard delete a company and ALL related data ───────────────────────────────
+  // Removes the tenant entirely from the database (admin + workers + attendance +
+  // schedules + requests + networks + QR + news + payments + subscription + ...).
+  // Irreversible. PROVIDER-only.
+
+  async deleteCompany(id: string, actorId: string) {
+    const company = await this.prisma.company.findUnique({
+      where: { id },
+      select: { id: true, name: true },
+    });
+    if (!company) throw new NotFoundException('Компания не найдена');
+
+    const users = await this.prisma.user.findMany({
+      where: { companyId: id },
+      select: { id: true },
+    });
+    const userIds = users.map((u) => u.id);
+
+    // Children first (respect FK: NewsRead→News, Payment→Subscription,
+    // Subscription→Company, User→Company), then the company itself.
+    await this.prisma.$transaction([
+      this.prisma.newsRead.deleteMany({ where: { news: { companyId: id } } }),
+      this.prisma.news.deleteMany({ where: { companyId: id } }),
+      this.prisma.payment.deleteMany({ where: { companyId: id } }),
+      this.prisma.subscription.deleteMany({ where: { companyId: id } }),
+      this.prisma.deviceToken.deleteMany({ where: { userId: { in: userIds } } }),
+      this.prisma.attendance.deleteMany({ where: { companyId: id } }),
+      this.prisma.employeeSchedule.deleteMany({ where: { companyId: id } }),
+      this.prisma.absenceRequest.deleteMany({ where: { companyId: id } }),
+      this.prisma.officeNetwork.deleteMany({ where: { companyId: id } }),
+      this.prisma.qrToken.deleteMany({ where: { companyId: id } }),
+      this.prisma.workSettings.deleteMany({ where: { companyId: id } }),
+      this.prisma.aiInsight.deleteMany({ where: { companyId: id } }),
+      this.prisma.companyDefaultSchedule.deleteMany({ where: { companyId: id } }),
+      this.prisma.auditLog.deleteMany({ where: { companyId: id } }),
+      this.prisma.user.deleteMany({ where: { companyId: id } }),
+      this.prisma.company.delete({ where: { id } }),
+    ]);
+
+    // Final platform-level audit record (companyId has no FK, safe after delete).
+    await this.audit.log({
+      actorId,
+      action: 'COMPANY_DELETED',
+      entityType: 'Company',
+      entityId: id,
+      meta: { companyName: company.name, deletedUsers: userIds.length },
+      companyId: id,
+    });
+
+    return { ok: true };
+  }
+
   // ─── Suspend ──────────────────────────────────────────────────────────────────
 
   async suspendCompany(id: string, actorId: string) {

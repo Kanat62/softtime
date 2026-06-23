@@ -1,11 +1,23 @@
+import { useState } from "react";
 import { useParams, useNavigate } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
-import { ChevronLeft, Building2, CreditCard, Users } from "lucide-react";
+import { toast } from "sonner";
+import { ChevronLeft, Building2, CreditCard, Users, Trash2 } from "lucide-react";
 import { PageHeader, StatusBadge } from "@/shared/ui";
 import { Button } from "@/shared/ui/button";
 import { Skeleton } from "@/shared/ui/skeleton";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/shared/ui/alert-dialog";
 import { providerApi } from "@/entities/provider/api";
 import { queryKeys } from "@/shared/api/query-keys";
 
@@ -29,6 +41,8 @@ function fmtPeriod(start: string, end: string) {
 export function CompanyDetailPage() {
   const { id } = useParams({ from: "/provider/companies/$id" });
   const navigate = useNavigate();
+  const qc = useQueryClient();
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const companyQ = useQuery({
     queryKey: queryKeys.providerCompany(id),
@@ -37,6 +51,18 @@ export function CompanyDetailPage() {
   });
 
   const company = companyQ.data;
+
+  const deleteMutation = useMutation({
+    mutationFn: () => providerApi.deleteCompany(id),
+    onSuccess: () => {
+      toast.success("Компания удалена");
+      setDeleteOpen(false);
+      qc.invalidateQueries({ queryKey: ["provider-companies"] });
+      qc.invalidateQueries({ queryKey: queryKeys.providerDashboard });
+      navigate({ to: "/provider/companies" });
+    },
+    onError: () => toast.error("Не удалось удалить компанию"),
+  });
 
   return (
     <div className="space-y-6">
@@ -73,7 +99,19 @@ export function CompanyDetailPage() {
         </div>
       ) : company ? (
         <>
-          <PageHeader title={company.name} />
+          <PageHeader
+            title={company.name}
+            actions={
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => setDeleteOpen(true)}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Удалить компанию
+              </Button>
+            }
+          />
 
           {/* Info + Subscription */}
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -198,6 +236,34 @@ export function CompanyDetailPage() {
               </table>
             )}
           </div>
+
+          {/* ── Delete confirmation ──────────────────────────────────────────── */}
+          <AlertDialog open={deleteOpen} onOpenChange={(open) => !open && setDeleteOpen(false)}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Удалить компанию «{company.name}»?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Будут безвозвратно удалены из базы данных: аккаунт админа,{" "}
+                  {company.users.length} пользовател{company.users.length === 1 ? "ь" : "ей"},
+                  вся посещаемость, графики, заявки, QR-коды, новости, подписка и платежи.
+                  Это действие нельзя отменить.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={deleteMutation.isPending}>Отмена</AlertDialogCancel>
+                <AlertDialogAction
+                  disabled={deleteMutation.isPending}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    deleteMutation.mutate();
+                  }}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  {deleteMutation.isPending ? "Удаляем..." : "Удалить навсегда"}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </>
       ) : null}
     </div>
