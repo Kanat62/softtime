@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import { toast } from "sonner";
-import { Search, Play, PauseCircle } from "lucide-react";
+import { Search, Play, PauseCircle, Trash2 } from "lucide-react";
 import { CompanyStatus, SubStatus } from "@softtime/shared";
 import { PageHeader, StatusBadge, EmptyState } from "@/shared/ui";
 import { Button } from "@/shared/ui/button";
@@ -36,7 +36,7 @@ function fmtDate(iso: string | null | undefined) {
   }
 }
 
-type DialogAction = "activate" | "suspend";
+type DialogAction = "activate" | "suspend" | "delete";
 
 export function CompaniesPage() {
   const navigate = useNavigate();
@@ -93,7 +93,18 @@ export function CompaniesPage() {
     onError: () => toast.error("Ошибка при приостановке"),
   });
 
-  const mutPending = activateMut.isPending || suspendMut.isPending;
+  const deleteMut = useMutation({
+    mutationFn: (id: string) => providerApi.deleteCompany(id),
+    onSuccess: () => {
+      toast.success("Компания удалена");
+      setDialog({ open: false, company: null, action: "activate" });
+      qc.invalidateQueries({ queryKey: ["provider-companies"] });
+      qc.invalidateQueries({ queryKey: queryKeys.providerDashboard });
+    },
+    onError: () => toast.error("Не удалось удалить компанию"),
+  });
+
+  const mutPending = activateMut.isPending || suspendMut.isPending || deleteMut.isPending;
 
   function openDialog(company: ProviderCompanyListItem, action: DialogAction) {
     setDialog({ open: true, company, action });
@@ -195,7 +206,7 @@ export function CompaniesPage() {
                 <th className="px-3 py-2.5 font-medium">Подписка</th>
                 <th className="px-3 py-2.5 font-medium">След. платёж</th>
                 <th className="px-3 py-2.5 font-medium">Регистрация</th>
-                <th className="px-3 py-2.5 font-medium w-28">Действия</th>
+                <th className="px-3 py-2.5 font-medium w-40">Действия</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -223,27 +234,38 @@ export function CompaniesPage() {
                     {fmtDate(c.createdAt)}
                   </td>
                   <td className="px-3 py-2.5" onClick={(e) => e.stopPropagation()}>
-                    {c.status === CompanyStatus.SUSPENDED ? (
+                    <div className="flex items-center gap-1">
+                      {c.status === CompanyStatus.SUSPENDED ? (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 gap-1 px-2 text-xs text-[#1877F2] hover:bg-[#EBF2FF] hover:text-[#1877F2]"
+                          onClick={() => openDialog(c, "activate")}
+                        >
+                          <Play className="h-3 w-3" />
+                          Включить
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 gap-1 px-2 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
+                          onClick={() => openDialog(c, "suspend")}
+                        >
+                          <PauseCircle className="h-3 w-3" />
+                          Стоп
+                        </Button>
+                      )}
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-7 gap-1 px-2 text-xs text-[#1877F2] hover:bg-[#EBF2FF] hover:text-[#1877F2]"
-                        onClick={() => openDialog(c, "activate")}
+                        className="h-7 w-7 px-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                        title="Удалить компанию"
+                        onClick={() => openDialog(c, "delete")}
                       >
-                        <Play className="h-3 w-3" />
-                        Включить
+                        <Trash2 className="h-3.5 w-3.5" />
                       </Button>
-                    ) : (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 gap-1 px-2 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
-                        onClick={() => openDialog(c, "suspend")}
-                      >
-                        <PauseCircle className="h-3 w-3" />
-                        Стоп
-                      </Button>
-                    )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -267,26 +289,40 @@ export function CompaniesPage() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {dialog.action === "activate" ? "Активировать компанию?" : "Приостановить компанию?"}
+              {dialog.action === "activate"
+                ? "Активировать компанию?"
+                : dialog.action === "suspend"
+                  ? "Приостановить компанию?"
+                  : `Удалить компанию «${dialog.company?.name}»?`}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {dialog.action === "activate"
                 ? `Компания «${dialog.company?.name}» получит статус ACTIVE и доступ к платформе.`
-                : `Компания «${dialog.company?.name}» будет приостановлена. Сотрудники не смогут использовать приложение.`}
+                : dialog.action === "suspend"
+                  ? `Компания «${dialog.company?.name}» будет приостановлена. Сотрудники не смогут использовать приложение.`
+                  : "Аккаунт админа, все сотрудники, посещаемость, графики, заявки, QR-коды, новости, подписка и платежи будут безвозвратно удалены из базы данных. Это действие нельзя отменить."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={mutPending}>Отмена</AlertDialogCancel>
             <AlertDialogAction
-              className={dialog.action === "suspend" ? "bg-destructive text-white hover:bg-destructive/90" : ""}
+              className={dialog.action !== "activate" ? "bg-destructive text-white hover:bg-destructive/90" : ""}
               disabled={mutPending}
-              onClick={() => {
+              onClick={(e) => {
                 if (!dialog.company) return;
+                if (dialog.action === "delete") e.preventDefault();
                 if (dialog.action === "activate") activateMut.mutate(dialog.company.id);
-                else suspendMut.mutate(dialog.company.id);
+                else if (dialog.action === "suspend") suspendMut.mutate(dialog.company.id);
+                else deleteMut.mutate(dialog.company.id);
               }}
             >
-              {mutPending ? "Обработка..." : dialog.action === "activate" ? "Активировать" : "Приостановить"}
+              {mutPending
+                ? "Обработка..."
+                : dialog.action === "activate"
+                  ? "Активировать"
+                  : dialog.action === "suspend"
+                    ? "Приостановить"
+                    : "Удалить навсегда"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
