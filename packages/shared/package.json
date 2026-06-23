@@ -3,9 +3,12 @@
   "version": "1.0.0",
   "private": true,
   "main": "dist/index.js",
+  "source": "src/index.ts",
+  "react-native": "src/index.ts",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "prepare": "tsc"
   },
   "dependencies": {
     "zod": "^3.22.0"
