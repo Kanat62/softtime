@@ -26,6 +26,16 @@
     "@types/react": "^19.2.0"
   },
   "overrides": {
-    "@types/react": "^19.2.0"
+    "@types/react": "^19.2.0",
+    "metro": "0.84.4",
+    "metro-config": "0.84.4",
+    "metro-cache": "0.84.4",
+    "metro-core": "0.84.4",
+    "metro-runtime": "0.84.4",
+    "metro-babel-transformer": "0.84.4",
+    "@react-native/metro-config": "0.86.0",
+    "@react-native/babel-preset": "0.86.0",
+    "hermes-parser": "0.36.0",
+    "hermes-estree": "0.36.0"
   }
 }
