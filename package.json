@@ -8,7 +8,7 @@
     "packages/*"
   ],
   "scripts": {
-    "postinstall": "npm run build --workspace=packages/shared && node scripts/patch-reanimated-gradle.js",
+    "postinstall": "node scripts/patch-reanimated-gradle.js",
     "backend": "npm run start:dev --workspace=backend",
     "mobile": "npm start --workspace=mobile",
     "web": "npm run dev --workspace=web",

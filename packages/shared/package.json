@@ -7,8 +7,7 @@
   "react-native": "src/index.ts",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc",
-    "prepare": "tsc"
+    "build": "tsc"
   },
   "dependencies": {
     "zod": "^3.22.0"
