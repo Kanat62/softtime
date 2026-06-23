@@ -29,14 +29,21 @@
         "android.permission.CAMERA"
       ]
     },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/4fc8817d-4f18-4330-9007-1882efa44833"
+    },
     "plugins": [
       "react-native-vision-camera",
       "expo-font",
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-updates"
     ],
     "extra": {
       "eas": {
-        "projectId": "dfb11165-7bbf-4f41-aace-b9094af57364"
+        "projectId": "4fc8817d-4f18-4330-9007-1882efa44833"
       }
     },
     "owner": "kanat62"
