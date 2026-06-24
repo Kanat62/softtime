@@ -25,6 +25,7 @@
       },
       "package": "com.softtime.mobile",
       "userInterfaceStyle": "light",
+      "newArchEnabled": true,
       "permissions": [
         "android.permission.CAMERA"
       ]
