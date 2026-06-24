@@ -23,7 +23,8 @@
       "autoIncrement": true,
       "channel": "production",
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://backend-production-46b22.up.railway.app"
+        "EXPO_PUBLIC_API_URL": "https://backend-production-46b22.up.railway.app",
+        "ORG_GRADLE_PROJECT_reactNativeArchitectures": "arm64-v8a"
       }
     }
   },
