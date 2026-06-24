@@ -6,7 +6,8 @@
     "start": "expo start",
     "android": "node scripts/run-android.js",
     "ios": "expo run:ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "eas-build-post-install": "node scripts/patch-reanimated-eas.js"
   },
   "dependencies": {
     "@expo-google-fonts/manrope": "^0.2.3",
