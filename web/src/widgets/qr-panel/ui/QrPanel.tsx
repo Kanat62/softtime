@@ -1,15 +1,13 @@
 import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { QRCodeSVG, QRCodeCanvas } from "qrcode.react";
+import { QRCodeSVG } from "qrcode.react";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import { toast } from "sonner";
-import { Printer, Download, QrCode as QrIcon, RefreshCw } from "lucide-react";
+import { Printer, QrCode as QrIcon, RefreshCw } from "lucide-react";
 import { qrApi } from "@/entities/qr/api";
 import { networkApi } from "@/entities/office-network/api";
 import { queryKeys } from "@/shared/api/query-keys";
-import { useAuth } from "@/entities/session";
-import logoUrl from "@/assets/softtime.png";
 import { PageHeader, EmptyState } from "@/shared/ui";
 import { Button } from "@/shared/ui/button";
 import { Skeleton } from "@/shared/ui/skeleton";
@@ -36,21 +34,11 @@ function fmtDate(iso: string) {
 
 const NO_NETWORK = "__none__";
 
-function loadImage(src: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = reject;
-    img.src = src;
-  });
-}
-
 export function QrPanel() {
   const qc = useQueryClient();
-  const { user } = useAuth();
   const [regenDialogOpen, setRegenDialogOpen] = useState(false);
   const [selectedNetworkId, setSelectedNetworkId] = useState<string>(NO_NETWORK);
-  const qrCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const printRef = useRef<HTMLDivElement | null>(null);
 
   const qrQuery = useQuery({
     queryKey: queryKeys.qr,
@@ -84,101 +72,28 @@ export function QrPanel() {
     regenMutation.mutate(networkId);
   }
 
-  // Build a nicely formatted printable card on a canvas and return it as a PNG data URL.
-  async function buildCardDataUrl(): Promise<string | null> {
-    const qrCanvas = qrCanvasRef.current;
-    if (!qrCanvas) return null;
-
-    const scale = 2; // crisp on retina / print
-    const W = 560;
-    const H = 760;
-    const canvas = document.createElement("canvas");
-    canvas.width = W * scale;
-    canvas.height = H * scale;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return null;
-    ctx.scale(scale, scale);
-
-    // background
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, W, H);
-
-    const cx = W / 2;
-    ctx.textAlign = "center";
-
-    // logo
-    try {
-      const logo = await loadImage(logoUrl);
-      const ls = 72;
-      ctx.drawImage(logo, cx - ls / 2, 56, ls, ls);
-    } catch {
-      /* ignore logo failure */
-    }
-
-    // brand name
-    ctx.fillStyle = "#111827";
-    ctx.font = "700 30px Manrope, system-ui, sans-serif";
-    ctx.fillText("SoftTime", cx, 168);
-
-    // company name
-    if (user?.companyName) {
-      ctx.fillStyle = "#6B7280";
-      ctx.font = "500 18px Manrope, system-ui, sans-serif";
-      ctx.fillText(user.companyName, cx, 198);
-    }
-
-    // QR
-    const qrSize = 280;
-    const qrX = cx - qrSize / 2;
-    const qrY = 232;
-    ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
-
-    // instruction
-    ctx.fillStyle = "#6B7280";
-    ctx.font = "500 15px Manrope, system-ui, sans-serif";
-    ctx.fillText("Отсканируйте для отметки прихода", cx, qrY + qrSize + 48);
-
-    // company code
-    if (user?.companyCode) {
-      ctx.fillStyle = "#9CA3AF";
-      ctx.font = "600 12px Manrope, system-ui, sans-serif";
-      ctx.fillText("КОД КОМПАНИИ", cx, qrY + qrSize + 92);
-      ctx.fillStyle = "#1877F2";
-      ctx.font = "700 34px ui-monospace, Menlo, monospace";
-      ctx.fillText(user.companyCode, cx, qrY + qrSize + 132);
-    }
-
-    return canvas.toDataURL("image/png");
-  }
-
-  async function handleDownload() {
-    const url = await buildCardDataUrl();
-    if (!url) return toast.error("Не удалось подготовить QR");
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `qr-${user?.companyCode ?? "softtime"}.png`;
-    a.click();
-  }
-
-  async function handlePrint() {
-    const url = await buildCardDataUrl();
-    if (!url) return toast.error("Не удалось подготовить QR");
+  function handlePrint() {
+    const el = printRef.current;
+    if (!el || !qrQuery.data) return;
     const win = window.open("", "_blank");
-    if (!win) {
-      toast.error("Разрешите всплывающие окна для печати");
-      return;
-    }
+    if (!win) return;
+    const network = networks.find((n) => n.id === qrQuery.data!.officeNetworkId);
     win.document.write(`
-      <html><head><title>QR-код — ${user?.companyName ?? "SoftTime"}</title>
+      <html><head><title>QR-код</title>
       <style>
-        @page { margin: 8mm; }
-        body { margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        img { width: 18cm; max-width: 100%; height: auto; }
+        body { margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; font-family: sans-serif; }
+        .card { text-align: center; padding: 32px; }
+        p { color: #666; font-size: 13px; margin: 4px 0; }
       </style>
-      </head><body>
-        <img src="${url}" onload="window.focus();window.print();" />
-      </body></html>`);
+      </head><body><div class="card">
+        <div>${el.innerHTML}</div>
+        ${network ? `<p>${network.label}</p>` : ""}
+        <p style="font-family:monospace;font-size:11px;color:#999">${qrQuery.data!.token.slice(0, 16)}…</p>
+      </div></body></html>`);
     win.document.close();
+    win.focus();
+    win.print();
+    win.close();
   }
 
   const token = qrQuery.data;
@@ -223,17 +138,11 @@ export function QrPanel() {
         </div>
       ) : (
         <div className="flex flex-col items-center gap-6 rounded-2xl bg-card p-8 shadow-sm md:flex-row md:items-start">
-          <div className="flex aspect-square shrink-0 items-center justify-center rounded-xl bg-white p-6">
+          <div
+            ref={printRef}
+            className="flex aspect-square shrink-0 items-center justify-center rounded-xl bg-white p-6"
+          >
             <QRCodeSVG value={token.token} size={200} level="M" />
-            {/* hidden high-res canvas used to build the printable / downloadable card */}
-            <QRCodeCanvas
-              ref={qrCanvasRef}
-              value={token.token}
-              size={560}
-              level="M"
-              marginSize={2}
-              className="hidden"
-            />
           </div>
           <div className="flex flex-1 flex-col gap-3">
             <div>
@@ -258,11 +167,7 @@ export function QrPanel() {
                 {token.token}
               </p>
             </div>
-            <div className="mt-2 flex flex-wrap gap-2">
-              <Button size="sm" onClick={handleDownload}>
-                <Download className="mr-1.5 h-3.5 w-3.5" />
-                Скачать
-              </Button>
+            <div className="mt-2 flex gap-2">
               <Button variant="outline" size="sm" onClick={handlePrint}>
                 <Printer className="mr-1.5 h-3.5 w-3.5" />
                 Печать

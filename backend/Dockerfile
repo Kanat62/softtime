@@ -37,4 +37,4 @@ COPY --from=build --chown=appuser:appgroup /app/backend/package.json ./
 USER appuser
 EXPOSE 3000
 
-CMD ["sh", "-c", "npx prisma migrate deploy && node prisma/ensure-provider.js && node dist/src/main"]
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/src/main"]
