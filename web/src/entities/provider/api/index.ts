@@ -49,9 +49,6 @@ export const providerApi = {
   suspendCompany: (id: string) =>
     apiClient.patch<{ ok: boolean }>(`/provider/companies/${id}/suspend`).then((r) => r.data),
 
-  deleteCompany: (id: string) =>
-    apiClient.delete<{ ok: boolean }>(`/provider/companies/${id}`).then((r) => r.data),
-
   listPayments: (params?: ProviderPaymentsParams) =>
     apiClient
       .get<ProviderPaymentsResult>("/provider/payments", { params })
