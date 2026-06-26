@@ -30,3 +30,10 @@ Adminer — http://localhost:8080
 Пользователь: softtime
 Пароль: softtime
 База данных: softtime
+
+
+# Один раз — пересобрать (чтобы embed expo-updates в бинарник)
+cd mobile && eas build --profile production --platform android
+
+# Теперь при любых JS-изменениях — без ребилда:
+cd mobile && eas update --branch production --message "описание что изменилось"

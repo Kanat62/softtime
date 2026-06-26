@@ -56,8 +56,8 @@ export function LoginPage() {
       {/* ── Brand panel (desktop only) ──────────────────────────────── */}
       <aside className="hidden lg:flex lg:w-115 xl:w-125 shrink-0 flex-col bg-primary p-12 text-white">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/20">
-            <span className="text-sm font-bold tracking-tight">ST</span>
+          <div className="flex h-9 w-9 overflow-hidden rounded-lg">
+            <img src="/softtime-white.png" alt="SoftTime" className="h-9 w-9 object-cover" />
           </div>
           <span className="text-xl font-bold">SoftTime</span>
         </div>
@@ -89,8 +89,8 @@ export function LoginPage() {
       <main className="flex flex-1 flex-col items-center justify-center bg-background p-6 sm:p-10">
         {/* Mobile logo */}
         <div className="mb-8 flex items-center gap-2 lg:hidden">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-white">
-            <span className="text-sm font-bold">ST</span>
+          <div className="flex h-9 w-9 overflow-hidden rounded-lg">
+            <img src="/softtime-icon.png" alt="SoftTime" className="h-9 w-9 object-cover" />
           </div>
           <span className="text-xl font-bold text-foreground">SoftTime</span>
         </div>
@@ -98,7 +98,7 @@ export function LoginPage() {
         <div className="w-full max-w-100">
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-foreground">Вход в систему</h2>
-            <p className="mt-1.5 text-sm text-muted-foreground">
+            <p className="mt-1.5 text-base text-muted-foreground">
               Введите email и пароль для доступа к панели управления
             </p>
           </div>
@@ -106,7 +106,7 @@ export function LoginPage() {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
             {/* Email */}
             <div>
-              <Label htmlFor="email" className="text-sm font-medium">
+              <Label htmlFor="email" className="text-base font-medium">
                 Email
               </Label>
               <div className="relative mt-1.5">
@@ -132,7 +132,7 @@ export function LoginPage() {
 
             {/* Password */}
             <div>
-              <Label htmlFor="password" className="text-sm font-medium">
+              <Label htmlFor="password" className="text-base font-medium">
                 Пароль
               </Label>
               <div className="relative mt-1.5">
@@ -171,7 +171,7 @@ export function LoginPage() {
 
             <Button
               type="submit"
-              className="mt-2 h-11 w-full text-[15px] font-semibold"
+              className="mt-2 h-11 w-full text-base font-semibold"
               disabled={submitting}
             >
               {submitting ? (
@@ -185,7 +185,7 @@ export function LoginPage() {
             </Button>
           </form>
 
-          <p className="mt-6 text-center text-sm text-muted-foreground">
+          <p className="mt-6 text-center text-base text-muted-foreground">
             Нет аккаунта?{" "}
             <Link
               to="/register"

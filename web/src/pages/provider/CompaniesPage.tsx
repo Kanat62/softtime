@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import { toast } from "sonner";
-import { Search, Play, PauseCircle, Trash2 } from "lucide-react";
+import { Search, Play, PauseCircle } from "lucide-react";
 import { CompanyStatus, SubStatus } from "@softtime/shared";
 import { PageHeader, StatusBadge, EmptyState } from "@/shared/ui";
 import { Button } from "@/shared/ui/button";
@@ -36,7 +36,7 @@ function fmtDate(iso: string | null | undefined) {
   }
 }
 
-type DialogAction = "activate" | "suspend" | "delete";
+type DialogAction = "activate" | "suspend";
 
 export function CompaniesPage() {
   const navigate = useNavigate();
@@ -93,18 +93,7 @@ export function CompaniesPage() {
     onError: () => toast.error("Ошибка при приостановке"),
   });
 
-  const deleteMut = useMutation({
-    mutationFn: (id: string) => providerApi.deleteCompany(id),
-    onSuccess: () => {
-      toast.success("Компания удалена");
-      setDialog({ open: false, company: null, action: "activate" });
-      qc.invalidateQueries({ queryKey: ["provider-companies"] });
-      qc.invalidateQueries({ queryKey: queryKeys.providerDashboard });
-    },
-    onError: () => toast.error("Не удалось удалить компанию"),
-  });
-
-  const mutPending = activateMut.isPending || suspendMut.isPending || deleteMut.isPending;
+  const mutPending = activateMut.isPending || suspendMut.isPending;
 
   function openDialog(company: ProviderCompanyListItem, action: DialogAction) {
     setDialog({ open: true, company, action });
@@ -256,15 +245,6 @@ export function CompaniesPage() {
                           Стоп
                         </Button>
                       )}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 w-7 px-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                        title="Удалить компанию"
-                        onClick={() => openDialog(c, "delete")}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
                     </div>
                   </td>
                 </tr>
@@ -291,38 +271,30 @@ export function CompaniesPage() {
             <AlertDialogTitle>
               {dialog.action === "activate"
                 ? "Активировать компанию?"
-                : dialog.action === "suspend"
-                  ? "Приостановить компанию?"
-                  : `Удалить компанию «${dialog.company?.name}»?`}
+                : "Приостановить компанию?"}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {dialog.action === "activate"
                 ? `Компания «${dialog.company?.name}» получит статус ACTIVE и доступ к платформе.`
-                : dialog.action === "suspend"
-                  ? `Компания «${dialog.company?.name}» будет приостановлена. Сотрудники не смогут использовать приложение.`
-                  : "Аккаунт админа, все сотрудники, посещаемость, графики, заявки, QR-коды, новости, подписка и платежи будут безвозвратно удалены из базы данных. Это действие нельзя отменить."}
+                : `Компания «${dialog.company?.name}» будет приостановлена. Сотрудники не смогут использовать приложение.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={mutPending}>Отмена</AlertDialogCancel>
             <AlertDialogAction
-              className={dialog.action !== "activate" ? "bg-destructive text-white hover:bg-destructive/90" : ""}
+              className={dialog.action === "suspend" ? "bg-destructive text-white hover:bg-destructive/90" : ""}
               disabled={mutPending}
-              onClick={(e) => {
+              onClick={() => {
                 if (!dialog.company) return;
-                if (dialog.action === "delete") e.preventDefault();
                 if (dialog.action === "activate") activateMut.mutate(dialog.company.id);
-                else if (dialog.action === "suspend") suspendMut.mutate(dialog.company.id);
-                else deleteMut.mutate(dialog.company.id);
+                else suspendMut.mutate(dialog.company.id);
               }}
             >
               {mutPending
                 ? "Обработка..."
                 : dialog.action === "activate"
                   ? "Активировать"
-                  : dialog.action === "suspend"
-                    ? "Приостановить"
-                    : "Удалить навсегда"}
+                  : "Приостановить"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

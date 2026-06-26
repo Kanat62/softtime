@@ -38,7 +38,7 @@ export class SubscriptionsService {
       Math.ceil(((sub as any).periodEnd.getTime() - now) / (1000 * 60 * 60 * 24)),
     );
 
-    return { ...(sub as any), daysLeft };
+    return { ...(sub as any), priceUsd: 10, daysLeft };
   }
 
   // ─── POST /subscriptions/pay ──────────────────────────────────────────────────
@@ -50,7 +50,7 @@ export class SubscriptionsService {
       throw new ConflictException('Подписка отменена. Обратитесь в службу поддержки.');
     }
 
-    const checkoutUrl = await this.paymentProvider.createCheckout(30, companyId);
+    const checkoutUrl = await this.paymentProvider.createCheckout(10, companyId);
     return { checkoutUrl };
   }
 
@@ -149,7 +149,7 @@ export class SubscriptionsService {
         data: {
           companyId,
           subscriptionId: (sub as any).id,
-          amountUsd: payload.amount ?? 30,
+          amountUsd: payload.amount ?? 10,
           periodStart: now,
           periodEnd,
           status: PaymentStatus.PAID,

@@ -4,10 +4,10 @@
     "slug": "softtime",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/softtime-white.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/softtime-white.png",
       "resizeMode": "contain",
       "backgroundColor": "#1877F2"
     },
@@ -19,8 +19,9 @@
       }
     },
     "android": {
+      "icon": "./assets/softtime-white.png",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/softtime-white.png",
         "backgroundColor": "#1877F2"
       },
       "package": "com.softtime.mobile",
@@ -34,7 +35,7 @@
       "policy": "appVersion"
     },
     "updates": {
-      "url": "https://u.expo.dev/4fc8817d-4f18-4330-9007-1882efa44833"
+      "url": "https://u.expo.dev/006619fc-b185-4228-a38e-03bf74c01b6c"
     },
     "plugins": [
       "react-native-vision-camera",
@@ -44,9 +45,9 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "4fc8817d-4f18-4330-9007-1882efa44833"
+        "projectId": "006619fc-b185-4228-a38e-03bf74c01b6c"
       }
     },
-    "owner": "kanat62"
+    "owner": "kanatdev5"
   }
 }

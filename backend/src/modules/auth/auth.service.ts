@@ -89,7 +89,7 @@ export class AuthService {
             status: SubStatus.TRIAL,
             periodStart: now,
             periodEnd,
-            priceUsd: 30,
+            priceUsd: 10,
           },
         });
 

@@ -25,7 +25,7 @@ export class CompaniesService {
       subscription: company.subscription
         ? {
             status: company.subscription.status,
-            priceUsd: company.subscription.priceUsd,
+            priceUsd: 10,
             periodStart: company.subscription.periodStart,
             periodEnd: company.subscription.periodEnd,
             nextBillingAt: company.subscription.nextBillingAt,

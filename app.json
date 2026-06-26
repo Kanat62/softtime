@@ -1,20 +1,53 @@
 {
-  "extra": {
-    "eas": {
-      "projectId": "2eab1e92-daac-4edb-96a1-7a9c0966d375"
-    }
-  },
   "expo": {
+    "name": "SoftTime",
+    "slug": "softtime",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./mobile/assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./mobile/assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FFFFFF"
+    },
     "ios": {
-      "bundleIdentifier": "com.emilbek.softtime",
+      "supportsTablet": false,
+      "bundleIdentifier": "com.softtime.mobile",
       "infoPlist": {
+        "NSCameraUsageDescription": "Allow $(PRODUCT_NAME) to access your camera",
         "ITSAppUsesNonExemptEncryption": false
       }
     },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./mobile/assets/adaptive-icon.png",
+        "backgroundColor": "#FFFFFF"
+      },
+      "package": "com.softtime.mobile",
+      "userInterfaceStyle": "light",
+      "newArchEnabled": true,
+      "permissions": [
+        "android.permission.CAMERA"
+      ]
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/006619fc-b185-4228-a38e-03bf74c01b6c"
+    },
+    "plugins": [
+      "react-native-vision-camera",
+      "expo-font",
+      "expo-secure-store",
+      "expo-updates"
+    ],
     "extra": {
       "eas": {
-        "projectId": "2eab1e92-daac-4edb-96a1-7a9c0966d375"
+        "projectId": "006619fc-b185-4228-a38e-03bf74c01b6c"
       }
-    }
+    },
+    "owner": "kanatdev5"
   }
 }

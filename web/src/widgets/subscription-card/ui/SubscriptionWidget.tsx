@@ -88,10 +88,10 @@ export function SubscriptionWidget() {
           size="sm"
           className="shrink-0"
           disabled={payMut.isPending}
-          onClick={() => payMut.mutate()}
+          onClick={() => window.open("https://wa.me/996702928197", "_blank", "noopener,noreferrer")}
         >
-          {payMut.isPending ? "Перенаправление…" : "Оплатить"}
-          {!payMut.isPending && <ExternalLink className="ml-1.5 h-3.5 w-3.5" />}
+          Оплатить
+          <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
         </Button>
       )}
     </div>

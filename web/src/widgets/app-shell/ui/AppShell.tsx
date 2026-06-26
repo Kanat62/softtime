@@ -7,9 +7,9 @@ import {
   Inbox,
   Newspaper,
   BarChart3,
-  Sparkles,
   Settings,
   LogOut,
+  Headphones,
   Building2,
   Wallet,
   type LucideIcon,
@@ -56,7 +56,6 @@ const ADMIN_NAV: NavGroup[] = [
       { to: "/admin/requests", label: "Заявки", icon: Inbox },
       { to: "/admin/news", label: "Новости", icon: Newspaper },
       { to: "/admin/reports", label: "Отчёты", icon: BarChart3 },
-      { to: "/admin/assistant", label: "ИИ-аналитик", icon: Sparkles },
     ],
   },
   {
@@ -86,8 +85,8 @@ function Sidebar({ role }: { role: UserRole }) {
   return (
     <aside className="flex h-screen w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar">
       <div className="flex items-center gap-2 px-5 py-5">
-        <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary text-primary-foreground">
-          <span className="text-sm font-bold">ST</span>
+        <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-md">
+          <img src="/softtime-icon.png" alt="SoftTime" className="h-9 w-9 object-cover" />
         </div>
         <div className="text-sm font-semibold text-sidebar-foreground">SoftTime</div>
       </div>
@@ -107,7 +106,7 @@ function Sidebar({ role }: { role: UserRole }) {
                     <Link
                       to={item.to}
                       className={cn(
-                        "flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm font-medium transition-colors",
+                        "flex items-center gap-2.5 rounded-md px-2.5 py-2 text-base font-medium transition-colors",
                         active
                           ? "bg-sidebar-accent text-sidebar-accent-foreground"
                           : "text-sidebar-foreground hover:bg-sidebar-accent/60",
@@ -124,7 +123,16 @@ function Sidebar({ role }: { role: UserRole }) {
         ))}
       </nav>
 
-      <div className="border-t border-sidebar-border p-4">
+      <div className="border-t border-sidebar-border p-4 space-y-1">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="w-full justify-start text-muted-foreground hover:text-primary"
+          onClick={() => window.open("https://wa.me/996702928197", "_blank", "noopener,noreferrer")}
+        >
+          <Headphones className="mr-2 h-4 w-4" />
+          Тех. поддержка
+        </Button>
         <Button
           variant="ghost"
           size="sm"

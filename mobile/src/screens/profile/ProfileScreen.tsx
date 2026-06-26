@@ -167,7 +167,7 @@ export function ProfileScreen() {
   }
 
   function handleOpenWebPanel() {
-    Linking.openURL('https://softtime.app').catch(() => {
+    Linking.openURL('https://softtime-web.vercel.app/').catch(() => {
       Alert.alert('Ошибка', 'Не удалось открыть браузер.');
     });
   }

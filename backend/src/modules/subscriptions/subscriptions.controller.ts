@@ -48,7 +48,7 @@ export class SubscriptionsController {
 
   @Post('pay')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Инициировать оплату $30 → вернуть ссылку (ADMIN)' })
+  @ApiOperation({ summary: 'Инициировать оплату $10 → вернуть ссылку (ADMIN)' })
   initiatePayment(@CurrentUser() user: TenantPayload) {
     return this.subscriptionsService.initiatePayment(user.companyId!);
   }

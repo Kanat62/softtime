@@ -29,7 +29,6 @@ import { Route as AdminEmployeesRouteImport } from './routes/admin.employees'
 import { Route as AdminDashboardRouteImport } from './routes/admin.dashboard'
 import { Route as AdminAuditRouteImport } from './routes/admin.audit'
 import { Route as AdminAttendanceRouteImport } from './routes/admin.attendance'
-import { Route as AdminAssistantRouteImport } from './routes/admin.assistant'
 import { Route as AdminEmployeesIndexRouteImport } from './routes/admin.employees.index'
 import { Route as ProviderCompaniesIdRouteImport } from './routes/provider.companies.$id'
 import { Route as AdminEmployeesIdRouteImport } from './routes/admin.employees.$id'
@@ -134,11 +133,6 @@ const AdminAttendanceRoute = AdminAttendanceRouteImport.update({
   path: '/attendance',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminAssistantRoute = AdminAssistantRouteImport.update({
-  id: '/assistant',
-  path: '/assistant',
-  getParentRoute: () => AdminRoute,
-} as any)
 const AdminEmployeesIndexRoute = AdminEmployeesIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -161,7 +155,6 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/provider': typeof ProviderRouteWithChildren
   '/register': typeof RegisterRoute
-  '/admin/assistant': typeof AdminAssistantRoute
   '/admin/attendance': typeof AdminAttendanceRoute
   '/admin/audit': typeof AdminAuditRoute
   '/admin/dashboard': typeof AdminDashboardRoute
@@ -187,7 +180,6 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/provider': typeof ProviderRouteWithChildren
   '/register': typeof RegisterRoute
-  '/admin/assistant': typeof AdminAssistantRoute
   '/admin/attendance': typeof AdminAttendanceRoute
   '/admin/audit': typeof AdminAuditRoute
   '/admin/dashboard': typeof AdminDashboardRoute
@@ -213,7 +205,6 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/provider': typeof ProviderRouteWithChildren
   '/register': typeof RegisterRoute
-  '/admin/assistant': typeof AdminAssistantRoute
   '/admin/attendance': typeof AdminAttendanceRoute
   '/admin/audit': typeof AdminAuditRoute
   '/admin/dashboard': typeof AdminDashboardRoute
@@ -241,7 +232,6 @@ export interface FileRouteTypes {
     | '/login'
     | '/provider'
     | '/register'
-    | '/admin/assistant'
     | '/admin/attendance'
     | '/admin/audit'
     | '/admin/dashboard'
@@ -267,7 +257,6 @@ export interface FileRouteTypes {
     | '/login'
     | '/provider'
     | '/register'
-    | '/admin/assistant'
     | '/admin/attendance'
     | '/admin/audit'
     | '/admin/dashboard'
@@ -292,7 +281,6 @@ export interface FileRouteTypes {
     | '/login'
     | '/provider'
     | '/register'
-    | '/admin/assistant'
     | '/admin/attendance'
     | '/admin/audit'
     | '/admin/dashboard'
@@ -463,13 +451,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAttendanceRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/assistant': {
-      id: '/admin/assistant'
-      path: '/assistant'
-      fullPath: '/admin/assistant'
-      preLoaderRoute: typeof AdminAssistantRouteImport
-      parentRoute: typeof AdminRoute
-    }
     '/admin/employees/': {
       id: '/admin/employees/'
       path: '/'
@@ -509,7 +490,6 @@ const AdminEmployeesRouteWithChildren = AdminEmployeesRoute._addFileChildren(
 )
 
 interface AdminRouteChildren {
-  AdminAssistantRoute: typeof AdminAssistantRoute
   AdminAttendanceRoute: typeof AdminAttendanceRoute
   AdminAuditRoute: typeof AdminAuditRoute
   AdminDashboardRoute: typeof AdminDashboardRoute
@@ -525,7 +505,6 @@ interface AdminRouteChildren {
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
-  AdminAssistantRoute: AdminAssistantRoute,
   AdminAttendanceRoute: AdminAttendanceRoute,
   AdminAuditRoute: AdminAuditRoute,
   AdminDashboardRoute: AdminDashboardRoute,

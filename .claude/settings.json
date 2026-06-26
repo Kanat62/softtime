@@ -7,7 +7,8 @@
       "Bash(node:*)",
       "Write(**)",
       "Read(**)",
-      "Bash(npx expo *)"
+      "Bash(npx expo *)",
+      "Bash(taskkill /PID 18860 /F)"
     ],
     "deny": [
       "Bash(rm -rf /*)",

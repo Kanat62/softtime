@@ -39,6 +39,7 @@ const ACTION_LABELS: Record<string, string> = {
   QR_REGENERATED: "Обновлён QR-код",
   // Новости
   NEWS_CREATED: "Опубликована новость",
+  NEWS_DELETED: "Новость удалена",
   // Компания / настройки / подписка
   UPDATE_COMPANY_REQUISITES: "Изменены реквизиты компании",
   COMPANY_ACTIVATED: "Компания активирована",
@@ -77,6 +78,7 @@ const DESTRUCTIVE_ACTIONS = [
   "USER_STATUS_CHANGED",
   "REQUEST_REJECTED",
   "OFFICE_NETWORK_DELETED",
+  "NEWS_DELETED",
   "COMPANY_SUSPENDED",
   "SUBSCRIPTION_CANCELLED",
 ];

@@ -22,8 +22,8 @@ import {
 import { useState } from "react";
 
 const FEATURES = [
-  "До 50 сотрудников",
-  "Безлимит check-in / check-out",
+  "Безлимит сотрудников",
+  "Безлимит приходов и уходов",
   "Отчёты и экспорт",
   "Внутренние новости",
   "Email-поддержка",
@@ -154,10 +154,10 @@ export function SubscriptionCard() {
               </div>
               <div className="mt-6 flex flex-wrap gap-2">
                 {canPay && (
-                  <Button onClick={() => payMutation.mutate()} disabled={payMutation.isPending}>
+                  <Button onClick={() => window.open("https://wa.me/996702928197", "_blank", "noopener,noreferrer")}>
                     <CreditCard className="mr-2 h-4 w-4" />
-                    {payMutation.isPending ? "Перенаправление..." : `Оплатить $${sub.priceUsd}`}
-                    {!payMutation.isPending && <ExternalLink className="ml-2 h-3.5 w-3.5" />}
+                    Оплатить ${sub.priceUsd}
+                    <ExternalLink className="ml-2 h-3.5 w-3.5" />
                   </Button>
                 )}
                 {sub.status === "ACTIVE" && (

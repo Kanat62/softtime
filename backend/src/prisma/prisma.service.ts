@@ -47,7 +47,6 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
   get workSettings() { return this._client.workSettings; }
   get deviceToken() { return this._client.deviceToken; }
   get companyDefaultSchedule() { return this._client.companyDefaultSchedule; }
-  get aiInsight() { return this._client.aiInsight; }
 
   // ─── Utilities ────────────────────────────────────────────────────────────
   get $transaction(): PrismaClient['$transaction'] {

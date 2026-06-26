@@ -177,9 +177,9 @@ export class ProviderService {
         where: { id },
         data: { status: CompanyStatus.ACTIVE },
       }),
-      // Activate subscription only if it exists and not CANCELLED
+      // Provider can re-activate any subscription (including CANCELLED)
       this.prisma.subscription.updateMany({
-        where: { companyId: id, status: { notIn: [SubStatus.CANCELLED] as any } },
+        where: { companyId: id },
         data: { status: SubStatus.ACTIVE },
       }),
     ]);
@@ -202,10 +202,17 @@ export class ProviderService {
     const company = await this.prisma.company.findUnique({ where: { id } });
     if (!company) throw new NotFoundException('Компания не найдена');
 
-    await this.prisma.company.update({
-      where: { id },
-      data: { status: CompanyStatus.SUSPENDED },
-    });
+    await Promise.all([
+      this.prisma.company.update({
+        where: { id },
+        data: { status: CompanyStatus.SUSPENDED },
+      }),
+      // Cancel subscription so the admin web panel shows the "suspended" banner
+      this.prisma.subscription.updateMany({
+        where: { companyId: id },
+        data: { status: SubStatus.CANCELLED },
+      }),
+    ]);
 
     await Promise.all([
       this.audit.log({
