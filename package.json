@@ -20,13 +20,13 @@
     "expo": "~54.0.35",
     "react": "19.1.0",
     "react-native": "0.81.5",
-    "react-native-worklets": "~0.8.3"
+    "react-native-worklets": "~0.5.1"
   },
   "devDependencies": {
-    "@types/react": "^19.2.0"
+    "@types/react": "~19.1.10"
   },
   "overrides": {
-    "@types/react": "^19.2.0",
+    "@types/react": "~19.1.10",
     "metro": "0.84.4",
     "metro-config": "0.84.4",
     "metro-cache": "0.84.4",
