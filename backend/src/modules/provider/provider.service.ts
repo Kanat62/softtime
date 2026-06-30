@@ -233,6 +233,50 @@ export class ProviderService {
     return { ok: true };
   }
 
+  // ─── Delete ───────────────────────────────────────────────────────────────────
+
+  async deleteCompany(id: string, actorId: string) {
+    const company = await this.prisma.company.findUnique({ where: { id } });
+    if (!company) throw new NotFoundException('Компания не найдена');
+
+    await this.prisma.$transaction(async (tx) => {
+      const userIds = (
+        await tx.user.findMany({ where: { companyId: id }, select: { id: true } })
+      ).map((u) => u.id);
+
+      const newsIds = (
+        await tx.news.findMany({ where: { companyId: id }, select: { id: true } })
+      ).map((n) => n.id);
+
+      await tx.newsRead.deleteMany({ where: { newsId: { in: newsIds } } });
+      await tx.news.deleteMany({ where: { companyId: id } });
+      await tx.payment.deleteMany({ where: { companyId: id } });
+      await tx.subscription.deleteMany({ where: { companyId: id } });
+      await tx.qrToken.deleteMany({ where: { companyId: id } });
+      await tx.officeNetwork.deleteMany({ where: { companyId: id } });
+      await tx.absenceRequest.deleteMany({ where: { companyId: id } });
+      await tx.attendance.deleteMany({ where: { companyId: id } });
+      await tx.employeeSchedule.deleteMany({ where: { companyId: id } });
+      await tx.workSettings.deleteMany({ where: { companyId: id } });
+      await tx.companyDefaultSchedule.deleteMany({ where: { companyId: id } });
+      await tx.deviceToken.deleteMany({ where: { userId: { in: userIds } } });
+      await tx.user.deleteMany({ where: { companyId: id } });
+      await tx.auditLog.deleteMany({ where: { companyId: id } });
+      await tx.company.delete({ where: { id } });
+    });
+
+    await this.audit.log({
+      actorId,
+      action: 'COMPANY_DELETED',
+      entityType: 'Company',
+      entityId: id,
+      meta: { companyName: (company as any).name },
+      companyId: null,
+    });
+
+    return { ok: true };
+  }
+
   // ─── Payments ─────────────────────────────────────────────────────────────────
 
   async listPayments(query: {

@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Patch,
+  Delete,
   Param,
   Query,
   HttpCode,
@@ -99,6 +100,15 @@ export class ProviderController {
   @ApiOperation({ summary: 'Приостановить компанию (PROVIDER) + push ADMIN + audit' })
   suspend(@Param('id') id: string, @CurrentUser() user: TenantPayload) {
     return this.providerService.suspendCompany(id, user.userId);
+  }
+
+  // ── DELETE /provider/companies/:id ───────────────────────────────────────
+
+  @Delete('companies/:id')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Удалить компанию и все связанные данные (PROVIDER)' })
+  deleteCompany(@Param('id') id: string, @CurrentUser() user: TenantPayload) {
+    return this.providerService.deleteCompany(id, user.userId);
   }
 
   // ── GET /provider/companies/:id ───────────────────────────────────────────
