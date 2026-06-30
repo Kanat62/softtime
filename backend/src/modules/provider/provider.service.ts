@@ -271,7 +271,7 @@ export class ProviderService {
       entityType: 'Company',
       entityId: id,
       meta: { companyName: (company as any).name },
-      companyId: null,
+      companyId: undefined,
     });
 
     return { ok: true };
