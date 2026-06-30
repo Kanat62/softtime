@@ -23,10 +23,9 @@ import {
   Mail,
   ShieldCheck,
 } from 'lucide-react-native';
-import { UserRole, Weekday } from '@softtime/shared';
+import { UserRole } from '@softtime/shared';
 import { useAuth } from '@/app/providers/AuthProvider';
 import { useProfile } from '@/features/profile/model/useProfile';
-import { useMySchedule } from '@/features/schedule/model/useMySchedule';
 import {
   colors,
   fontFamily,
@@ -34,52 +33,16 @@ import {
   iconStrokeWidth,
   layout,
   radius,
+  shadows,
   space,
   typography,
 } from '@/shared/config/theme';
 import { useNavigation } from '@react-navigation/native';
 import { OfflineBanner } from '@/shared/ui';
 
-// ─── Constants ────────────────────────────────────────────────────────────────
-
-const WEEKDAY_LABELS: Record<Weekday, string> = {
-  [Weekday.MON]: 'Пн',
-  [Weekday.TUE]: 'Вт',
-  [Weekday.WED]: 'Ср',
-  [Weekday.THU]: 'Чт',
-  [Weekday.FRI]: 'Пт',
-  [Weekday.SAT]: 'Сб',
-  [Weekday.SUN]: 'Вс',
-};
-
-const WEEKDAY_ORDER: Weekday[] = [
-  Weekday.MON,
-  Weekday.TUE,
-  Weekday.WED,
-  Weekday.THU,
-  Weekday.FRI,
-  Weekday.SAT,
-  Weekday.SUN,
-];
-
-function formatDate(date: Date | null): string {
-  if (!date) return '—';
-  return date.toLocaleDateString('ru-RU', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  });
-}
-
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function AvatarBlock({
-  initials,
-  onCameraPress,
-}: {
-  initials: string;
-  onCameraPress: () => void;
-}) {
+function AvatarBlock({ initials, onCameraPress }: { initials: string; onCameraPress: () => void }) {
   return (
     <View style={s.avatarWrapper}>
       <View style={s.avatar}>
@@ -107,15 +70,7 @@ function RoleBadge({ role }: { role: UserRole }) {
   );
 }
 
-function InfoRow({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-}) {
+function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
     <View style={s.infoRow}>
       <View style={s.infoIcon}>{icon}</View>
@@ -127,45 +82,25 @@ function InfoRow({
   );
 }
 
-function ScheduleRow({
-  day,
-  isWorking,
-  startTime,
-  endTime,
-}: {
-  day: string;
-  isWorking: boolean;
-  startTime: string | null;
-  endTime: string | null;
-}) {
-  return (
-    <View style={s.scheduleRow}>
-      <View style={[s.scheduleDot, isWorking ? s.scheduleDotActive : s.scheduleDotOff]} />
-      <Text style={s.scheduleDay}>{day}</Text>
-      <Text style={[s.scheduleTime, !isWorking && s.scheduleTimeOff]}>
-        {isWorking && startTime && endTime ? `${startTime} – ${endTime}` : 'Выходной'}
-      </Text>
-    </View>
-  );
-}
-
 function ActionRow({
   icon,
   label,
   onPress,
   variant = 'default',
   showChevron = false,
+  borderColor,
 }: {
   icon: React.ReactNode;
   label: string;
   onPress: () => void;
   variant?: 'default' | 'danger';
   showChevron?: boolean;
+  borderColor?: string;
 }) {
   const isDanger = variant === 'danger';
   return (
     <TouchableOpacity
-      style={[s.actionRow, isDanger && s.actionRowDanger]}
+      style={[s.actionRow, borderColor ? { borderWidth: 1.5, borderColor, borderRadius: radius.md } : undefined]}
       onPress={onPress}
       activeOpacity={0.85}
       accessibilityLabel={label}
@@ -181,13 +116,7 @@ function ActionRow({
 
 // ─── Change Password Modal ────────────────────────────────────────────────────
 
-function ChangePasswordModal({
-  visible,
-  onClose,
-}: {
-  visible: boolean;
-  onClose: () => void;
-}) {
+function ChangePasswordModal({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <TouchableOpacity style={s.overlay} activeOpacity={1} onPress={onClose}>
@@ -219,34 +148,18 @@ export function ProfileScreen() {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
 
   const { user, isLoading } = useProfile();
-  const { schedule } = useMySchedule();
 
   const isAdmin = userRole === UserRole.ADMIN;
 
   const initials = user
-    ? user.fullName
-        .split(' ')
-        .slice(0, 2)
-        .map((w) => w[0])
-        .join('')
-        .toUpperCase()
+    ? user.fullName.split(' ').slice(0, 2).map((w) => w[0]).join('').toUpperCase()
     : '?';
 
   function handleLogout() {
-    Alert.alert(
-      'Выход',
-      'Вы уверены, что хотите выйти из аккаунта?',
-      [
-        { text: 'Отмена', style: 'cancel' },
-        {
-          text: 'Выйти',
-          style: 'destructive',
-          onPress: async () => {
-            await logout();
-          },
-        },
-      ],
-    );
+    Alert.alert('Выход', 'Вы уверены, что хотите выйти из аккаунта?', [
+      { text: 'Отмена', style: 'cancel' },
+      { text: 'Выйти', style: 'destructive', onPress: async () => { await logout(); } },
+    ]);
   }
 
   function handleAvatarCamera() {
@@ -254,18 +167,19 @@ export function ProfileScreen() {
   }
 
   function handleOpenWebPanel() {
-    Linking.openURL('https://softtime.app').catch(() => {
+    Linking.openURL('https://softtime-web.vercel.app/').catch(() => {
       Alert.alert('Ошибка', 'Не удалось открыть браузер.');
     });
   }
 
   return (
     <SafeAreaView style={s.root} edges={['top']}>
+      <View style={s.pageHeader}>
+        <Text style={s.pageTitle}>Профиль</Text>
+      </View>
       <OfflineBanner variant="stale" />
-      <ScrollView
-        contentContainerStyle={s.scroll}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
+
         {/* ── Header card ── */}
         <View style={s.headerCard}>
           {isLoading ? (
@@ -292,36 +206,9 @@ export function ProfileScreen() {
           <InfoRow
             icon={<Building2 size={iconSize.md} color={colors.textSecondary} strokeWidth={iconStrokeWidth} />}
             label="Компания"
-            value={user?.companyId ? 'SoftTime Ltd.' : '—'}
+            value={user?.companyName ?? '—'}
           />
         </View>
-
-        {/* ── Schedule card ── */}
-        <TouchableOpacity
-          style={s.card}
-          activeOpacity={0.9}
-          onPress={() => navigation.navigate('Home', { screen: 'MySchedule' } as any)}
-          accessibilityLabel="Мой график"
-        >
-          <View style={s.scheduleHeader}>
-            <Text style={s.cardTitle}>График работы</Text>
-            <ChevronRight size={iconSize.md} color={colors.textSecondary} strokeWidth={iconStrokeWidth} />
-          </View>
-          <View style={s.scheduleList}>
-            {WEEKDAY_ORDER.map((weekday) => {
-              const entry = schedule?.find((e) => e.weekday === weekday);
-              return (
-                <ScheduleRow
-                  key={weekday}
-                  day={WEEKDAY_LABELS[weekday]}
-                  isWorking={entry?.isWorkingDay ?? false}
-                  startTime={entry?.startTime ?? null}
-                  endTime={entry?.endTime ?? null}
-                />
-              );
-            })}
-          </View>
-        </TouchableOpacity>
 
         {/* ── Admin-only actions ── */}
         {isAdmin && (
@@ -365,10 +252,7 @@ export function ProfileScreen() {
         <View style={s.bottomSpacer} />
       </ScrollView>
 
-      <ChangePasswordModal
-        visible={showPasswordModal}
-        onClose={() => setShowPasswordModal(false)}
-      />
+      <ChangePasswordModal visible={showPasswordModal} onClose={() => setShowPasswordModal(false)} />
     </SafeAreaView>
   );
 }
@@ -376,17 +260,15 @@ export function ProfileScreen() {
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const s = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: colors.bg,
-  },
-  scroll: {
+  root: { flex: 1, backgroundColor: colors.bg },
+  pageHeader: {
+    height: 56,
+    justifyContent: 'center',
     paddingHorizontal: layout.screenPadding,
-    paddingTop: space[4],
-    gap: space[3],
   },
+  pageTitle: { ...typography.xl, fontFamily: fontFamily.bold, color: colors.textPrimary },
+  scroll: { paddingHorizontal: layout.screenPadding, gap: space[3] },
 
-  // Header card
   headerCard: {
     backgroundColor: colors.surface,
     borderRadius: radius.xl,
@@ -397,14 +279,10 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: space[4],
+    ...(shadows.card as object),
   },
-  headerInfo: {
-    flex: 1,
-    gap: space[2],
-  },
-  avatarWrapper: {
-    position: 'relative',
-  },
+  headerInfo: { flex: 1, gap: space[2] },
+  avatarWrapper: { position: 'relative' },
   avatar: {
     width: 64,
     height: 64,
@@ -413,12 +291,7 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarInitial: {
-    fontSize: 24,
-    lineHeight: 30,
-    fontFamily: fontFamily.bold,
-    color: colors.primary,
-  },
+  avatarInitial: { fontSize: 24, lineHeight: 30, fontFamily: fontFamily.bold, color: colors.primary },
   cameraBtn: {
     position: 'absolute',
     bottom: 0,
@@ -432,135 +305,51 @@ const s = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
-  fullName: {
-    ...typography.lg,
-    fontFamily: fontFamily.bold,
-    color: colors.textPrimary,
-  },
+  fullName: { ...typography.lg, fontFamily: fontFamily.bold, color: colors.textPrimary },
   roleBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'flex-start',
     gap: 4,
-    paddingHorizontal: space[2],
+    paddingRight: space[2],
     paddingVertical: 4,
     borderRadius: radius.full,
   },
-  roleBadgeText: {
-    fontSize: 13,
-    lineHeight: 18,
-    fontFamily: fontFamily.medium,
-    color: colors.primary,
-  },
+  roleBadgeText: { fontSize: 13, lineHeight: 18, fontFamily: fontFamily.medium, color: colors.primary },
 
-  // Card
   card: {
     backgroundColor: colors.surface,
     borderRadius: radius.xl,
     paddingHorizontal: space[4],
     paddingVertical: space[2],
+    ...(shadows.card as object),
+  },
+  cardTitle: { ...typography.baseMedium, color: colors.textPrimary },
+  divider: { height: 1, backgroundColor: colors.border, marginVertical: space[1] },
 
-  },
-  cardTitle: {
-    ...typography.baseMedium,
-    color: colors.textPrimary,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: colors.border,
-    marginVertical: space[1],
-  },
-
-  // Info rows
   infoRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: space[3],
     gap: space[3],
   },
-  infoIcon: {
-    width: 20,
-    alignItems: 'center',
-  },
-  infoText: {
-    flex: 1,
-    gap: 2,
-  },
-  infoLabel: {
-    ...typography.xs,
-    color: colors.textSecondary,
-  },
-  infoValue: {
-    ...typography.base,
-    color: colors.textPrimary,
-  },
+  infoIcon: { width: 20, alignItems: 'center' },
+  infoText: { flex: 1, gap: 2 },
+  infoLabel: { ...typography.xs, color: colors.textSecondary },
+  infoValue: { ...typography.base, color: colors.textPrimary },
 
-  // Schedule
-  scheduleHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: space[3],
-  },
-  scheduleList: {
-    gap: space[1],
-    paddingBottom: space[2],
-  },
-  scheduleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: space[1] + 2,
-    gap: space[2],
-  },
-  scheduleDot: {
-    width: 8,
-    height: 8,
-    borderRadius: radius.full,
-  },
-  scheduleDotActive: {
-    backgroundColor: colors.success,
-  },
-  scheduleDotOff: {
-    backgroundColor: colors.textDisabled,
-  },
-  scheduleDay: {
-    ...typography.sm,
-    color: colors.textSecondary,
-    width: 28,
-  },
-  scheduleTime: {
-    ...typography.sm,
-    color: colors.textPrimary,
-    fontFamily: fontFamily.medium,
-  },
-  scheduleTimeOff: {
-    color: colors.textDisabled,
-    fontFamily: fontFamily.regular,
-  },
-
-  // Action rows
   actionRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: space[3],
+    paddingHorizontal: space[1],
     gap: space[3],
     minHeight: 44,
   },
-  actionRowDanger: {},
-  actionIcon: {
-    width: 20,
-    alignItems: 'center',
-  },
-  actionLabel: {
-    flex: 1,
-    ...typography.base,
-    color: colors.textPrimary,
-  },
-  actionLabelDanger: {
-    color: colors.danger,
-  },
+  actionIcon: { width: 20, alignItems: 'center' },
+  actionLabel: { flex: 1, ...typography.base, color: colors.textPrimary },
+  actionLabelDanger: { color: colors.danger },
 
-  // Logout button
   logoutBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -572,14 +361,10 @@ const s = StyleSheet.create({
     paddingVertical: space[4],
     backgroundColor: colors.surface,
     minHeight: 52,
+    ...(shadows.card as object),
   },
-  logoutText: {
-    ...typography.base,
-    fontFamily: fontFamily.semiBold,
-    color: colors.danger,
-  },
+  logoutText: { ...typography.base, fontFamily: fontFamily.semiBold, color: colors.danger },
 
-  // Modal
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.4)',
@@ -605,9 +390,7 @@ const s = StyleSheet.create({
     backgroundColor: colors.border,
     marginBottom: space[2],
   },
-  modalIconRow: {
-    alignItems: 'center',
-  },
+  modalIconRow: { alignItems: 'center' },
   modalIconBg: {
     width: 56,
     height: 56,
@@ -616,15 +399,8 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  modalTitle: {
-    ...typography.lg,
-    color: colors.textPrimary,
-  },
-  modalDesc: {
-    ...typography.sm,
-    color: colors.textSecondary,
-    textAlign: 'center',
-  },
+  modalTitle: { ...typography.lg, color: colors.textPrimary },
+  modalDesc: { ...typography.sm, color: colors.textSecondary, textAlign: 'center' },
   modalBtn: {
     backgroundColor: colors.primary,
     borderRadius: radius.md,
@@ -634,13 +410,6 @@ const s = StyleSheet.create({
     alignItems: 'center',
     marginTop: space[1],
   },
-  modalBtnText: {
-    ...typography.base,
-    fontFamily: fontFamily.semiBold,
-    color: colors.surface,
-  },
-
-  bottomSpacer: {
-    height: space[4],
-  },
+  modalBtnText: { ...typography.base, fontFamily: fontFamily.semiBold, color: colors.surface },
+  bottomSpacer: { height: space[4] },
 });

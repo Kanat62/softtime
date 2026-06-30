@@ -20,6 +20,17 @@ import { formatWorkedDuration } from '@/shared/lib/date';
 
 type ScanResultRoute = RouteProp<WorkerHomeStackParamList, 'ScanResult'>;
 
+function fmtMessage(message: string): string {
+  return message.replace(/(\d+)\s*мин/, (_, n) => {
+    const total = parseInt(n, 10);
+    const h = Math.floor(total / 60);
+    const m = total % 60;
+    if (h > 0 && m > 0) return `${h}ч ${m}мин`;
+    if (h > 0) return `${h}ч`;
+    return `${m}мин`;
+  });
+}
+
 type ResultConfig = {
   icon: React.ReactNode;
   bgColor: string;
@@ -104,7 +115,7 @@ export function ScanResultScreen() {
           {config.icon}
         </Animated.View>
 
-        <Text style={[styles.title, { color: config.titleColor }]}>{message}</Text>
+        <Text style={[styles.title, { color: config.titleColor }]}>{fmtMessage(message)}</Text>
 
         <Text style={styles.time}>{time}</Text>
 

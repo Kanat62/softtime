@@ -6,6 +6,7 @@ export type NewsWithRead = News & { isRead: boolean };
 export interface CreateNewsPayload {
   title: string;
   body: string;
+  photoUrl?: string | null;
 }
 
 interface PaginatedNews {
@@ -35,4 +36,8 @@ export async function getNewsDetailApi(id: string): Promise<NewsWithRead> {
 export async function createNewsApi(payload: CreateNewsPayload): Promise<NewsWithRead> {
   const res = await apiClient.post<unknown>('/news', payload);
   return parseNews(res.data);
+}
+
+export async function markNewsReadApi(id: string): Promise<void> {
+  await apiClient.post(`/news/${id}/read`);
 }

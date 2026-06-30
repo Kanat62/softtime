@@ -1,5 +1,6 @@
 import React from 'react';
 import { Platform, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { House, Newspaper, FileText, User } from 'lucide-react-native';
@@ -86,11 +87,12 @@ function AdminProfileStack() {
 const Tab = createBottomTabNavigator<AdminTabParamList>();
 
 export function AdminTabs() {
+  const insets = useSafeAreaInsets();
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarStyle: styles.tabBar,
+        tabBarStyle: [styles.tabBar, { height: layout.tabBarHeight + insets.bottom, paddingBottom: insets.bottom }],
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textDisabled,
         tabBarLabelStyle: styles.tabLabel,
@@ -116,7 +118,6 @@ export function AdminTabs() {
 
 const styles = StyleSheet.create({
   tabBar: {
-    height: layout.tabBarHeight + (Platform.OS === 'ios' ? 0 : 8),
     backgroundColor: colors.surface,
     borderTopWidth: 1,
     borderTopColor: colors.border,

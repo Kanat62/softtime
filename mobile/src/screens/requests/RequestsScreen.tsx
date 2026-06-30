@@ -14,7 +14,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { CalendarDays, ChevronLeft, ChevronRight, FileText, X } from 'lucide-react-native';
+import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight, FileText, X } from 'lucide-react-native';
 import { RequestType, RequestStatus } from '@softtime/shared';
 import type { AbsenceRequest } from '@softtime/shared';
 import type { AppError } from '@/shared/api/errors';
@@ -120,6 +120,9 @@ export function RequestsScreen() {
   const [endDate, setEndDate]           = useState<Date | null>(null);
   const [comment, setComment]           = useState('');
 
+  // Type picker
+  const [typePickerVisible, setTypePickerVisible] = useState(false);
+
   // Date picker
   const [dateTarget, setDateTarget] = useState<'start' | 'end' | null>(null);
 
@@ -212,23 +215,20 @@ export function RequestsScreen() {
             {/* Type section */}
             <View style={styles.section}>
               <Text style={styles.sectionLabel}>ТИП ЗАЯВКИ</Text>
-              <View style={styles.chipsWrap}>
-                {REQUEST_TYPES.map(([type, label]) => (
-                  <TouchableOpacity
-                    key={type}
-                    style={[styles.chip, selectedType === type && styles.chipActive]}
-                    onPress={() => handleTypeChange(type)}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={[
-                      styles.chipText,
-                      selectedType === type && styles.chipTextActive,
-                    ]}>
-                      {label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
+              <TouchableOpacity
+                style={styles.selectField}
+                onPress={() => setTypePickerVisible(true)}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.selectValue, !selectedType && styles.selectPlaceholder]}>
+                  {selectedType ? REQUEST_TYPE_LABELS[selectedType] : 'Выберите тип заявки...'}
+                </Text>
+                <ChevronDown
+                  size={18}
+                  color={colors.textSecondary}
+                  strokeWidth={iconStrokeWidth}
+                />
+              </TouchableOpacity>
             </View>
 
             {/* Period section */}
@@ -378,6 +378,14 @@ export function RequestsScreen() {
         />
       )}
 
+      {/* Type picker modal */}
+      <TypePickerModal
+        visible={typePickerVisible}
+        selectedType={selectedType}
+        onSelect={(t) => { handleTypeChange(t); setTypePickerVisible(false); }}
+        onClose={() => setTypePickerVisible(false)}
+      />
+
       {/* Date picker modal */}
       <DatePickerModal
         visible={dateTarget !== null}
@@ -392,6 +400,65 @@ export function RequestsScreen() {
         onClose={() => setDetailItem(null)}
       />
     </SafeAreaView>
+  );
+}
+
+// ─── Type picker modal ───────────────────────────────────────────────────────
+
+function TypePickerModal({
+  visible,
+  selectedType,
+  onSelect,
+  onClose,
+}: {
+  visible: boolean;
+  selectedType: RequestType | null;
+  onSelect: (type: RequestType) => void;
+  onClose: () => void;
+}) {
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      statusBarTranslucent
+      onRequestClose={onClose}
+    >
+      <Pressable style={styles.overlay} onPress={onClose}>
+        <Pressable style={styles.sheet} onPress={() => {}}>
+          <View style={styles.handle} />
+          <View style={styles.detailHeader}>
+            <Text style={styles.detailTitle}>Тип заявки</Text>
+            <TouchableOpacity onPress={onClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <X size={20} color={colors.textSecondary} strokeWidth={iconStrokeWidth} />
+            </TouchableOpacity>
+          </View>
+          <ScrollView showsVerticalScrollIndicator={false}>
+            {REQUEST_TYPES.map(([type, label], index) => (
+              <React.Fragment key={type}>
+                <TouchableOpacity
+                  style={styles.typeOption}
+                  onPress={() => onSelect(type)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[
+                    styles.typeOptionText,
+                    selectedType === type && styles.typeOptionTextActive,
+                  ]}>
+                    {label}
+                  </Text>
+                  {selectedType === type && (
+                    <View style={styles.typeOptionDot} />
+                  )}
+                </TouchableOpacity>
+                {index < REQUEST_TYPES.length - 1 && <View style={styles.typeOptionDivider} />}
+              </React.Fragment>
+            ))}
+            <View style={styles.calBottom} />
+          </ScrollView>
+        </Pressable>
+      </Pressable>
+    </Modal>
   );
 }
 
@@ -702,31 +769,53 @@ const styles = StyleSheet.create({
     letterSpacing: 0.8,
   },
 
-  chipsWrap: {
+  selectField: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: space[2],
-  },
-  chip: {
-    paddingVertical: space[2],
-    paddingHorizontal: space[3],
-    borderRadius: radius.full,
-    borderWidth: 1.5,
-    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'space-between',
     backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: space[4],
+    paddingVertical: space[3],
+    minHeight: 48,
   },
-  chipActive: {
-    borderColor: colors.primary,
-    backgroundColor: colors.primaryLight,
+  selectValue: {
+    flex: 1,
+    ...typography.base,
+    fontFamily: fontFamily.semiBold,
+    color: colors.textPrimary,
   },
-  chipText: {
-    fontSize: 13,
-    fontFamily: fontFamily.medium,
-    color: colors.textSecondary,
+  selectPlaceholder: {
+    color: colors.textDisabled,
+    fontFamily: fontFamily.regular,
   },
-  chipTextActive: {
+  typeOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: space[5],
+    paddingVertical: space[4],
+  },
+  typeOptionText: {
+    flex: 1,
+    ...typography.base,
+    color: colors.textPrimary,
+  },
+  typeOptionTextActive: {
     color: colors.primary,
     fontFamily: fontFamily.semiBold,
+  },
+  typeOptionDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.primary,
+  },
+  typeOptionDivider: {
+    height: 1,
+    backgroundColor: colors.border,
+    marginHorizontal: space[5],
   },
 
   dateCard: {

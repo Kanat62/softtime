@@ -43,6 +43,7 @@ export interface AttendanceTodaySummary {
   inOffice: number;
   left: number;
   total: number;
+  absent: number;
 }
 
 /** GET /attendance/today/summary — WORKER + ADMIN */

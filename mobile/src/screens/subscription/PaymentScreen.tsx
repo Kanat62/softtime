@@ -23,6 +23,7 @@ import {
   iconStrokeWidth,
   layout,
   radius,
+  shadows,
   space,
   typography,
 } from '@/shared/config/theme';
@@ -249,7 +250,7 @@ const s = StyleSheet.create({
     borderRadius: radius.xl,
     padding: space[4],
     gap: space[3],
-
+    ...(shadows.card as object),
   },
   cardTitle: {
     ...typography.baseMedium,
