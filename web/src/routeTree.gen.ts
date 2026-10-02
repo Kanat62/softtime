@@ -9,43 +9,33 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as RegisterRouteImport } from './routes/register'
-import { Route as ProviderRouteImport } from './routes/provider'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as ProviderPaymentsRouteImport } from './routes/provider.payments'
-import { Route as ProviderDashboardRouteImport } from './routes/provider.dashboard'
-import { Route as ProviderCompaniesRouteImport } from './routes/provider.companies'
-import { Route as AdminSubscriptionRouteImport } from './routes/admin.subscription'
-import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
-import { Route as AdminSchedulesRouteImport } from './routes/admin.schedules'
-import { Route as AdminRequestsRouteImport } from './routes/admin.requests'
-import { Route as AdminReportsRouteImport } from './routes/admin.reports'
-import { Route as AdminQrRouteImport } from './routes/admin.qr'
-import { Route as AdminNewsRouteImport } from './routes/admin.news'
-import { Route as AdminNetworksRouteImport } from './routes/admin.networks'
-import { Route as AdminEmployeesRouteImport } from './routes/admin.employees'
-import { Route as AdminDashboardRouteImport } from './routes/admin.dashboard'
-import { Route as AdminAuditRouteImport } from './routes/admin.audit'
+import { Route as AdminRouteImport } from './routes/admin'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as ProviderRouteImport } from './routes/provider'
+import { Route as RegisterRouteImport } from './routes/register'
 import { Route as AdminAttendanceRouteImport } from './routes/admin.attendance'
+import { Route as AdminAuditRouteImport } from './routes/admin.audit'
+import { Route as AdminDashboardRouteImport } from './routes/admin.dashboard'
+import { Route as AdminEmployeesRouteImport } from './routes/admin.employees'
+import { Route as AdminNetworksRouteImport } from './routes/admin.networks'
+import { Route as AdminNewsRouteImport } from './routes/admin.news'
+import { Route as AdminQrRouteImport } from './routes/admin.qr'
+import { Route as AdminReportsRouteImport } from './routes/admin.reports'
+import { Route as AdminRequestsRouteImport } from './routes/admin.requests'
+import { Route as AdminSchedulesRouteImport } from './routes/admin.schedules'
+import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
+import { Route as AdminSubscriptionRouteImport } from './routes/admin.subscription'
+import { Route as ProviderCompaniesRouteImport } from './routes/provider.companies'
+import { Route as ProviderDashboardRouteImport } from './routes/provider.dashboard'
+import { Route as ProviderPaymentsRouteImport } from './routes/provider.payments'
 import { Route as AdminEmployeesIndexRouteImport } from './routes/admin.employees.index'
-import { Route as ProviderCompaniesIdRouteImport } from './routes/provider.companies.$id'
 import { Route as AdminEmployeesIdRouteImport } from './routes/admin.employees.$id'
+import { Route as ProviderCompaniesIdRouteImport } from './routes/provider.companies.$id'
 
-const RegisterRoute = RegisterRouteImport.update({
-  id: '/register',
-  path: '/register',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProviderRoute = ProviderRouteImport.update({
-  id: '/provider',
-  path: '/provider',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -53,74 +43,24 @@ const AdminRoute = AdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ProviderPaymentsRoute = ProviderPaymentsRouteImport.update({
-  id: '/payments',
-  path: '/payments',
-  getParentRoute: () => ProviderRoute,
+const ProviderRoute = ProviderRouteImport.update({
+  id: '/provider',
+  path: '/provider',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const ProviderDashboardRoute = ProviderDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => ProviderRoute,
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const ProviderCompaniesRoute = ProviderCompaniesRouteImport.update({
-  id: '/companies',
-  path: '/companies',
-  getParentRoute: () => ProviderRoute,
-} as any)
-const AdminSubscriptionRoute = AdminSubscriptionRouteImport.update({
-  id: '/subscription',
-  path: '/subscription',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminSettingsRoute = AdminSettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminSchedulesRoute = AdminSchedulesRouteImport.update({
-  id: '/schedules',
-  path: '/schedules',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminRequestsRoute = AdminRequestsRouteImport.update({
-  id: '/requests',
-  path: '/requests',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminReportsRoute = AdminReportsRouteImport.update({
-  id: '/reports',
-  path: '/reports',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminQrRoute = AdminQrRouteImport.update({
-  id: '/qr',
-  path: '/qr',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminNewsRoute = AdminNewsRouteImport.update({
-  id: '/news',
-  path: '/news',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminNetworksRoute = AdminNetworksRouteImport.update({
-  id: '/networks',
-  path: '/networks',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminEmployeesRoute = AdminEmployeesRouteImport.update({
-  id: '/employees',
-  path: '/employees',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminDashboardRoute = AdminDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
+const AdminAttendanceRoute = AdminAttendanceRouteImport.update({
+  id: '/attendance',
+  path: '/attendance',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminAuditRoute = AdminAuditRouteImport.update({
@@ -128,25 +68,85 @@ const AdminAuditRoute = AdminAuditRouteImport.update({
   path: '/audit',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminAttendanceRoute = AdminAttendanceRouteImport.update({
-  id: '/attendance',
-  path: '/attendance',
+const AdminDashboardRoute = AdminDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => AdminRoute,
+} as any)
+const AdminEmployeesRoute = AdminEmployeesRouteImport.update({
+  id: '/employees',
+  path: '/employees',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminNetworksRoute = AdminNetworksRouteImport.update({
+  id: '/networks',
+  path: '/networks',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminNewsRoute = AdminNewsRouteImport.update({
+  id: '/news',
+  path: '/news',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminQrRoute = AdminQrRouteImport.update({
+  id: '/qr',
+  path: '/qr',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminReportsRoute = AdminReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminRequestsRoute = AdminRequestsRouteImport.update({
+  id: '/requests',
+  path: '/requests',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSchedulesRoute = AdminSchedulesRouteImport.update({
+  id: '/schedules',
+  path: '/schedules',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSettingsRoute = AdminSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSubscriptionRoute = AdminSubscriptionRouteImport.update({
+  id: '/subscription',
+  path: '/subscription',
+  getParentRoute: () => AdminRoute,
+} as any)
+const ProviderCompaniesRoute = ProviderCompaniesRouteImport.update({
+  id: '/companies',
+  path: '/companies',
+  getParentRoute: () => ProviderRoute,
+} as any)
+const ProviderDashboardRoute = ProviderDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => ProviderRoute,
+} as any)
+const ProviderPaymentsRoute = ProviderPaymentsRouteImport.update({
+  id: '/payments',
+  path: '/payments',
+  getParentRoute: () => ProviderRoute,
 } as any)
 const AdminEmployeesIndexRoute = AdminEmployeesIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AdminEmployeesRoute,
 } as any)
-const ProviderCompaniesIdRoute = ProviderCompaniesIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => ProviderCompaniesRoute,
-} as any)
 const AdminEmployeesIdRoute = AdminEmployeesIdRouteImport.update({
   id: '/$id',
   path: '/$id',
   getParentRoute: () => AdminEmployeesRoute,
+} as any)
+const ProviderCompaniesIdRoute = ProviderCompaniesIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => ProviderCompaniesRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -311,25 +311,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/register': {
-      id: '/register'
-      path: '/register'
-      fullPath: '/register'
-      preLoaderRoute: typeof RegisterRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/provider': {
-      id: '/provider'
-      path: '/provider'
-      fullPath: '/provider'
-      preLoaderRoute: typeof ProviderRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -339,102 +325,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/provider/payments': {
-      id: '/provider/payments'
-      path: '/payments'
-      fullPath: '/provider/payments'
-      preLoaderRoute: typeof ProviderPaymentsRouteImport
-      parentRoute: typeof ProviderRoute
+    '/provider': {
+      id: '/provider'
+      path: '/provider'
+      fullPath: '/provider'
+      preLoaderRoute: typeof ProviderRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/provider/dashboard': {
-      id: '/provider/dashboard'
-      path: '/dashboard'
-      fullPath: '/provider/dashboard'
-      preLoaderRoute: typeof ProviderDashboardRouteImport
-      parentRoute: typeof ProviderRoute
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/provider/companies': {
-      id: '/provider/companies'
-      path: '/companies'
-      fullPath: '/provider/companies'
-      preLoaderRoute: typeof ProviderCompaniesRouteImport
-      parentRoute: typeof ProviderRoute
-    }
-    '/admin/subscription': {
-      id: '/admin/subscription'
-      path: '/subscription'
-      fullPath: '/admin/subscription'
-      preLoaderRoute: typeof AdminSubscriptionRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/settings': {
-      id: '/admin/settings'
-      path: '/settings'
-      fullPath: '/admin/settings'
-      preLoaderRoute: typeof AdminSettingsRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/schedules': {
-      id: '/admin/schedules'
-      path: '/schedules'
-      fullPath: '/admin/schedules'
-      preLoaderRoute: typeof AdminSchedulesRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/requests': {
-      id: '/admin/requests'
-      path: '/requests'
-      fullPath: '/admin/requests'
-      preLoaderRoute: typeof AdminRequestsRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/reports': {
-      id: '/admin/reports'
-      path: '/reports'
-      fullPath: '/admin/reports'
-      preLoaderRoute: typeof AdminReportsRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/qr': {
-      id: '/admin/qr'
-      path: '/qr'
-      fullPath: '/admin/qr'
-      preLoaderRoute: typeof AdminQrRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/news': {
-      id: '/admin/news'
-      path: '/news'
-      fullPath: '/admin/news'
-      preLoaderRoute: typeof AdminNewsRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/networks': {
-      id: '/admin/networks'
-      path: '/networks'
-      fullPath: '/admin/networks'
-      preLoaderRoute: typeof AdminNetworksRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/employees': {
-      id: '/admin/employees'
-      path: '/employees'
-      fullPath: '/admin/employees'
-      preLoaderRoute: typeof AdminEmployeesRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/dashboard': {
-      id: '/admin/dashboard'
-      path: '/dashboard'
-      fullPath: '/admin/dashboard'
-      preLoaderRoute: typeof AdminDashboardRouteImport
+    '/admin/attendance': {
+      id: '/admin/attendance'
+      path: '/attendance'
+      fullPath: '/admin/attendance'
+      preLoaderRoute: typeof AdminAttendanceRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/audit': {
@@ -444,12 +360,96 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAuditRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/attendance': {
-      id: '/admin/attendance'
-      path: '/attendance'
-      fullPath: '/admin/attendance'
-      preLoaderRoute: typeof AdminAttendanceRouteImport
+    '/admin/dashboard': {
+      id: '/admin/dashboard'
+      path: '/dashboard'
+      fullPath: '/admin/dashboard'
+      preLoaderRoute: typeof AdminDashboardRouteImport
       parentRoute: typeof AdminRoute
+    }
+    '/admin/employees': {
+      id: '/admin/employees'
+      path: '/employees'
+      fullPath: '/admin/employees'
+      preLoaderRoute: typeof AdminEmployeesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/networks': {
+      id: '/admin/networks'
+      path: '/networks'
+      fullPath: '/admin/networks'
+      preLoaderRoute: typeof AdminNetworksRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/news': {
+      id: '/admin/news'
+      path: '/news'
+      fullPath: '/admin/news'
+      preLoaderRoute: typeof AdminNewsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/qr': {
+      id: '/admin/qr'
+      path: '/qr'
+      fullPath: '/admin/qr'
+      preLoaderRoute: typeof AdminQrRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/reports': {
+      id: '/admin/reports'
+      path: '/reports'
+      fullPath: '/admin/reports'
+      preLoaderRoute: typeof AdminReportsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/requests': {
+      id: '/admin/requests'
+      path: '/requests'
+      fullPath: '/admin/requests'
+      preLoaderRoute: typeof AdminRequestsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/schedules': {
+      id: '/admin/schedules'
+      path: '/schedules'
+      fullPath: '/admin/schedules'
+      preLoaderRoute: typeof AdminSchedulesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/settings': {
+      id: '/admin/settings'
+      path: '/settings'
+      fullPath: '/admin/settings'
+      preLoaderRoute: typeof AdminSettingsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/subscription': {
+      id: '/admin/subscription'
+      path: '/subscription'
+      fullPath: '/admin/subscription'
+      preLoaderRoute: typeof AdminSubscriptionRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/provider/companies': {
+      id: '/provider/companies'
+      path: '/companies'
+      fullPath: '/provider/companies'
+      preLoaderRoute: typeof ProviderCompaniesRouteImport
+      parentRoute: typeof ProviderRoute
+    }
+    '/provider/dashboard': {
+      id: '/provider/dashboard'
+      path: '/dashboard'
+      fullPath: '/provider/dashboard'
+      preLoaderRoute: typeof ProviderDashboardRouteImport
+      parentRoute: typeof ProviderRoute
+    }
+    '/provider/payments': {
+      id: '/provider/payments'
+      path: '/payments'
+      fullPath: '/provider/payments'
+      preLoaderRoute: typeof ProviderPaymentsRouteImport
+      parentRoute: typeof ProviderRoute
     }
     '/admin/employees/': {
       id: '/admin/employees/'
@@ -458,19 +458,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminEmployeesIndexRouteImport
       parentRoute: typeof AdminEmployeesRoute
     }
-    '/provider/companies/$id': {
-      id: '/provider/companies/$id'
-      path: '/$id'
-      fullPath: '/provider/companies/$id'
-      preLoaderRoute: typeof ProviderCompaniesIdRouteImport
-      parentRoute: typeof ProviderCompaniesRoute
-    }
     '/admin/employees/$id': {
       id: '/admin/employees/$id'
       path: '/$id'
       fullPath: '/admin/employees/$id'
       preLoaderRoute: typeof AdminEmployeesIdRouteImport
       parentRoute: typeof AdminEmployeesRoute
+    }
+    '/provider/companies/$id': {
+      id: '/provider/companies/$id'
+      path: '/$id'
+      fullPath: '/provider/companies/$id'
+      preLoaderRoute: typeof ProviderCompaniesIdRouteImport
+      parentRoute: typeof ProviderCompaniesRoute
     }
   }
 }
