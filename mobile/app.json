@@ -6,11 +6,6 @@
     "orientation": "portrait",
     "icon": "./assets/softtime-white.png",
     "userInterfaceStyle": "light",
-    "splash": {
-      "image": "./assets/softtime-white.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#1877F2"
-    },
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.softtime.mobile",
@@ -26,10 +21,7 @@
       },
       "package": "com.softtime.mobile",
       "userInterfaceStyle": "light",
-      "newArchEnabled": true,
-      "permissions": [
-        "android.permission.CAMERA"
-      ]
+      "permissions": ["android.permission.CAMERA"]
     },
     "runtimeVersion": {
       "policy": "appVersion"
@@ -38,7 +30,17 @@
       "react-native-vision-camera",
       "expo-font",
       "expo-secure-store",
-      "expo-updates"
+      "expo-updates",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/softtime-white.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#1877F2",
+          "imageWidth": 200
+        }
+      ],
+      "expo-status-bar"
     ],
     "extra": {
       "eas": {
