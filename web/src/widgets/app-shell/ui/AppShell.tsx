@@ -19,6 +19,7 @@ import { useAuth, type UserRole } from "@/entities/session";
 import { cn } from "@/shared/lib";
 import { Button } from "@/shared/ui/button";
 import { Skeleton } from "@/shared/ui/skeleton";
+import { LanguageSwitcher } from "@/features/language-switcher";
 
 function PageFallback() {
   return (
@@ -155,6 +156,7 @@ function Topbar() {
         {user?.role === "ADMIN" ? (user.companyName ?? "") : ""}
       </div>
       <div className="flex items-center gap-3">
+        <LanguageSwitcher />
         <div className="text-right">
           <div className="text-sm font-medium text-foreground">{user?.fullName}</div>
           <div className="text-xs text-muted-foreground">
