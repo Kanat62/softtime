@@ -1,0 +1,39 @@
+{
+  "qr": {
+    "checkInTitle": "Check in",
+    "checkOutTitle": "Check out",
+    "subtitle": "Point the camera at the office QR code",
+    "wifiConnected": "Office network connected",
+    "wifiNotFound": "No Wi-Fi detected",
+    "noCameraAccess": "No camera access. Allow it in your device settings."
+  },
+  "result": {
+    "worked": "Worked"
+  },
+  "history": {
+    "title": "Attendance history",
+    "periods": {
+      "week": "Week",
+      "month": "Month",
+      "range": "Custom"
+    },
+    "lastThreeMonths": "Last 3 months",
+    "clearTodayLabel": "Clear today's data",
+    "clearTitle": "Clear data",
+    "clearMessage": "Delete today's check-in and check-out?",
+    "clearFailed": "Could not clear data",
+    "totalHours": "total hours",
+    "late_one": "late arrival",
+    "late_other": "late arrivals",
+    "absence_one": "absence",
+    "absence_other": "absences",
+    "detail": {
+      "status": "Status",
+      "note": "Note",
+      "worked": "Worked"
+    },
+    "pickPeriod": "Select period",
+    "rangeStart": "Start",
+    "rangeEnd": "End"
+  }
+}

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, fontFamily, space, typography } from '@/shared/config/theme';
@@ -6,6 +7,7 @@ import { Button } from '@/shared/ui';
 import { useAuthNavigation } from '@/shared/navigation/hooks';
 
 export function OnboardingScreen() {
+  const { t } = useTranslation(['auth', 'common']);
   const navigation = useAuthNavigation();
 
   return (
@@ -14,7 +16,7 @@ export function OnboardingScreen() {
       <View style={styles.hero}>
         <Text style={styles.logo}>SoftTime</Text>
         <Text style={styles.slogan}>
-          Умный учёт рабочего времени{'\n'}для вашей команды
+          {t('auth:onboarding.slogan')}
         </Text>
       </View>
 
@@ -25,14 +27,14 @@ export function OnboardingScreen() {
           size="full"
           onPress={() => navigation.navigate('Login')}
         >
-          Войти
+          {t('common:login')}
         </Button>
         <Button
           variant="outline"
           size="full"
           onPress={() => navigation.navigate('RoleSelect')}
         >
-          Зарегистрироваться
+          {t('common:register')}
         </Button>
       </View>
     </SafeAreaView>

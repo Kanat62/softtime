@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   RefreshControl,
   ScrollView,
@@ -23,6 +24,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useMySchedule } from '@/features/schedule/model/useMySchedule';
 
 export function MyScheduleScreen() {
+  const { t } = useTranslation(['schedule', 'common']);
   const navigation = useNavigation<any>();
   const { schedule, isLoading, isError, refetch } = useMySchedule();
 
@@ -33,11 +35,11 @@ export function MyScheduleScreen() {
           style={styles.backBtn}
           onPress={() => navigation.goBack()}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          accessibilityLabel="Назад"
+          accessibilityLabel={t('common:back')}
         >
           <ChevronLeft size={24} color={colors.textPrimary} strokeWidth={iconStrokeWidth} />
         </TouchableOpacity>
-        <Text style={styles.title}>Мой график</Text>
+        <Text style={styles.title}>{t('schedule:title')}</Text>
         <View style={styles.backBtn} />
       </View>
       <OfflineBanner variant="stale" />

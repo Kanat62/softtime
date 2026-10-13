@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Clock } from 'lucide-react-native';
@@ -20,6 +21,7 @@ import { UserStatus, UserRole } from '@softtime/shared';
 const POLL_INTERVAL_MS = 5000;
 
 export function PendingScreen() {
+  const { t } = useTranslation(['auth', 'common']);
   const { logout, setAuth } = useAuth();
   const [isChecking, setIsChecking] = useState(false);
   const [notApprovedYet, setNotApprovedYet] = useState(false);
@@ -72,21 +74,20 @@ export function PendingScreen() {
         <View style={styles.clockWrap}>
           <Clock size={40} color={colors.warning} strokeWidth={iconStrokeWidth} />
         </View>
-        <Text style={styles.title}>Заявка отправлена</Text>
+        <Text style={styles.title}>{t('auth:pending.title')}</Text>
         <Text style={styles.subtitle}>
-          Ожидайте подтверждения администратора.{'\n'}
-          Вход произойдёт автоматически после одобрения.
+          {t('auth:pending.description')}
         </Text>
 
         <View style={styles.autoCheck}>
           <ActivityIndicator size="small" color={colors.primary} />
           <Text style={styles.autoCheckText}>
-            {isChecking ? 'Проверяем статус...' : 'Проверка каждые 5 сек'}
+            {isChecking ? t('auth:pending.checkingStatus') : t('auth:pending.autoCheck')}
           </Text>
         </View>
 
         {notApprovedYet && (
-          <Text style={styles.notApproved}>Заявка ещё не одобрена</Text>
+          <Text style={styles.notApproved}>{t('auth:pending.notApproved')}</Text>
         )}
       </View>
 
@@ -97,10 +98,10 @@ export function PendingScreen() {
           onPress={checkStatus}
           disabled={isChecking}
         >
-          {isChecking ? 'Проверяем...' : 'Обновить сейчас'}
+          {isChecking ? t('common:checking') : t('auth:pending.refreshNow')}
         </Button>
         <Button variant="ghost" size="full" onPress={logout}>
-          Выйти
+          {t('common:logout')}
         </Button>
       </View>
     </SafeAreaView>

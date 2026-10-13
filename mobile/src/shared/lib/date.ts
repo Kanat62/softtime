@@ -34,6 +34,36 @@ export function formatWorkedDuration(minutes: number): string {
   return h > 0 ? `${h}${hoursShort} ${m}${minutesShort}` : `${m}${minutesShort}`;
 }
 
+/** "13 окт" / "13 Oct" — для компактных диапазонов. */
+export function formatDayMonthShort(date: Date | string): string {
+  const d = typeof date === 'string' ? new Date(date) : date;
+  return d.toLocaleDateString(localeTag(), { day: 'numeric', month: 'short' });
+}
+
+/** "13 окт 2026" / "Oct 13, 2026". */
+export function formatDayMonthYearShort(date: Date | string): string {
+  const d = typeof date === 'string' ? new Date(date) : date;
+  return d.toLocaleDateString(localeTag(), { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+/** Название месяца отдельным словом: "Октябрь" / "October". */
+export function monthNameLong(monthIndex: number): string {
+  const name = new Date(2000, monthIndex, 1).toLocaleDateString(localeTag(), { month: 'long' });
+  return name.charAt(0).toUpperCase() + name.slice(1);
+}
+
+/** Сокращение месяца: "окт" / "Oct". */
+export function monthNameShort(monthIndex: number): string {
+  return new Date(2000, monthIndex, 1).toLocaleDateString(localeTag(), { month: 'short' });
+}
+
+/** Подписи дней недели Пн…Вс из общего словаря (enums.weekdayShort). */
+export function weekdayShortLabels(): string[] {
+  return ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'].map((d) =>
+    i18n.t(`enums:weekdayShort.${d}`),
+  );
+}
+
 export function isToday(date: Date | string): boolean {
   const d = typeof date === 'string' ? new Date(date) : date;
   const today = new Date();

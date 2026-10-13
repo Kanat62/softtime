@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Alert,
   Modal,
@@ -64,65 +65,55 @@ function isNonActive(status: SubStatus): boolean {
 
 // ─── Features list ────────────────────────────────────────────────────────────
 
-const FEATURES = [
-  'До 50 сотрудников',
-  'QR check-in/out с защитой по IP',
-  'Push-уведомления',
-  'Расписания и заявки',
-  'История посещаемости',
-];
+const FEATURE_KEYS = ['employees', 'qr', 'push', 'schedules', 'history'] as const;
 
 // ─── Status config ────────────────────────────────────────────────────────────
 
 interface StatusConfig {
   badgeStatus: string;
-  badgeLabel: string;
   bannerColor: string;
   bannerTextColor: string;
-  bannerText: string;
+  /** Ключ в subscription:banners.*; пустая строка — баннера нет. */
+  bannerKey: string;
 }
 
 const STATUS_CONFIGS: Record<SubStatus, StatusConfig> = {
   [SubStatus.ACTIVE]: {
     badgeStatus: 'ACTIVE',
-    badgeLabel: 'Активна',
     bannerColor: colors.successLight,
     bannerTextColor: colors.successText,
-    bannerText: '',
+    bannerKey: '',
   },
   [SubStatus.TRIAL]: {
     badgeStatus: 'TRIAL',
-    badgeLabel: 'Пробный период',
     bannerColor: colors.warningLight,
     bannerTextColor: colors.warningText,
-    bannerText: 'Пробный период истекает. Оплатите подписку, чтобы не прерывать работу.',
+    bannerKey: 'trial',
   },
   [SubStatus.GRACE]: {
     badgeStatus: 'GRACE',
-    badgeLabel: 'Льготный период',
     bannerColor: colors.warningLight,
     bannerTextColor: colors.warningText,
-    bannerText: 'Оплата просрочена. Сервис работает в льготном режиме.',
+    bannerKey: 'grace',
   },
   [SubStatus.EXPIRED]: {
     badgeStatus: 'ABSENT',
-    badgeLabel: 'Истекла',
     bannerColor: colors.dangerLight,
     bannerTextColor: colors.dangerText,
-    bannerText: 'Подписка истекла. Доступ к сервису ограничен.',
+    bannerKey: 'expired',
   },
   [SubStatus.CANCELLED]: {
     badgeStatus: 'REJECTED',
-    badgeLabel: 'Отменена',
     bannerColor: colors.dangerLight,
     bannerTextColor: colors.dangerText,
-    bannerText: 'Подписка отменена. Возобновите, чтобы продолжить работу.',
+    bannerKey: 'cancelled',
   },
 };
 
 // ─── SubscriptionScreen ───────────────────────────────────────────────────────
 
 export function SubscriptionScreen() {
+  const { t } = useTranslation(['subscription', 'enums', 'common']);
   const navigation = useAdminProfileNavigation();
   const [showHistory, setShowHistory] = useState(false);
   const { subscription, isLoading, isError, refetch, payments } = useSubscription();
@@ -132,7 +123,7 @@ export function SubscriptionScreen() {
       <SafeAreaView style={s.root} edges={['top']}>
         <View style={s.topBar}>
           <View style={s.backBtn} />
-          <Text style={s.topBarTitle}>Подписка</Text>
+          <Text style={s.topBarTitle}>{t('subscription:title')}</Text>
           <View style={s.backBtn} />
         </View>
         <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
@@ -154,10 +145,10 @@ export function SubscriptionScreen() {
           >
             <ChevronLeft size={24} color={colors.textPrimary} strokeWidth={iconStrokeWidth} />
           </TouchableOpacity>
-          <Text style={s.topBarTitle}>Подписка</Text>
+          <Text style={s.topBarTitle}>{t('subscription:title')}</Text>
           <View style={s.backBtn} />
         </View>
-        <ErrorState title="Не удалось загрузить подписку" onRetry={refetch} />
+        <ErrorState title={t('subscription:loadFailed')} onRetry={refetch} />
       </SafeAreaView>
     );
   }
@@ -168,11 +159,11 @@ export function SubscriptionScreen() {
 
   function handleCancel() {
     Alert.alert(
-      'Отменить подписку',
-      'Подписка будет отменена в конце текущего периода. Продолжить?',
+      t('subscription:cancelTitle'),
+      t('subscription:cancelMessage'),
       [
-        { text: 'Назад', style: 'cancel' },
-        { text: 'Отменить', style: 'destructive', onPress: () => {} },
+        { text: t('common:back'), style: 'cancel' },
+        { text: t('subscription:cancelConfirm'), style: 'destructive', onPress: () => {} },
       ],
     );
   }
@@ -185,11 +176,11 @@ export function SubscriptionScreen() {
           style={s.backBtn}
           onPress={() => navigation.goBack()}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          accessibilityLabel="Назад"
+          accessibilityLabel={t('common:back')}
         >
           <ChevronLeft size={24} color={colors.textPrimary} strokeWidth={iconStrokeWidth} />
         </TouchableOpacity>
-        <Text style={s.topBarTitle}>Подписка</Text>
+        <Text style={s.topBarTitle}>{t('subscription:title')}</Text>
         <View style={s.backBtn} />
       </View>
       <OfflineBanner variant="stale" />
@@ -205,7 +196,7 @@ export function SubscriptionScreen() {
         />
 
         {/* ── Warning banner (non-active) ── */}
-        {needsPayment && cfg.bannerText ? (
+        {needsPayment && cfg.bannerKey ? (
           <View style={[s.banner, { backgroundColor: cfg.bannerColor }]}>
             <AlertTriangle
               size={iconSize.md}
@@ -213,17 +204,17 @@ export function SubscriptionScreen() {
               strokeWidth={iconStrokeWidth}
             />
             <Text style={[s.bannerText, { color: cfg.bannerTextColor }]}>
-              {cfg.bannerText}
+              {t(`subscription:banners.${cfg.bannerKey}`)}
             </Text>
           </View>
         ) : null}
 
         {/* ── What's included ── */}
         <View style={s.card}>
-          <Text style={s.cardTitle}>Что входит в тариф</Text>
+          <Text style={s.cardTitle}>{t('subscription:included')}</Text>
           <View style={s.featureList}>
-            {FEATURES.map((feature) => (
-              <FeatureRow key={feature} text={feature} />
+            {FEATURE_KEYS.map((feature) => (
+              <FeatureRow key={feature} text={t(`subscription:features.${feature}`)} />
             ))}
           </View>
         </View>
@@ -231,14 +222,14 @@ export function SubscriptionScreen() {
         {/* ── CTA (non-active) ── */}
         {needsPayment && (
           <Button variant="primary" size="full" onPress={() => navigation.navigate('Payment')}>
-            Оплатить $30
+            {t('subscription:pay')}
           </Button>
         )}
 
         {/* ── Cancel (active) ── */}
         {!needsPayment && (
           <TouchableOpacity style={s.cancelBtn} onPress={handleCancel} activeOpacity={0.7}>
-            <Text style={s.cancelText}>Отменить подписку</Text>
+            <Text style={s.cancelText}>{t('subscription:cancelAction')}</Text>
           </TouchableOpacity>
         )}
 
@@ -265,42 +256,43 @@ interface HeroCardProps {
 }
 
 function HeroCard({ sub, cfg, needsPayment, onHistoryPress }: HeroCardProps) {
+  const { t } = useTranslation(['subscription', 'enums', 'common']);
   const days = sub.periodEnd ? daysUntil(sub.periodEnd) : 0;
 
   return (
     <View style={s.hero}>
       {/* Badge */}
       <View style={s.heroBadgeRow}>
-        <StatusBadge status={cfg.badgeStatus} label={cfg.badgeLabel} />
+        <StatusBadge status={cfg.badgeStatus} label={t(`enums:subStatus.${sub.status}`)} />
       </View>
 
       {/* Tariff name */}
-      <Text style={s.heroTitle}>Тариф SoftTime Pro</Text>
+      <Text style={s.heroTitle}>{t('subscription:planName')}</Text>
 
       {/* Status-specific info */}
       {sub.status === SubStatus.ACTIVE && sub.nextBillingAt ? (
         <View style={s.heroInfoBlock}>
-          <Text style={s.heroLabel}>Следующее списание</Text>
+          <Text style={s.heroLabel}>{t('subscription:nextCharge')}</Text>
           <Text style={s.heroDate}>{formatDate(sub.nextBillingAt)}</Text>
         </View>
       ) : (
         <View style={s.heroInfoBlock}>
           <Text style={s.heroLabel}>
             {sub.status === SubStatus.EXPIRED || sub.status === SubStatus.CANCELLED
-              ? 'Подписка неактивна'
-              : `Осталось дней: ${days}`}
+              ? t('subscription:inactive')
+              : t('subscription:daysLeft', { count: days })}
           </Text>
         </View>
       )}
 
       {/* Price */}
-      <Text style={s.heroPrice}>Стоимость $30 / мес</Text>
+      <Text style={s.heroPrice}>{t('subscription:price')}</Text>
 
       {/* "История платежей" — only for ACTIVE */}
       {!needsPayment && (
         <TouchableOpacity style={s.heroOutlineBtn} onPress={onHistoryPress} activeOpacity={0.85}>
           <History size={iconSize.sm} color={colors.surface} strokeWidth={iconStrokeWidth} />
-          <Text style={s.heroOutlineBtnText}>История платежей</Text>
+          <Text style={s.heroOutlineBtnText}>{t('subscription:paymentHistory')}</Text>
         </TouchableOpacity>
       )}
     </View>
@@ -329,6 +321,7 @@ interface PaymentHistorySheetProps {
 }
 
 function PaymentHistorySheet({ visible, payments, onClose }: PaymentHistorySheetProps) {
+  const { t } = useTranslation(['subscription', 'enums', 'common']);
   return (
     <Modal
       visible={visible}
@@ -342,7 +335,7 @@ function PaymentHistorySheet({ visible, payments, onClose }: PaymentHistorySheet
           <View style={s.handle} />
 
           <View style={s.sheetHeader}>
-            <Text style={s.sheetTitle}>История платежей</Text>
+            <Text style={s.sheetTitle}>{t('subscription:paymentHistory')}</Text>
             <TouchableOpacity
               onPress={onClose}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
@@ -370,6 +363,7 @@ function PaymentHistorySheet({ visible, payments, onClose }: PaymentHistorySheet
 }
 
 function PaymentRow({ payment }: { payment: Payment }) {
+  const { t } = useTranslation(['subscription', 'enums', 'common']);
   const isPaid = payment.status === PaymentStatus.PAID;
   return (
     <View style={s.payRow}>
@@ -382,7 +376,7 @@ function PaymentRow({ payment }: { payment: Payment }) {
       </View>
       <StatusBadge
         status={isPaid ? 'PAID' : 'REJECTED'}
-        label={isPaid ? 'Оплачено' : 'Ошибка'}
+        label={isPaid ? t('enums:paymentStatus.PAID') : t('common:error')}
       />
     </View>
   );

@@ -1,0 +1,52 @@
+{
+  "title": "Subscription",
+  "loadFailed": "Could not load the subscription",
+  "planName": "SoftTime Pro plan",
+  "features": {
+    "employees": "Up to 50 employees",
+    "qr": "QR check in/out with IP protection",
+    "push": "Push notifications",
+    "schedules": "Schedules and requests",
+    "history": "Attendance history"
+  },
+  "banners": {
+    "trial": "Your free trial is ending. Pay for the subscription to avoid interruption.",
+    "grace": "Payment is overdue. The service is running in grace mode.",
+    "expired": "The subscription has expired. Access to the service is limited.",
+    "cancelled": "The subscription is cancelled. Renew it to continue working."
+  },
+  "included": "What the plan includes",
+  "pay": "Pay $30",
+  "cancelAction": "Cancel subscription",
+  "cancelTitle": "Cancel subscription",
+  "cancelMessage": "The subscription will be cancelled at the end of the current period. Continue?",
+  "cancelConfirm": "Cancel it",
+  "nextCharge": "Next charge",
+  "inactive": "Subscription inactive",
+  "daysLeft": "Days left: {{count}}",
+  "price": "Price $30 / month",
+  "paymentHistory": "Payment history",
+  "payment": {
+    "title": "Payment",
+    "description": "SoftTime subscription for 1 month",
+    "periodStart": "Period start",
+    "periodEnd": "Period end",
+    "cost": "Price",
+    "period": "Period",
+    "oneMonth": "1 month",
+    "total": "Total",
+    "secured": "Payment is protected by encryption",
+    "choose": "Choose a payment method",
+    "chooseTitle": "Choose a payment method",
+    "chooseMessage": "Integration with a payment provider will be available in the next version.",
+    "mockContinue": "Continue (mock)"
+  },
+  "success": {
+    "title": "Payment complete ✓",
+    "activeUntil": "Subscription active until",
+    "plan": "Plan",
+    "amount": "Amount",
+    "period": "Period",
+    "until": "until {{date}}"
+  }
+}

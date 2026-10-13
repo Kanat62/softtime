@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Alert,
   ScrollView,
@@ -31,16 +32,17 @@ import {
 // ─── PaymentScreen ────────────────────────────────────────────────────────────
 
 export function PaymentScreen() {
+  const { t } = useTranslation(['subscription', 'common']);
   const navigation = useAdminProfileNavigation();
 
   function handlePay() {
     Alert.alert(
-      'Выбор способа оплаты',
-      'Интеграция с платёжным провайдером будет доступна в следующей версии.',
+      t('subscription:payment.chooseTitle'),
+      t('subscription:payment.chooseMessage'),
       [
-        { text: 'Отмена', style: 'cancel' },
+        { text: t('common:cancel'), style: 'cancel' },
         {
-          text: 'Продолжить (мок)',
+          text: t('subscription:payment.mockContinue'),
           onPress: () => navigation.navigate('PaymentSuccess'),
         },
       ],
@@ -55,11 +57,11 @@ export function PaymentScreen() {
           style={s.backBtn}
           onPress={() => navigation.goBack()}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          accessibilityLabel="Назад"
+          accessibilityLabel={t('common:back')}
         >
           <ChevronLeft size={24} color={colors.textPrimary} strokeWidth={iconStrokeWidth} />
         </TouchableOpacity>
-        <Text style={s.topBarTitle}>Оплата</Text>
+        <Text style={s.topBarTitle}>{t('subscription:payment.title')}</Text>
         <View style={s.backBtn} />
       </View>
 
@@ -73,29 +75,29 @@ export function PaymentScreen() {
             <CreditCard size={32} color={colors.primary} strokeWidth={iconStrokeWidth} />
           </View>
           <Text style={s.amount}>$30.00</Text>
-          <Text style={s.description}>Подписка SoftTime на 1 месяц</Text>
+          <Text style={s.description}>{t('subscription:payment.description')}</Text>
 
           {/* Period */}
           <View style={s.periodRow}>
-            <PeriodItem label="Начало периода" value={formatDate(new Date())} />
+            <PeriodItem label={t('subscription:payment.periodStart')} value={formatDate(new Date())} />
             <View style={s.periodSep} />
-            <PeriodItem label="Конец периода" value={formatDatePlusMonth(new Date())} />
+            <PeriodItem label={t('subscription:payment.periodEnd')} value={formatDatePlusMonth(new Date())} />
           </View>
         </View>
 
         {/* ── What you get ── */}
         <View style={s.card}>
-          <Text style={s.cardTitle}>Тариф SoftTime Pro</Text>
+          <Text style={s.cardTitle}>{t('subscription:planName')}</Text>
           <View style={s.summaryRow}>
-            <Text style={s.summaryLabel}>Стоимость</Text>
+            <Text style={s.summaryLabel}>{t('subscription:payment.cost')}</Text>
             <Text style={s.summaryValue}>$30</Text>
           </View>
           <View style={s.summaryRow}>
-            <Text style={s.summaryLabel}>Период</Text>
-            <Text style={s.summaryValue}>1 месяц</Text>
+            <Text style={s.summaryLabel}>{t('subscription:payment.period')}</Text>
+            <Text style={s.summaryValue}>{t('subscription:payment.oneMonth')}</Text>
           </View>
           <View style={[s.summaryRow, s.summaryTotal]}>
-            <Text style={s.totalLabel}>Итого</Text>
+            <Text style={s.totalLabel}>{t('subscription:payment.total')}</Text>
             <Text style={s.totalValue}>$30.00</Text>
           </View>
         </View>
@@ -103,7 +105,7 @@ export function PaymentScreen() {
         {/* ── Security note ── */}
         <View style={s.securityRow}>
           <Lock size={iconSize.sm} color={colors.textSecondary} strokeWidth={iconStrokeWidth} />
-          <Text style={s.securityText}>Оплата защищена шифрованием</Text>
+          <Text style={s.securityText}>{t('subscription:payment.secured')}</Text>
           <ShieldCheck size={iconSize.sm} color={colors.success} strokeWidth={iconStrokeWidth} />
         </View>
 
@@ -113,7 +115,7 @@ export function PaymentScreen() {
       {/* Sticky CTA */}
       <View style={s.footer}>
         <Button variant="primary" size="full" onPress={handlePay}>
-          Выбрать способ оплаты
+          {t('subscription:payment.choose')}
         </Button>
       </View>
     </SafeAreaView>

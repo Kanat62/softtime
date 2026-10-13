@@ -1,12 +1,14 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { colors, fontFamily, typography } from '@/shared/config/theme';
 
 export function BlockedScreen() {
+  const { t } = useTranslation('auth');
   return (
     <View style={styles.container}>
       <Text style={styles.text}>BlockedScreen</Text>
-      <Text style={styles.sub}>Доступ заблокирован</Text>
+      <Text style={styles.sub}>{t('auth:blocked.subtitle')}</Text>
     </View>
   );
 }

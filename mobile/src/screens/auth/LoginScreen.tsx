@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -24,6 +25,7 @@ import { useAuthNavigation } from '@/shared/navigation/hooks';
 import { useLogin } from '@/features/auth/login/model/useLogin';
 
 export function LoginScreen() {
+  const { t } = useTranslation(['auth', 'common']);
   const navigation = useAuthNavigation();
   const { form, onSubmit, isLoading, serverError } = useLogin();
   const [showPassword, setShowPassword] = useState(false);
@@ -46,7 +48,7 @@ export function LoginScreen() {
         >
           <View style={styles.hero}>
             <Text style={styles.logo}>SoftTime</Text>
-            <Text style={styles.title}>Войти</Text>
+            <Text style={styles.title}>{t('auth:login.title')}</Text>
           </View>
 
           <View style={styles.form}>
@@ -86,8 +88,8 @@ export function LoginScreen() {
               name="password"
               render={({ field: { onChange, onBlur, value } }) => (
                 <Input
-                  label="Пароль"
-                  placeholder="Минимум 8 символов"
+                  label={t('auth:password')}
+                  placeholder={t('auth:passwordPlaceholder')}
                   secureTextEntry={!showPassword}
                   value={value}
                   onChangeText={onChange}
@@ -130,14 +132,14 @@ export function LoginScreen() {
               loading={isLoading}
               onPress={onSubmit}
             >
-              Войти
+              {t('auth:login.submit')}
             </Button>
           </View>
 
           <View style={styles.footer}>
-            <Text style={styles.footerText}>Нет аккаунта?{'  '}</Text>
+            <Text style={styles.footerText}>{t('auth:login.noAccount')}{'  '}</Text>
             <TouchableOpacity onPress={() => navigation.navigate('RoleSelect')}>
-              <Text style={styles.footerLink}>Зарегистрироваться</Text>
+              <Text style={styles.footerLink}>{t('common:register')}</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>

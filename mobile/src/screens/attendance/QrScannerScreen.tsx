@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
   Animated,
@@ -34,6 +35,7 @@ const SCAN_DURATION = 1600;
 const MASK_COLOR = 'rgba(0,0,0,0.78)';
 
 export function QrScannerScreen() {
+  const { t } = useTranslation(['attendance', 'common']);
   const navigation = useWorkerNavigation();
   const route = useRoute<QrScannerRoute>();
   const { mode } = route.params;
@@ -50,7 +52,7 @@ export function QrScannerScreen() {
   const scanLineY = useRef(new Animated.Value(0)).current;
   const { mutate, isPending } = useAttendanceScan(mode);
 
-  const title = mode === 'checkIn' ? 'Отметить приход' : 'Отметить уход';
+  const title = mode === 'checkIn' ? t('attendance:qr.checkInTitle') : t('attendance:qr.checkOutTitle');
 
   useEffect(() => {
     if (!hasPermission) requestPermission();
@@ -119,7 +121,7 @@ export function QrScannerScreen() {
     },
   });
 
-  const wifiLabel = wifiInfo.isWifi ? 'Офисная сеть подключена' : 'WiFi не обнаружен';
+  const wifiLabel = wifiInfo.isWifi ? t('attendance:qr.wifiConnected') : t('attendance:qr.wifiNotFound');
   const wifiSublabel = wifiInfo.isWifi
     ? [wifiInfo.ssid, wifiInfo.ipAddress ? maskLastOctet(wifiInfo.ipAddress) : null]
         .filter(Boolean)
@@ -157,7 +159,7 @@ export function QrScannerScreen() {
 
           <View style={styles.titleBlock}>
             <Text style={styles.title}>{title}</Text>
-            <Text style={styles.subtitle}>Наведите камеру на QR-код офиса</Text>
+            <Text style={styles.subtitle}>{t('attendance:qr.subtitle')}</Text>
           </View>
         </View>
 
@@ -192,7 +194,7 @@ export function QrScannerScreen() {
       {isPending && (
         <View style={styles.loadingOverlay}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.loadingText}>Проверяем...</Text>
+          <Text style={styles.loadingText}>{t('common:checking')}</Text>
         </View>
       )}
 
@@ -201,12 +203,12 @@ export function QrScannerScreen() {
         <SafeAreaView edges={['bottom']} style={styles.bannerContainer}>
           {!isOnline ? (
             <View style={[styles.banner, styles.bannerNeutral]}>
-              <Text style={styles.bannerText}>Нет подключения к интернету</Text>
+              <Text style={styles.bannerText}>{t('common:offline')}</Text>
             </View>
           ) : !hasPermission ? (
             <View style={styles.banner}>
               <Text style={styles.bannerText}>
-                Нет доступа к камере. Разрешите в настройках устройства.
+                {t('attendance:qr.noCameraAccess')}
               </Text>
             </View>
           ) : scanError ? (
@@ -216,7 +218,7 @@ export function QrScannerScreen() {
                 onPress={() => setScanError(null)}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
-                <Text style={styles.bannerRetry}>Повторить</Text>
+                <Text style={styles.bannerRetry}>{t('common:retry')}</Text>
               </TouchableOpacity>
             </View>
           ) : null}

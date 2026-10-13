@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
   FlatList,
@@ -36,6 +37,7 @@ import type { AppError } from '@/shared/api/errors';
 // ─── Screen ──────────────────────────────────────────────────────────────────
 
 export function OfficeScreen() {
+  const { t } = useTranslation(['office', 'common']);
   const navigation = useWorkerNavigation();
   const { userRole } = useAuth();
   const isAdmin = userRole === UserRole.ADMIN;
@@ -63,8 +65,8 @@ export function OfficeScreen() {
           const appErr = err as unknown as AppError;
           setCheckoutError(
             appErr.isNetworkError
-              ? 'Нет подключения к интернету'
-              : appErr.message || 'Ошибка при сохранении',
+              ? t('common:offline')
+              : appErr.message || t('office:saveError'),
           );
         },
       },
@@ -79,13 +81,13 @@ export function OfficeScreen() {
           style={styles.backBtn}
           onPress={() => navigation.goBack()}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          accessibilityLabel="Назад"
+          accessibilityLabel={t('common:back')}
         >
           <ChevronLeft size={24} color={colors.textPrimary} strokeWidth={iconStrokeWidth} />
         </TouchableOpacity>
 
         <View style={styles.titleRow}>
-          <Text style={styles.topBarTitle}>Сейчас в офисе</Text>
+          <Text style={styles.topBarTitle}>{t('office:title')}</Text>
           {!isLoading && !isError && !isAccessDenied && (
             <View style={styles.countBadge}>
               <Text style={styles.countText}>{entries.length}</Text>
@@ -103,8 +105,8 @@ export function OfficeScreen() {
       ) : isAccessDenied ? (
         <View style={styles.centered}>
           <ErrorState
-            title="Нет доступа"
-            description="Просмотр офиса доступен после обновления приложения."
+            title={t('office:noAccessTitle')}
+            description={t('office:noAccessDescription')}
           />
         </View>
       ) : isError ? (
@@ -130,8 +132,8 @@ export function OfficeScreen() {
           ListEmptyComponent={
             <EmptyState
               icon={<Users size={48} color={colors.textDisabled} strokeWidth={iconStrokeWidth} />}
-              title="Никого ещё нет в офисе"
-              description="Список появится после первого чекина"
+              title={t('office:emptyTitle')}
+              description={t('office:emptyDescription')}
             />
           }
           refreshControl={
@@ -168,7 +170,8 @@ interface EmployeeRowProps {
 }
 
 function EmployeeRow({ entry, isAdmin, onMorePress }: EmployeeRowProps) {
-  const name = entry.user?.fullName ?? 'Сотрудник';
+  const { t } = useTranslation(['office', 'common']);
+  const name = entry.user?.fullName ?? t('common:employee');
   const avatarUrl = entry.user?.avatarUrl ?? null;
   const timeStr = entry.checkInAt ? formatTime(entry.checkInAt) : '--:--';
 
@@ -178,7 +181,7 @@ function EmployeeRow({ entry, isAdmin, onMorePress }: EmployeeRowProps) {
 
       <View style={styles.rowContent}>
         <Text style={styles.rowName}>{name}</Text>
-        <Text style={styles.rowTime}>с {timeStr}</Text>
+        <Text style={styles.rowTime}>{t('office:since', { time: timeStr })}</Text>
       </View>
 
       {isAdmin && (
@@ -186,7 +189,7 @@ function EmployeeRow({ entry, isAdmin, onMorePress }: EmployeeRowProps) {
           style={styles.moreBtn}
           onPress={onMorePress}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          accessibilityLabel="Действия"
+          accessibilityLabel={t('office:actions')}
         >
           <MoreHorizontal
             size={iconSize.md}
@@ -210,6 +213,7 @@ interface CheckoutSheetProps {
 }
 
 function CheckoutSheet({ entry, onClose, onSave, isSaving, saveError }: CheckoutSheetProps) {
+  const { t } = useTranslation(['office', 'common']);
   const now = new Date();
   const [hours, setHours] = useState(now.getHours().toString().padStart(2, '0'));
   const [minutes, setMinutes] = useState(now.getMinutes().toString().padStart(2, '0'));
@@ -219,7 +223,7 @@ function CheckoutSheet({ entry, onClose, onSave, isSaving, saveError }: Checkout
     const h = parseInt(hours, 10);
     const m = parseInt(minutes, 10);
     if (isNaN(h) || h < 0 || h > 23 || isNaN(m) || m < 0 || m > 59) {
-      setValidationError('Введите корректное время (ЧЧ:ММ)');
+      setValidationError(t('common:time.invalid'));
       return;
     }
     setValidationError(null);
@@ -249,10 +253,10 @@ function CheckoutSheet({ entry, onClose, onSave, isSaving, saveError }: Checkout
 
           <View style={styles.sheetHeader}>
             <View>
-              <Text style={styles.sheetTitle}>Указать время ухода</Text>
+              <Text style={styles.sheetTitle}>{t('office:setLeaveTitle')}</Text>
               {entry && (
                 <Text style={styles.sheetSub}>
-                  {entry.user?.fullName ?? 'Сотрудник'}
+                  {entry.user?.fullName ?? t('common:employee')}
                 </Text>
               )}
             </View>
@@ -265,7 +269,7 @@ function CheckoutSheet({ entry, onClose, onSave, isSaving, saveError }: Checkout
           </View>
 
           <View style={styles.sheetBody}>
-            <Text style={styles.timeLabel}>Время ухода</Text>
+            <Text style={styles.timeLabel}>{t('office:leaveTime')}</Text>
             <View style={styles.timePicker}>
               <View style={styles.timeSegmentWrap}>
                 <TextInput
@@ -278,11 +282,11 @@ function CheckoutSheet({ entry, onClose, onSave, isSaving, saveError }: Checkout
                   keyboardType="number-pad"
                   maxLength={2}
                   selectTextOnFocus
-                  placeholder="ЧЧ"
+                  placeholder={t('common:time.hoursPlaceholder')}
                   placeholderTextColor={colors.textDisabled}
                   editable={!isSaving}
                 />
-                <Text style={styles.timeSegmentLabel}>часы</Text>
+                <Text style={styles.timeSegmentLabel}>{t('common:time.hours')}</Text>
               </View>
 
               <Text style={styles.timeColon}>:</Text>
@@ -298,11 +302,11 @@ function CheckoutSheet({ entry, onClose, onSave, isSaving, saveError }: Checkout
                   keyboardType="number-pad"
                   maxLength={2}
                   selectTextOnFocus
-                  placeholder="ММ"
+                  placeholder={t('common:time.minutesPlaceholder')}
                   placeholderTextColor={colors.textDisabled}
                   editable={!isSaving}
                 />
-                <Text style={styles.timeSegmentLabel}>минуты</Text>
+                <Text style={styles.timeSegmentLabel}>{t('common:time.minutes')}</Text>
               </View>
             </View>
 
@@ -316,7 +320,7 @@ function CheckoutSheet({ entry, onClose, onSave, isSaving, saveError }: Checkout
               onPress={handleSave}
               loading={isSaving}
             >
-              Сохранить
+              {t('common:save')}
             </Button>
           </View>
         </Pressable>

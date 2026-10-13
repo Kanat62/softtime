@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Platform, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -78,6 +79,7 @@ function WorkerProfileStack() {
 const Tab = createBottomTabNavigator<WorkerTabParamList>();
 
 export function WorkerTabs() {
+  const { t } = useTranslation('nav');
   const insets = useSafeAreaInsets();
   return (
     <Tab.Navigator
@@ -99,10 +101,10 @@ export function WorkerTabs() {
         },
       })}
     >
-      <Tab.Screen name="Home" component={WorkerHomeStack} options={{ tabBarLabel: 'Главная' }} />
-      <Tab.Screen name="News" component={WorkerNewsStack} options={{ tabBarLabel: 'Новости' }} />
-      <Tab.Screen name="Requests" component={WorkerRequestsStack} options={{ tabBarLabel: 'Заявки' }} />
-      <Tab.Screen name="Profile" component={WorkerProfileStack} options={{ tabBarLabel: 'Профиль' }} />
+      <Tab.Screen name="Home" component={WorkerHomeStack} options={{ tabBarLabel: t('nav:tabs.home') }} />
+      <Tab.Screen name="News" component={WorkerNewsStack} options={{ tabBarLabel: t('nav:tabs.news') }} />
+      <Tab.Screen name="Requests" component={WorkerRequestsStack} options={{ tabBarLabel: t('nav:tabs.requests') }} />
+      <Tab.Screen name="Profile" component={WorkerProfileStack} options={{ tabBarLabel: t('nav:tabs.profile') }} />
     </Tab.Navigator>
   );
 }

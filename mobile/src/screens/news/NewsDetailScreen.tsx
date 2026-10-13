@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Animated,
   Image,
@@ -24,22 +25,20 @@ import {
 } from '@/shared/config/theme';
 import { ErrorState, OfflineBanner, Skeleton } from '@/shared/ui';
 import type { NewsStackParamList } from '@/shared/navigation/types';
+import { formatDate } from '@/shared/lib/date';
 import { useNewsDetail } from '@/features/news/detail/model/useNewsDetail';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const MONTHS_GENITIVE = [
-  'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
-  'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря',
-];
 
 function formatFullDate(date: Date): string {
-  return `${date.getDate()} ${MONTHS_GENITIVE[date.getMonth()]} ${date.getFullYear()}`;
+  return formatDate(date);
 }
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export function NewsDetailScreen() {
+  const { t } = useTranslation(['news', 'common']);
   const navigation = useNavigation();
   const route      = useRoute<RouteProp<NewsStackParamList, 'NewsDetail'>>();
   const { id }     = route.params;
@@ -68,11 +67,11 @@ export function NewsDetailScreen() {
           style={styles.backBtn}
           onPress={() => navigation.goBack()}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          accessibilityLabel="Назад"
+          accessibilityLabel={t('common:back')}
         >
           <ChevronLeft size={24} color={colors.textPrimary} strokeWidth={iconStrokeWidth} />
         </TouchableOpacity>
-        <Text style={styles.topBarTitle}>Новость</Text>
+        <Text style={styles.topBarTitle}>{t('news:detailTitle')}</Text>
         <View style={styles.backBtn} />
       </View>
       <OfflineBanner variant="stale" />
@@ -99,7 +98,7 @@ export function NewsDetailScreen() {
           {/* Meta row */}
           <View style={styles.metaRow}>
             <View style={styles.newsBadge}>
-              <Text style={styles.newsBadgeText}>Новость</Text>
+              <Text style={styles.newsBadgeText}>{t('news:badge')}</Text>
             </View>
             <Text style={styles.metaDate}>{formatFullDate(item.createdAt)}</Text>
           </View>
@@ -127,7 +126,7 @@ export function NewsDetailScreen() {
                 color={colors.success}
                 strokeWidth={iconStrokeWidth}
               />
-              <Text style={styles.readBadgeText}>Отмечено как прочитанное</Text>
+              <Text style={styles.readBadgeText}>{t('news:readMarked')}</Text>
             </View>
           </Animated.View>
 

@@ -47,6 +47,7 @@ import { OfflineBanner } from '@/shared/ui';
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function AvatarBlock({ initials, onCameraPress }: { initials: string; onCameraPress: () => void }) {
+  const { t } = useTranslation(['profile', 'enums', 'common']);
   return (
     <View style={s.avatarWrapper}>
       <View style={s.avatar}>
@@ -56,7 +57,7 @@ function AvatarBlock({ initials, onCameraPress }: { initials: string; onCameraPr
         style={s.cameraBtn}
         onPress={onCameraPress}
         hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
-        accessibilityLabel="Сменить фото"
+        accessibilityLabel={t('profile:changePhoto')}
       >
         <Camera size={14} color={colors.primary} strokeWidth={iconStrokeWidth} />
       </TouchableOpacity>
@@ -65,7 +66,8 @@ function AvatarBlock({ initials, onCameraPress }: { initials: string; onCameraPr
 }
 
 function RoleBadge({ role }: { role: UserRole }) {
-  const label = role === UserRole.ADMIN ? 'Администратор' : 'Сотрудник';
+  const { t } = useTranslation(['profile', 'enums', 'common']);
+  const label = t(`enums:userRole.${role === UserRole.ADMIN ? 'ADMIN' : 'WORKER'}`);
   return (
     <View style={s.roleBadge}>
       <ShieldCheck size={14} color={colors.primary} strokeWidth={iconStrokeWidth} />
@@ -125,6 +127,7 @@ function ActionRow({
 // ─── Change Password Modal ────────────────────────────────────────────────────
 
 function ChangePasswordModal({ visible, onClose }: { visible: boolean; onClose: () => void }) {
+  const { t } = useTranslation(['profile', 'enums', 'common']);
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <TouchableOpacity style={s.overlay} activeOpacity={1} onPress={onClose}>
@@ -135,12 +138,12 @@ function ChangePasswordModal({ visible, onClose }: { visible: boolean; onClose: 
               <Lock size={24} color={colors.primary} strokeWidth={iconStrokeWidth} />
             </View>
           </View>
-          <Text style={s.modalTitle}>Смена пароля</Text>
+          <Text style={s.modalTitle}>{t('profile:passwordModal.title')}</Text>
           <Text style={s.modalDesc}>
-            Функция смены пароля доступна в следующей версии приложения.
+            {t('profile:passwordModal.description')}
           </Text>
           <TouchableOpacity style={s.modalBtn} onPress={onClose} activeOpacity={0.85}>
-            <Text style={s.modalBtnText}>Закрыть</Text>
+            <Text style={s.modalBtnText}>{t('profile:passwordModal.close')}</Text>
           </TouchableOpacity>
         </TouchableOpacity>
       </TouchableOpacity>
@@ -151,7 +154,7 @@ function ChangePasswordModal({ visible, onClose }: { visible: boolean; onClose: 
 // ─── Language Modal ───────────────────────────────────────────────────────────
 
 function LanguageModal({ visible, onClose }: { visible: boolean; onClose: () => void }) {
-  const { t, i18n } = useTranslation(['settings', 'common']);
+  const { t, i18n } = useTranslation(['profile', 'settings', 'enums', 'common']);
   const current = i18n.language as Language;
 
   async function handleSelect(language: Language) {
@@ -209,7 +212,7 @@ export function ProfileScreen() {
   const navigation = useNavigation<any>();
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showLanguageModal, setShowLanguageModal] = useState(false);
-  const { t, i18n } = useTranslation(['settings', 'common']);
+  const { t, i18n } = useTranslation(['profile', 'settings', 'enums', 'common']);
 
   const { user, isLoading } = useProfile();
 
@@ -220,26 +223,26 @@ export function ProfileScreen() {
     : '?';
 
   function handleLogout() {
-    Alert.alert('Выход', 'Вы уверены, что хотите выйти из аккаунта?', [
-      { text: 'Отмена', style: 'cancel' },
-      { text: 'Выйти', style: 'destructive', onPress: async () => { await logout(); } },
+    Alert.alert(t('profile:logoutTitle'), t('profile:logoutMessage'), [
+      { text: t('common:cancel'), style: 'cancel' },
+      { text: t('common:logout'), style: 'destructive', onPress: async () => { await logout(); } },
     ]);
   }
 
   function handleAvatarCamera() {
-    Alert.alert('Фото профиля', 'Выбор фото будет доступен в следующей версии.');
+    Alert.alert(t('profile:photoTitle'), t('profile:photoMessage'));
   }
 
   function handleOpenWebPanel() {
     Linking.openURL('https://softtime-web.vercel.app/').catch(() => {
-      Alert.alert('Ошибка', 'Не удалось открыть браузер.');
+      Alert.alert(t('common:error'), t('profile:browserError'));
     });
   }
 
   return (
     <SafeAreaView style={s.root} edges={['top']}>
       <View style={s.pageHeader}>
-        <Text style={s.pageTitle}>Профиль</Text>
+        <Text style={s.pageTitle}>{t('profile:title')}</Text>
       </View>
       <OfflineBanner variant="stale" />
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
@@ -263,13 +266,13 @@ export function ProfileScreen() {
         <View style={s.card}>
           <InfoRow
             icon={<Mail size={iconSize.md} color={colors.textSecondary} strokeWidth={iconStrokeWidth} />}
-            label="Email"
+            label={t('profile:email')}
             value={user?.email ?? '—'}
           />
           <View style={s.divider} />
           <InfoRow
             icon={<Building2 size={iconSize.md} color={colors.textSecondary} strokeWidth={iconStrokeWidth} />}
-            label="Компания"
+            label={t('profile:company')}
             value={user?.companyName ?? '—'}
           />
         </View>
@@ -279,14 +282,14 @@ export function ProfileScreen() {
           <View style={s.card}>
             <ActionRow
               icon={<CreditCard size={iconSize.md} color={colors.primary} strokeWidth={iconStrokeWidth} />}
-              label="Подписка и оплата"
+              label={t('profile:subscriptionAction')}
               onPress={() => navigation.navigate('Subscription')}
               showChevron
             />
             <View style={s.divider} />
             <ActionRow
               icon={<ExternalLink size={iconSize.md} color={colors.primary} strokeWidth={iconStrokeWidth} />}
-              label="Открыть веб-панель"
+              label={t('profile:openWebPanel')}
               onPress={handleOpenWebPanel}
               showChevron
             />
@@ -297,7 +300,7 @@ export function ProfileScreen() {
         <View style={s.card}>
           <ActionRow
             icon={<KeyRound size={iconSize.md} color={colors.textPrimary} strokeWidth={iconStrokeWidth} />}
-            label="Сменить пароль"
+            label={t('profile:changePassword')}
             onPress={() => setShowPasswordModal(true)}
             showChevron
           />
@@ -315,10 +318,10 @@ export function ProfileScreen() {
           style={s.logoutBtn}
           onPress={handleLogout}
           activeOpacity={0.85}
-          accessibilityLabel="Выйти из аккаунта"
+          accessibilityLabel={t('profile:logoutAction')}
         >
           <LogOut size={iconSize.md} color={colors.danger} strokeWidth={iconStrokeWidth} />
-          <Text style={s.logoutText}>Выйти из аккаунта</Text>
+          <Text style={s.logoutText}>{t('profile:logoutAction')}</Text>
         </TouchableOpacity>
 
         <View style={s.bottomSpacer} />

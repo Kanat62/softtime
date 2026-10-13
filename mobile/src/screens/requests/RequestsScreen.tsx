@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   FlatList,
   KeyboardAvoidingView,
@@ -31,57 +32,41 @@ import {
 } from '@/shared/config/theme';
 import { Button, EmptyState, ErrorState, OfflineBanner, Skeleton, StatusBadge } from '@/shared/ui';
 import { useIsOnline } from '@/shared/lib/network';
+import i18n from '@/shared/i18n';
+import { formatDate, monthNameLong, monthNameShort, weekdayShortLabels } from '@/shared/lib/date';
 import { useSubmitRequest } from '@/features/request/submit/model/useSubmitRequest';
 import { useMyRequests } from '@/features/request/history/model/useMyRequests';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const REQUEST_TYPE_LABELS: Record<RequestType, string> = {
-  [RequestType.SICK]:          'Больничный',
-  [RequestType.FAMILY]:        'Семейные обстоятельства',
-  [RequestType.VACATION]:      'Отпуск',
-  [RequestType.BUSINESS_TRIP]: 'Командировка',
-  [RequestType.REMOTE]:        'Удалённая работа',
-  [RequestType.LATE_REASON]:   'Опоздание (по причине)',
-  [RequestType.EARLY_LEAVE]:   'Ранний уход (по причине)',
-  [RequestType.OTHER]:         'Другое',
-};
-
-const REQUEST_TYPES = Object.entries(REQUEST_TYPE_LABELS) as Array<[RequestType, string]>;
-
-const MONTHS_SHORT = [
-  'янв', 'фев', 'мар', 'апр', 'май', 'июн',
-  'июл', 'авг', 'сен', 'окт', 'ноя', 'дек',
+const REQUEST_TYPES: RequestType[] = [
+  RequestType.SICK,
+  RequestType.FAMILY,
+  RequestType.VACATION,
+  RequestType.BUSINESS_TRIP,
+  RequestType.REMOTE,
+  RequestType.LATE_REASON,
+  RequestType.EARLY_LEAVE,
+  RequestType.OTHER,
 ];
 
-const MONTHS_GENITIVE = [
-  'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
-  'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря',
-];
-
-const MONTHS_NOMINATIVE = [
-  'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
-  'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь',
-];
-
-const DAY_NAMES = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function formatFullDate(date: Date): string {
-  return `${date.getDate()} ${MONTHS_GENITIVE[date.getMonth()]} ${date.getFullYear()}`;
+  return formatDate(date);
 }
 
 function formatDateRange(start: Date, end: Date | null | undefined): string {
   const startDay   = start.getDate();
-  const startMonth = MONTHS_SHORT[start.getMonth()];
+  const startMonth = monthNameShort(start.getMonth());
 
   if (!end || end.toDateString() === start.toDateString()) {
     return `${startDay} ${startMonth} ${start.getFullYear()}`;
   }
 
   const endDay   = end.getDate();
-  const endMonth = MONTHS_SHORT[end.getMonth()];
+  const endMonth = monthNameShort(end.getMonth());
 
   if (start.getMonth() === end.getMonth() && start.getFullYear() === end.getFullYear()) {
     return `${startDay}–${endDay} ${endMonth} ${end.getFullYear()}`;
@@ -91,22 +76,23 @@ function formatDateRange(start: Date, end: Date | null | undefined): string {
 }
 
 function mapSubmitError(err: AppError): string {
-  if (err.isNetworkError) return 'Нет соединения. Проверьте интернет.';
-  if (err.statusCode === 409) return 'Заявка на этот период уже существует.';
-  if (err.statusCode === 400) return 'Проверьте правильность заполнения формы.';
-  return err.message ?? 'Не удалось отправить заявку.';
+  if (err.isNetworkError) return i18n.t('common:noConnection');
+  if (err.statusCode === 409) return i18n.t('requests:errors.duplicate');
+  if (err.statusCode === 400) return i18n.t('requests:errors.badForm');
+  return err.message ?? i18n.t('requests:errors.submitFailed');
 }
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 type Tab = 'new' | 'my';
 
-const TABS: Array<{ key: Tab; label: string }> = [
-  { key: 'new', label: 'Новая заявка' },
-  { key: 'my',  label: 'Мои заявки'  },
+const TABS: Array<{ key: Tab; labelKey: string }> = [
+  { key: 'new', labelKey: 'requests:tabs.new' },
+  { key: 'my',  labelKey: 'requests:tabs.my'  },
 ];
 
 export function RequestsScreen() {
+  const { t } = useTranslation(['requests', 'enums', 'common']);
   const [activeTab, setActiveTab] = useState<Tab>('new');
   const isOnline = useIsOnline();
 
@@ -176,7 +162,7 @@ export function RequestsScreen() {
     <SafeAreaView style={styles.root} edges={['top']}>
       {/* Page title */}
       <View style={styles.pageHeader}>
-        <Text style={styles.pageTitle}>Заявки</Text>
+        <Text style={styles.pageTitle}>{t('requests:title')}</Text>
       </View>
       <OfflineBanner variant="block" />
 
@@ -194,7 +180,7 @@ export function RequestsScreen() {
                 styles.segmentText,
                 activeTab === tab.key && styles.segmentTextActive,
               ]}>
-                {tab.label}
+                {t(tab.labelKey)}
               </Text>
             </TouchableOpacity>
           ))}
@@ -214,14 +200,14 @@ export function RequestsScreen() {
           >
             {/* Type section */}
             <View style={styles.section}>
-              <Text style={styles.sectionLabel}>ТИП ЗАЯВКИ</Text>
+              <Text style={styles.sectionLabel}>{t('requests:form.typeLabel')}</Text>
               <TouchableOpacity
                 style={styles.selectField}
                 onPress={() => setTypePickerVisible(true)}
                 activeOpacity={0.7}
               >
                 <Text style={[styles.selectValue, !selectedType && styles.selectPlaceholder]}>
-                  {selectedType ? REQUEST_TYPE_LABELS[selectedType] : 'Выберите тип заявки...'}
+                  {selectedType ? t(`enums:requestType.${selectedType}`) : t('requests:form.typePlaceholder')}
                 </Text>
                 <ChevronDown
                   size={18}
@@ -233,7 +219,7 @@ export function RequestsScreen() {
 
             {/* Period section */}
             <View style={styles.section}>
-              <Text style={styles.sectionLabel}>ПЕРИОД</Text>
+              <Text style={styles.sectionLabel}>{t('requests:form.periodLabel')}</Text>
 
               {/* Start date */}
               <TouchableOpacity
@@ -248,12 +234,12 @@ export function RequestsScreen() {
                     strokeWidth={iconStrokeWidth}
                   />
                   <View style={styles.dateCardText}>
-                    <Text style={styles.dateCardLabel}>Дата начала</Text>
+                    <Text style={styles.dateCardLabel}>{t('requests:form.startDate')}</Text>
                     <Text style={[
                       styles.dateCardValue,
                       !startDate && styles.dateCardPlaceholder,
                     ]}>
-                      {startDate ? formatFullDate(startDate) : 'Выберите дату'}
+                      {startDate ? formatFullDate(startDate) : t('requests:form.pickDate')}
                     </Text>
                   </View>
                 </View>
@@ -277,12 +263,12 @@ export function RequestsScreen() {
                     strokeWidth={iconStrokeWidth}
                   />
                   <View style={styles.dateCardText}>
-                    <Text style={styles.dateCardLabel}>Дата окончания</Text>
+                    <Text style={styles.dateCardLabel}>{t('requests:form.endDate')}</Text>
                     <Text style={[
                       styles.dateCardValue,
                       !endDate && styles.dateCardPlaceholder,
                     ]}>
-                      {endDate ? formatFullDate(endDate) : 'Не выбрано (необязательно)'}
+                      {endDate ? formatFullDate(endDate) : t('requests:form.endDateOptional')}
                     </Text>
                   </View>
                 </View>
@@ -306,12 +292,12 @@ export function RequestsScreen() {
 
             {/* Comment section */}
             <View style={styles.section}>
-              <Text style={styles.sectionLabel}>КОММЕНТАРИЙ</Text>
+              <Text style={styles.sectionLabel}>{t('requests:form.commentLabel')}</Text>
               <TextInput
                 style={styles.textarea}
                 value={comment}
                 onChangeText={setComment}
-                placeholder="Опишите причину..."
+                placeholder={t('requests:form.commentPlaceholder')}
                 placeholderTextColor={colors.textDisabled}
                 multiline
                 numberOfLines={4}
@@ -335,7 +321,7 @@ export function RequestsScreen() {
                 disabled={!canSubmit}
                 loading={submitMutation.isPending}
               >
-                Отправить заявку
+                {t('requests:form.submit')}
               </Button>
             </View>
 
@@ -361,8 +347,8 @@ export function RequestsScreen() {
                 icon={
                   <FileText size={48} color={colors.textDisabled} strokeWidth={iconStrokeWidth} />
                 }
-                title="Нет заявок"
-                description="Здесь появятся ваши заявки"
+                title={t('requests:emptyTitle')}
+                description={t('requests:emptyDescription')}
               />
             )
           }
@@ -416,6 +402,7 @@ function TypePickerModal({
   onSelect: (type: RequestType) => void;
   onClose: () => void;
 }) {
+  const { t } = useTranslation(['requests', 'enums', 'common']);
   return (
     <Modal
       visible={visible}
@@ -428,13 +415,13 @@ function TypePickerModal({
         <Pressable style={styles.sheet} onPress={() => {}}>
           <View style={styles.handle} />
           <View style={styles.detailHeader}>
-            <Text style={styles.detailTitle}>Тип заявки</Text>
+            <Text style={styles.detailTitle}>{t('requests:typeTitle')}</Text>
             <TouchableOpacity onPress={onClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
               <X size={20} color={colors.textSecondary} strokeWidth={iconStrokeWidth} />
             </TouchableOpacity>
           </View>
           <ScrollView showsVerticalScrollIndicator={false}>
-            {REQUEST_TYPES.map(([type, label], index) => (
+            {REQUEST_TYPES.map((type, index) => (
               <React.Fragment key={type}>
                 <TouchableOpacity
                   style={styles.typeOption}
@@ -445,7 +432,7 @@ function TypePickerModal({
                     styles.typeOptionText,
                     selectedType === type && styles.typeOptionTextActive,
                   ]}>
-                    {label}
+                    {t(`enums:requestType.${type}`)}
                   </Text>
                   {selectedType === type && (
                     <View style={styles.typeOptionDot} />
@@ -465,13 +452,15 @@ function TypePickerModal({
 // ─── Request row ──────────────────────────────────────────────────────────────
 
 function RequestRow({ item, onPress }: { item: AbsenceRequest; onPress: () => void }) {
-  const pendingLabel = item.status === RequestStatus.PENDING ? 'На рассмотрении' : undefined;
+  const { t } = useTranslation(['requests', 'enums', 'common']);
+  const pendingLabel =
+    item.status === RequestStatus.PENDING ? t('enums:requestStatus.PENDING') : undefined;
 
   return (
     <TouchableOpacity style={styles.requestRow} onPress={onPress} activeOpacity={0.8}>
       <View style={styles.requestRowTop}>
         <View style={styles.requestRowInfo}>
-          <Text style={styles.requestType}>{REQUEST_TYPE_LABELS[item.type]}</Text>
+          <Text style={styles.requestType}>{t(`enums:requestType.${item.type}`)}</Text>
           <Text style={styles.requestDate}>{formatDateRange(item.startDate, item.endDate)}</Text>
         </View>
         <StatusBadge status={item.status} label={pendingLabel} />
@@ -513,10 +502,11 @@ function RequestDetailSheet({
   item: AbsenceRequest | null;
   onClose: () => void;
 }) {
+  const { t } = useTranslation(['requests', 'enums', 'common']);
   const statusLabels: Record<string, string> = {
-    [RequestStatus.PENDING]:  'На рассмотрении',
-    [RequestStatus.APPROVED]: 'Одобрено',
-    [RequestStatus.REJECTED]: 'Отклонено',
+    [RequestStatus.PENDING]:  t('enums:requestStatus.PENDING'),
+    [RequestStatus.APPROVED]: t('enums:requestStatus.APPROVED'),
+    [RequestStatus.REJECTED]: t('enums:requestStatus.REJECTED'),
   };
 
   return (
@@ -532,7 +522,7 @@ function RequestDetailSheet({
           <View style={styles.handle} />
 
           <View style={styles.detailHeader}>
-            <Text style={styles.detailTitle}>Детали заявки</Text>
+            <Text style={styles.detailTitle}>{t('requests:detailTitle')}</Text>
             <TouchableOpacity onPress={onClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
               <X size={20} color={colors.textSecondary} strokeWidth={iconStrokeWidth} />
             </TouchableOpacity>
@@ -540,21 +530,21 @@ function RequestDetailSheet({
 
           {item && (
             <View style={styles.detailBody}>
-              <DetailPair label="Тип" value={REQUEST_TYPE_LABELS[item.type]} />
-              <DetailPair label="Период" value={formatDateRange(item.startDate, item.endDate)} />
+              <DetailPair label={t('requests:detail.type')} value={t(`enums:requestType.${item.type}`)} />
+              <DetailPair label={t('requests:detail.period')} value={formatDateRange(item.startDate, item.endDate)} />
               <View style={styles.detailPair}>
-                <Text style={styles.detailLabel}>Статус</Text>
+                <Text style={styles.detailLabel}>{t('requests:detail.status')}</Text>
                 <StatusBadge
                   status={item.status}
                   label={statusLabels[item.status] ?? item.status}
                 />
               </View>
               {item.comment ? (
-                <DetailPair label="Ваш комментарий" value={item.comment} />
+                <DetailPair label={t('requests:detail.yourComment')} value={item.comment} />
               ) : null}
               {item.status === RequestStatus.REJECTED && item.decisionNote ? (
                 <View style={styles.decisionBlock}>
-                  <Text style={styles.decisionBlockLabel}>Комментарий администратора</Text>
+                  <Text style={styles.decisionBlockLabel}>{t('requests:detail.adminComment')}</Text>
                   <Text style={styles.decisionBlockText}>{item.decisionNote}</Text>
                 </View>
               ) : null}
@@ -587,6 +577,7 @@ interface DatePickerModalProps {
 }
 
 function DatePickerModal({ visible, onClose, onSelect, selectedDate }: DatePickerModalProps) {
+  const { t } = useTranslation(['requests', 'enums', 'common']);
   const today = new Date();
   const [viewYear, setViewYear]   = useState(today.getFullYear());
   const [viewMonth, setViewMonth] = useState(today.getMonth());
@@ -638,7 +629,7 @@ function DatePickerModal({ visible, onClose, onSelect, selectedDate }: DatePicke
               />
             </TouchableOpacity>
             <Text style={styles.calMonthText}>
-              {MONTHS_NOMINATIVE[viewMonth]} {viewYear}
+              {monthNameLong(viewMonth)} {viewYear}
             </Text>
             <TouchableOpacity
               onPress={nextMonth}
@@ -653,7 +644,7 @@ function DatePickerModal({ visible, onClose, onSelect, selectedDate }: DatePicke
           </View>
 
           <View style={styles.calRow}>
-            {DAY_NAMES.map((d) => (
+            {weekdayShortLabels().map((d) => (
               <View key={d} style={styles.calCell}>
                 <Text style={styles.calDayName}>{d}</Text>
               </View>

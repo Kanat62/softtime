@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -31,6 +32,7 @@ import { useAuthNavigation } from '@/shared/navigation/hooks';
 import { useRegisterWorker } from '@/features/auth/register-worker/model/useRegisterWorker';
 
 export function RegisterWorkerScreen() {
+  const { t } = useTranslation(['auth', 'common']);
   const navigation = useAuthNavigation();
   const { form, onSubmit, isLoading, serverError } = useRegisterWorker();
   const [showPassword, setShowPassword] = useState(false);
@@ -48,11 +50,11 @@ export function RegisterWorkerScreen() {
           style={styles.backBtn}
           onPress={() => navigation.goBack()}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          accessibilityLabel="Назад"
+          accessibilityLabel={t('common:back')}
         >
           <ChevronLeft size={24} color={colors.textPrimary} strokeWidth={iconStrokeWidth} />
         </TouchableOpacity>
-        <Text style={styles.topBarTitle}>Регистрация</Text>
+        <Text style={styles.topBarTitle}>{t('auth:registerWorker.title')}</Text>
         <View style={styles.backBtn} />
       </View>
 
@@ -77,8 +79,8 @@ export function RegisterWorkerScreen() {
               name="fullName"
               render={({ field: { onChange, onBlur, value } }) => (
                 <Input
-                  label="ФИО"
-                  placeholder="Иванов Иван Иванович"
+                  label={t('auth:fullName')}
+                  placeholder={t('auth:fullNamePlaceholder')}
                   autoCapitalize="words"
                   value={value}
                   onChangeText={onChange}
@@ -127,8 +129,8 @@ export function RegisterWorkerScreen() {
               name="password"
               render={({ field: { onChange, onBlur, value } }) => (
                 <Input
-                  label="Пароль"
-                  placeholder="Минимум 8 символов"
+                  label={t('auth:password')}
+                  placeholder={t('auth:passwordPlaceholder')}
                   secureTextEntry={!showPassword}
                   value={value}
                   onChangeText={onChange}
@@ -171,7 +173,7 @@ export function RegisterWorkerScreen() {
               name="companyCode"
               render={({ field: { onChange, onBlur, value } }) => (
                 <Input
-                  label="Код компании"
+                  label={t('auth:registerWorker.companyCode')}
                   placeholder="000000"
                   keyboardType="number-pad"
                   maxLength={6}
@@ -191,7 +193,7 @@ export function RegisterWorkerScreen() {
             />
 
             <Button variant="primary" size="full" loading={isLoading} onPress={onSubmit}>
-              Зарегистрироваться
+              {t('common:register')}
             </Button>
           </View>
         </ScrollView>

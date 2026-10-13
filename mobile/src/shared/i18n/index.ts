@@ -11,9 +11,29 @@ import {
 import ruCommon from './locales/ru/common.json';
 import ruSettings from './locales/ru/settings.json';
 import ruHome from './locales/ru/home.json';
+import ruAttendance from './locales/ru/attendance.json';
+import ruAuth from './locales/ru/auth.json';
+import ruManagement from './locales/ru/management.json';
+import ruNav from './locales/ru/nav.json';
+import ruNews from './locales/ru/news.json';
+import ruOffice from './locales/ru/office.json';
+import ruProfile from './locales/ru/profile.json';
+import ruRequests from './locales/ru/requests.json';
+import ruSchedule from './locales/ru/schedule.json';
+import ruSubscription from './locales/ru/subscription.json';
 import enCommon from './locales/en/common.json';
 import enSettings from './locales/en/settings.json';
 import enHome from './locales/en/home.json';
+import enAttendance from './locales/en/attendance.json';
+import enAuth from './locales/en/auth.json';
+import enManagement from './locales/en/management.json';
+import enNav from './locales/en/nav.json';
+import enNews from './locales/en/news.json';
+import enOffice from './locales/en/office.json';
+import enProfile from './locales/en/profile.json';
+import enRequests from './locales/en/requests.json';
+import enSchedule from './locales/en/schedule.json';
+import enSubscription from './locales/en/subscription.json';
 
 import { languageStorage } from './language-storage';
 
@@ -23,7 +43,8 @@ export { languageStorage } from './language-storage';
  * Namespace:
  *  - enums, validation — общий словарь из @softtime/shared (один источник
  *    с web и backend, чтобы тексты не разошлись);
- *  - common, settings, home — мобильные строки (JSON рядом с этим файлом).
+ *  - остальные (common, nav, settings и по домену экрана) — мобильные
+ *    строки, JSON в ./locales/{ru,en}/.
  */
 const resources = {
   ru: {
@@ -32,6 +53,16 @@ const resources = {
     common: ruCommon,
     settings: ruSettings,
     home: ruHome,
+    attendance: ruAttendance,
+    auth: ruAuth,
+    management: ruManagement,
+    nav: ruNav,
+    news: ruNews,
+    office: ruOffice,
+    profile: ruProfile,
+    requests: ruRequests,
+    schedule: ruSchedule,
+    subscription: ruSubscription,
   },
   en: {
     enums: dictionaries.en.enums,
@@ -39,6 +70,16 @@ const resources = {
     common: enCommon,
     settings: enSettings,
     home: enHome,
+    attendance: enAttendance,
+    auth: enAuth,
+    management: enManagement,
+    nav: enNav,
+    news: enNews,
+    office: enOffice,
+    profile: enProfile,
+    requests: enRequests,
+    schedule: enSchedule,
+    subscription: enSubscription,
   },
 } as const;
 
@@ -54,7 +95,23 @@ i18n.use(initReactI18next).init({
   resources,
   lng: getDeviceLanguage(),
   fallbackLng: FALLBACK_LANGUAGE,
-  ns: ['common', 'settings', 'home', 'enums', 'validation'],
+  ns: [
+    'common',
+    'nav',
+    'settings',
+    'home',
+    'auth',
+    'attendance',
+    'office',
+    'schedule',
+    'requests',
+    'news',
+    'profile',
+    'management',
+    'subscription',
+    'enums',
+    'validation',
+  ],
   defaultNS: 'common',
   interpolation: {
     // React сам экранирует вывод.

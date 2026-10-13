@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
   Modal,
@@ -43,6 +44,7 @@ function formatTime(date: Date): string {
 // ─── ManagementScreen ─────────────────────────────────────────────────────────
 
 export function ManagementScreen() {
+  const { t } = useTranslation(['management', 'common']);
   const navigation = useNavigation<any>();
 
   const pendingEmp = usePendingEmployees();
@@ -57,11 +59,11 @@ export function ManagementScreen() {
           style={s.backBtn}
           onPress={() => navigation.goBack()}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          accessibilityLabel="Назад"
+          accessibilityLabel={t('common:back')}
         >
           <ChevronLeft size={24} color={colors.textPrimary} strokeWidth={iconStrokeWidth} />
         </TouchableOpacity>
-        <Text style={s.topBarTitle}>Управление</Text>
+        <Text style={s.topBarTitle}>{t('management:title')}</Text>
         <View style={s.backBtn} />
       </View>
       <OfflineBanner variant="stale" />
@@ -72,11 +74,11 @@ export function ManagementScreen() {
       >
         {/* ── Section 1: Pending employees ── */}
         <Section
-          title="Сотрудники"
-          subtitle={`Ожидают подтверждения: ${pendingEmp.employees.length}`}
+          title={t('management:employeesSection')}
+          subtitle={t('management:pendingCount', { count: pendingEmp.employees.length })}
         >
           {pendingEmp.isError ? (
-            <ErrorState title="Не удалось загрузить" onRetry={pendingEmp.refetch} />
+            <ErrorState title={t('common:loadFailed')} onRetry={pendingEmp.refetch} />
           ) : (
             <PendingEmployees
               workers={pendingEmp.employees}
@@ -88,9 +90,9 @@ export function ManagementScreen() {
         </Section>
 
         {/* ── Section 2: Incoming requests ── */}
-        <Section title="Заявки сотрудников">
+        <Section title={t('management:requestsSection')}>
           {adminReqs.isError ? (
-            <ErrorState title="Не удалось загрузить" onRetry={adminReqs.refetch} />
+            <ErrorState title={t('common:loadFailed')} onRetry={adminReqs.refetch} />
           ) : (
             <IncomingRequests
               requests={adminReqs.items}
@@ -161,6 +163,7 @@ function OfficeSection({
   isCheckingOut,
   onViewAll,
 }: OfficeSectionProps) {
+  const { t } = useTranslation(['management', 'common']);
   const [checkoutTarget, setCheckoutTarget] = useState<AttendanceWithUser | null>(null);
   const preview = entries.slice(0, 3);
 
@@ -173,11 +176,11 @@ function OfficeSection({
         activeOpacity={0.85}
       >
         <View>
-          <Text style={s.sectionTitle}>Сейчас в офисе</Text>
-          <Text style={s.sectionSubtitle}>{entries.length} человек</Text>
+          <Text style={s.sectionTitle}>{t('management:inOfficeTitle')}</Text>
+          <Text style={s.sectionSubtitle}>{t('management:peopleCount', { count: entries.length })}</Text>
         </View>
         <View style={s.viewAllRow}>
-          <Text style={s.viewAllText}>Все</Text>
+          <Text style={s.viewAllText}>{t('common:all')}</Text>
           <ChevronRight size={iconSize.md} color={colors.primary} strokeWidth={iconStrokeWidth} />
         </View>
       </TouchableOpacity>
@@ -186,7 +189,7 @@ function OfficeSection({
         {isLoading ? (
           <ActivityIndicator size="small" color={colors.primary} style={s.loader} />
         ) : isError ? (
-          <ErrorState title="Не удалось загрузить" onRetry={onRefetch} />
+          <ErrorState title={t('common:loadFailed')} onRetry={onRefetch} />
         ) : (
           preview.map((entry, idx) => (
             <React.Fragment key={entry.id}>
@@ -223,21 +226,22 @@ interface OfficeRowProps {
 }
 
 function OfficeRow({ entry, onMorePress }: OfficeRowProps) {
-  const name = entry.user?.fullName ?? 'Сотрудник';
+  const { t } = useTranslation(['management', 'common']);
+  const name = entry.user?.fullName ?? t('common:employee');
   return (
     <View style={s.officeRow}>
       <Avatar uri={entry.user?.avatarUrl ?? null} name={name} size={40} />
       <View style={s.officeRowInfo}>
         <Text style={s.officeRowName} numberOfLines={1}>{name}</Text>
         {entry.checkInAt && (
-          <Text style={s.officeRowTime}>с {formatTime(entry.checkInAt)}</Text>
+          <Text style={s.officeRowTime}>{t('management:since', { time: formatTime(entry.checkInAt) })}</Text>
         )}
       </View>
       <TouchableOpacity
         style={s.moreBtn}
         onPress={onMorePress}
         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        accessibilityLabel="Указать уход"
+        accessibilityLabel={t('management:setLeaveLabel')}
       >
         <MoreHorizontal size={iconSize.md} color={colors.textSecondary} strokeWidth={iconStrokeWidth} />
       </TouchableOpacity>
@@ -255,6 +259,7 @@ interface CheckoutSheetProps {
 }
 
 function CheckoutSheet({ entry, onClose, onSave, isSaving }: CheckoutSheetProps) {
+  const { t } = useTranslation(['management', 'common']);
   const now = new Date();
   const [hours, setHours] = useState(now.getHours().toString().padStart(2, '0'));
   const [minutes, setMinutes] = useState(now.getMinutes().toString().padStart(2, '0'));
@@ -264,7 +269,7 @@ function CheckoutSheet({ entry, onClose, onSave, isSaving }: CheckoutSheetProps)
     const h = parseInt(hours, 10);
     const m = parseInt(minutes, 10);
     if (isNaN(h) || h < 0 || h > 23 || isNaN(m) || m < 0 || m > 59) {
-      setError('Введите корректное время (ЧЧ:ММ)');
+      setError(t('common:time.invalid'));
       return;
     }
     setError(null);
@@ -292,9 +297,9 @@ function CheckoutSheet({ entry, onClose, onSave, isSaving }: CheckoutSheetProps)
 
           <View style={s.sheetHeader}>
             <View>
-              <Text style={s.sheetTitle}>Указать время ухода</Text>
+              <Text style={s.sheetTitle}>{t('management:setLeaveTitle')}</Text>
               {entry && (
-                <Text style={s.sheetSub}>{entry.user?.fullName ?? 'Сотрудник'}</Text>
+                <Text style={s.sheetSub}>{entry.user?.fullName ?? t('common:employee')}</Text>
               )}
             </View>
             <TouchableOpacity
@@ -306,7 +311,7 @@ function CheckoutSheet({ entry, onClose, onSave, isSaving }: CheckoutSheetProps)
           </View>
 
           <View style={s.sheetBody}>
-            <Text style={s.timeLabel}>Время ухода</Text>
+            <Text style={s.timeLabel}>{t('management:leaveTime')}</Text>
             <View style={s.timePicker}>
               <View style={s.timeSegmentWrap}>
                 <TextInput
@@ -316,10 +321,10 @@ function CheckoutSheet({ entry, onClose, onSave, isSaving }: CheckoutSheetProps)
                   keyboardType="number-pad"
                   maxLength={2}
                   selectTextOnFocus
-                  placeholder="ЧЧ"
+                  placeholder={t('common:time.hoursPlaceholder')}
                   placeholderTextColor={colors.textDisabled}
                 />
-                <Text style={s.timeSegmentLabel}>часы</Text>
+                <Text style={s.timeSegmentLabel}>{t('common:time.hours')}</Text>
               </View>
               <Text style={s.timeColon}>:</Text>
               <View style={s.timeSegmentWrap}>
@@ -330,10 +335,10 @@ function CheckoutSheet({ entry, onClose, onSave, isSaving }: CheckoutSheetProps)
                   keyboardType="number-pad"
                   maxLength={2}
                   selectTextOnFocus
-                  placeholder="ММ"
+                  placeholder={t('common:time.minutesPlaceholder')}
                   placeholderTextColor={colors.textDisabled}
                 />
-                <Text style={s.timeSegmentLabel}>минуты</Text>
+                <Text style={s.timeSegmentLabel}>{t('common:time.minutes')}</Text>
               </View>
             </View>
             {error && <Text style={s.timeError}>{error}</Text>}
@@ -343,7 +348,7 @@ function CheckoutSheet({ entry, onClose, onSave, isSaving }: CheckoutSheetProps)
               onPress={handleSave}
               disabled={isSaving}
             >
-              {isSaving ? 'Сохранение…' : 'Сохранить'}
+              {isSaving ? t('common:saving') : t('common:save')}
             </Button>
           </View>
         </Pressable>

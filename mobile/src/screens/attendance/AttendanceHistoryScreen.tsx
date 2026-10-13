@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Alert,
   Modal,
@@ -26,6 +27,7 @@ import {
 } from '@/shared/config/theme';
 import { Button, ErrorState, OfflineBanner, Skeleton, StatusBadge } from '@/shared/ui';
 import { HistoryList, formatDate, formatTime, formatMinutes } from '@/widgets/history-list/HistoryList';
+import { formatDayMonthShort, monthNameLong, weekdayShortLabels } from '@/shared/lib/date';
 import { useWorkerNavigation } from '@/shared/navigation/hooks';
 import {
   useAttendanceHistory,
@@ -35,23 +37,7 @@ import { clearTodayAttendanceApi } from '@/entities/attendance';
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
 
-const PERIODS: Array<{ key: Period; label: string }> = [
-  { key: 'week', label: 'Неделя' },
-  { key: 'month', label: 'Месяц' },
-  { key: 'range', label: 'Период' },
-];
-
-const MONTH_NAMES = [
-  'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
-  'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь',
-];
-
-const MONTHS_SHORT = [
-  'янв', 'фев', 'мар', 'апр', 'май', 'июн',
-  'июл', 'авг', 'сен', 'окт', 'ноя', 'дек',
-];
-
-const WEEKDAY_LABELS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+const PERIODS: Period[] = ['week', 'month', 'range'];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -59,19 +45,18 @@ function dateToYMD(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
 
-function formatDateShort(d: Date): string {
-  return `${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}`;
-}
 
-function formatTotalHours(minutes: number): string {
+
+function formatTotalHours(minutes: number, hoursShort: string, minutesShort: string): string {
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
-  return m === 0 ? `${h} ч` : `${h} ч ${m} м`;
+  return m === 0 ? `${h} ${hoursShort}` : `${h} ${hoursShort} ${m} ${minutesShort}`;
 }
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export function AttendanceHistoryScreen() {
+  const { t } = useTranslation(['attendance', 'common']);
   const navigation = useWorkerNavigation();
   const [period, setPeriod] = useState<Period>('week');
   const [selectedItem, setSelectedItem] = useState<Attendance | null>(null);
@@ -89,19 +74,19 @@ export function AttendanceHistoryScreen() {
 
   function handleClearToday() {
     Alert.alert(
-      'Очистить данные',
-      'Удалить приход и уход за сегодня?',
+      t('attendance:history.clearTitle'),
+      t('attendance:history.clearMessage'),
       [
-        { text: 'Отмена', style: 'cancel' },
+        { text: t('common:cancel'), style: 'cancel' },
         {
-          text: 'Удалить',
+          text: t('common:delete'),
           style: 'destructive',
           onPress: async () => {
             try {
               await clearTodayAttendanceApi();
               refetch();
             } catch {
-              Alert.alert('Ошибка', 'Не удалось очистить данные');
+              Alert.alert(t('common:error'), t('attendance:history.clearFailed'));
             }
           },
         },
@@ -111,9 +96,9 @@ export function AttendanceHistoryScreen() {
 
   const rangeLabel = useMemo(() => {
     if (customFrom && customTo) {
-      return `${formatDateShort(customFrom)} — ${formatDateShort(customTo)}`;
+      return `${formatDayMonthShort(customFrom)} — ${formatDayMonthShort(customTo)}`;
     }
-    return 'Последние 3 месяца';
+    return t('attendance:history.lastThreeMonths');
   }, [customFrom, customTo]);
 
   return (
@@ -124,16 +109,16 @@ export function AttendanceHistoryScreen() {
           style={styles.backBtn}
           onPress={() => navigation.goBack()}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          accessibilityLabel="Назад"
+          accessibilityLabel={t('common:back')}
         >
           <ChevronLeft size={24} color={colors.textPrimary} strokeWidth={iconStrokeWidth} />
         </TouchableOpacity>
-        <Text style={styles.topBarTitle}>История посещаемости</Text>
+        <Text style={styles.topBarTitle}>{t('attendance:history.title')}</Text>
         <TouchableOpacity
           style={styles.backBtn}
           onPress={handleClearToday}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          accessibilityLabel="Очистить данные за сегодня"
+          accessibilityLabel={t('attendance:history.clearTodayLabel')}
         >
           <Trash2 size={20} color={colors.danger} strokeWidth={iconStrokeWidth} />
         </TouchableOpacity>
@@ -145,13 +130,13 @@ export function AttendanceHistoryScreen() {
         <View style={styles.segmentTrack}>
           {PERIODS.map((p) => (
             <TouchableOpacity
-              key={p.key}
-              style={[styles.segment, period === p.key && styles.segmentActive]}
-              onPress={() => setPeriod(p.key)}
+              key={p}
+              style={[styles.segment, period === p && styles.segmentActive]}
+              onPress={() => setPeriod(p)}
               activeOpacity={0.8}
             >
-              <Text style={[styles.segmentText, period === p.key && styles.segmentTextActive]}>
-                {p.label}
+              <Text style={[styles.segmentText, period === p && styles.segmentTextActive]}>
+                {t(`attendance:history.periods.${p}`)}
               </Text>
             </TouchableOpacity>
           ))}
@@ -193,19 +178,27 @@ export function AttendanceHistoryScreen() {
               {/* Summary card */}
               <View style={styles.summaryCard}>
                 <StatCol
-                  value={totalMinutes > 0 ? formatTotalHours(totalMinutes) : '—'}
-                  label="всего часов"
+                  value={
+                    totalMinutes > 0
+                      ? formatTotalHours(
+                          totalMinutes,
+                          t('common:duration.hoursShort'),
+                          t('common:duration.minutesShort'),
+                        )
+                      : '—'
+                  }
+                  label={t('attendance:history.totalHours')}
                 />
                 <View style={styles.divider} />
                 <StatCol
                   value={String(lateCount)}
-                  label={lateCount === 1 ? 'опоздание' : 'опоздания'}
+                  label={t('attendance:history.late', { count: lateCount })}
                   valueColor={lateCount > 0 ? colors.warningText : colors.textPrimary}
                 />
                 <View style={styles.divider} />
                 <StatCol
                   value={String(absentCount)}
-                  label={absentCount === 1 ? 'пропуск' : 'пропуска'}
+                  label={t('attendance:history.absence', { count: absentCount })}
                   valueColor={absentCount > 0 ? colors.dangerText : colors.textPrimary}
                 />
               </View>
@@ -257,6 +250,7 @@ function StatCol({
 // ─── Detail modal ─────────────────────────────────────────────────────────────
 
 function DetailModal({ item, onClose }: { item: Attendance | null; onClose: () => void }) {
+  const { t } = useTranslation(['attendance', 'common']);
   return (
     <Modal
       visible={item !== null}
@@ -283,20 +277,20 @@ function DetailModal({ item, onClose }: { item: Attendance | null; onClose: () =
 
           {item && (
             <View style={styles.sheetBody}>
-              <DetailRow label="Статус">
+              <DetailRow label={t('attendance:history.detail.status')}>
                 <StatusBadge status={item.status} />
               </DetailRow>
-              <DetailRow label="Приход">
+              <DetailRow label={t('common:checkIn')}>
                 <Text style={styles.detailValue}>{formatTime(item.checkInAt)}</Text>
               </DetailRow>
-              <DetailRow label="Уход">
+              <DetailRow label={t('common:checkOut')}>
                 <Text style={styles.detailValue}>{formatTime(item.checkOutAt)}</Text>
               </DetailRow>
-              <DetailRow label="Отработано">
+              <DetailRow label={t('attendance:history.detail.worked')}>
                 <Text style={styles.detailValue}>{formatMinutes(item.workedMinutes)}</Text>
               </DetailRow>
               {item.note && (
-                <DetailRow label="Примечание">
+                <DetailRow label={t('attendance:history.detail.note')}>
                   <Text style={[styles.detailValue, styles.detailNote]}>{item.note}</Text>
                 </DetailRow>
               )}
@@ -332,6 +326,7 @@ function DateRangeSheet({
   onApply: (from: Date, to: Date) => void;
   onClose: () => void;
 }) {
+  const { t } = useTranslation(['attendance', 'common']);
   const todayRef = useRef(new Date());
   const today = todayRef.current;
 
@@ -432,7 +427,7 @@ function DateRangeSheet({
 
           {/* Header */}
           <View style={styles.sheetHeader}>
-            <Text style={styles.sheetTitle}>Выберите период</Text>
+            <Text style={styles.sheetTitle}>{t('attendance:history.pickPeriod')}</Text>
             <TouchableOpacity onPress={onClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
               <X size={20} color={colors.textSecondary} strokeWidth={iconStrokeWidth} />
             </TouchableOpacity>
@@ -443,7 +438,7 @@ function DateRangeSheet({
             <TouchableOpacity style={cal.navBtn} onPress={prevMonth}>
               <ChevronLeft size={iconSize.md} color={colors.textPrimary} strokeWidth={iconStrokeWidth} />
             </TouchableOpacity>
-            <Text style={cal.monthTitle}>{MONTH_NAMES[viewMonth]} {viewYear}</Text>
+            <Text style={cal.monthTitle}>{monthNameLong(viewMonth)} {viewYear}</Text>
             <TouchableOpacity style={cal.navBtn} onPress={nextMonth} disabled={isFutureMonth}>
               <ChevronRight
                 size={iconSize.md}
@@ -455,7 +450,7 @@ function DateRangeSheet({
 
           {/* Weekday labels */}
           <View style={cal.weekRow}>
-            {WEEKDAY_LABELS.map((label) => (
+            {weekdayShortLabels().map((label) => (
               <Text key={label} style={cal.weekLabel}>{label}</Text>
             ))}
           </View>
@@ -502,13 +497,13 @@ function DateRangeSheet({
           {/* Selection row */}
           <View style={cal.selRow}>
             <View style={cal.selItem}>
-              <Text style={cal.selLabel}>Начало</Text>
-              <Text style={cal.selValue}>{selFrom ? formatDateShort(selFrom) : '—'}</Text>
+              <Text style={cal.selLabel}>{t('attendance:history.rangeStart')}</Text>
+              <Text style={cal.selValue}>{selFrom ? formatDayMonthShort(selFrom) : '—'}</Text>
             </View>
             <View style={cal.selDivider} />
             <View style={cal.selItem}>
-              <Text style={cal.selLabel}>Конец</Text>
-              <Text style={cal.selValue}>{selTo ? formatDateShort(selTo) : '—'}</Text>
+              <Text style={cal.selLabel}>{t('attendance:history.rangeEnd')}</Text>
+              <Text style={cal.selValue}>{selTo ? formatDayMonthShort(selTo) : '—'}</Text>
             </View>
           </View>
 
@@ -520,7 +515,7 @@ function DateRangeSheet({
               onPress={canApply ? () => onApply(selFrom!, selTo!) : undefined}
               disabled={!canApply}
             >
-              Применить
+              {t('common:apply')}
             </Button>
           </View>
         </Pressable>

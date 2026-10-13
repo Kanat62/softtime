@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Animated,
   StyleSheet,
@@ -39,6 +40,7 @@ function addMonth(date: Date): Date {
 // ─── PaymentSuccessScreen ─────────────────────────────────────────────────────
 
 export function PaymentSuccessScreen() {
+  const { t } = useTranslation(['subscription', 'common']);
   const navigation = useAdminProfileNavigation();
 
   // Animations
@@ -102,18 +104,21 @@ export function PaymentSuccessScreen() {
 
         {/* ── Text block ── */}
         <Animated.View style={[s.textBlock, { opacity: contentOpacity }]}>
-          <Text style={s.title}>Оплата прошла ✓</Text>
-          <Text style={s.subtitle}>Подписка активна до</Text>
+          <Text style={s.title}>{t('subscription:success.title')}</Text>
+          <Text style={s.subtitle}>{t('subscription:success.activeUntil')}</Text>
           <Text style={s.date}>{formatDate(activeUntil)}</Text>
         </Animated.View>
 
         {/* ── Details card ── */}
         <Animated.View style={[s.detailCard, { opacity: contentOpacity }]}>
-          <DetailRow label="Тариф" value="SoftTime Pro" />
+          <DetailRow label={t('subscription:success.plan')} value="SoftTime Pro" />
           <View style={s.detailDivider} />
-          <DetailRow label="Сумма" value="$30.00" />
+          <DetailRow label={t('subscription:success.amount')} value="$30.00" />
           <View style={s.detailDivider} />
-          <DetailRow label="Период" value={`до ${formatDate(activeUntil)}`} />
+          <DetailRow
+            label={t('subscription:success.period')}
+            value={t('subscription:success.until', { date: formatDate(activeUntil) })}
+          />
         </Animated.View>
       </View>
 
@@ -124,7 +129,7 @@ export function PaymentSuccessScreen() {
           size="full"
           onPress={() => navigation.popToTop()}
         >
-          Готово
+          {t('common:done')}
         </Button>
       </View>
     </SafeAreaView>

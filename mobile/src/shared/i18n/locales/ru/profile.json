@@ -1,0 +1,20 @@
+{
+  "title": "Профиль",
+  "changePhoto": "Сменить фото",
+  "email": "Email",
+  "company": "Компания",
+  "subscriptionAction": "Подписка и оплата",
+  "openWebPanel": "Открыть веб-панель",
+  "changePassword": "Сменить пароль",
+  "logoutAction": "Выйти из аккаунта",
+  "logoutTitle": "Выход",
+  "logoutMessage": "Вы уверены, что хотите выйти из аккаунта?",
+  "photoTitle": "Фото профиля",
+  "photoMessage": "Выбор фото будет доступен в следующей версии.",
+  "browserError": "Не удалось открыть браузер.",
+  "passwordModal": {
+    "title": "Смена пароля",
+    "description": "Функция смены пароля доступна в следующей версии приложения.",
+    "close": "Закрыть"
+  }
+}

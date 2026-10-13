@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute } from '@react-navigation/native';
@@ -20,14 +21,16 @@ import { formatWorkedDuration } from '@/shared/lib/date';
 
 type ScanResultRoute = RouteProp<WorkerHomeStackParamList, 'ScanResult'>;
 
-function fmtMessage(message: string): string {
+function fmtMessage(message: string, hoursShort: string, minutesMed: string): string {
+  // Регулярка ищет русское «мин», потому что сообщение приходит с backend,
+  // а он переводится на этапе A4. До тех пор на en текст останется русским.
   return message.replace(/(\d+)\s*мин/, (_, n) => {
     const total = parseInt(n, 10);
     const h = Math.floor(total / 60);
     const m = total % 60;
-    if (h > 0 && m > 0) return `${h}ч ${m}мин`;
-    if (h > 0) return `${h}ч`;
-    return `${m}мин`;
+    if (h > 0 && m > 0) return `${h}${hoursShort} ${m}${minutesMed}`;
+    if (h > 0) return `${h}${hoursShort}`;
+    return `${m}${minutesMed}`;
   });
 }
 
@@ -84,6 +87,7 @@ function getCheckOutConfig(status: string): ResultConfig {
 }
 
 export function ScanResultScreen() {
+  const { t } = useTranslation(['attendance', 'common']);
   const navigation = useWorkerNavigation();
   const route = useRoute<ScanResultRoute>();
   const { type, status, time, message, workedMinutes } = route.params;
@@ -115,13 +119,13 @@ export function ScanResultScreen() {
           {config.icon}
         </Animated.View>
 
-        <Text style={[styles.title, { color: config.titleColor }]}>{fmtMessage(message)}</Text>
+        <Text style={[styles.title, { color: config.titleColor }]}>{fmtMessage(message, t('common:duration.hoursShort'), t('common:duration.minutesMed'))}</Text>
 
         <Text style={styles.time}>{time}</Text>
 
         {type === 'checkOut' && workedMinutes != null && workedMinutes > 0 && (
           <View style={styles.workedRow}>
-            <Text style={styles.workedLabel}>Отработано</Text>
+            <Text style={styles.workedLabel}>{t('attendance:result.worked')}</Text>
             <Text style={styles.workedValue}>{formatWorkedDuration(workedMinutes)}</Text>
           </View>
         )}
@@ -133,7 +137,7 @@ export function ScanResultScreen() {
           size="full"
           onPress={() => navigation.navigate('HomeScreen')}
         >
-          Готово
+          {t('common:done')}
         </Button>
       </View>
     </SafeAreaView>

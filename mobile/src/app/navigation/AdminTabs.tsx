@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Platform, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -87,6 +88,7 @@ function AdminProfileStack() {
 const Tab = createBottomTabNavigator<AdminTabParamList>();
 
 export function AdminTabs() {
+  const { t } = useTranslation('nav');
   const insets = useSafeAreaInsets();
   return (
     <Tab.Navigator
@@ -108,10 +110,10 @@ export function AdminTabs() {
         },
       })}
     >
-      <Tab.Screen name="Home" component={AdminHomeStack} options={{ tabBarLabel: 'Главная' }} />
-      <Tab.Screen name="News" component={AdminNewsStack} options={{ tabBarLabel: 'Новости' }} />
-      <Tab.Screen name="Requests" component={AdminRequestsStack} options={{ tabBarLabel: 'Заявки' }} />
-      <Tab.Screen name="Profile" component={AdminProfileStack} options={{ tabBarLabel: 'Профиль' }} />
+      <Tab.Screen name="Home" component={AdminHomeStack} options={{ tabBarLabel: t('nav:tabs.home') }} />
+      <Tab.Screen name="News" component={AdminNewsStack} options={{ tabBarLabel: t('nav:tabs.news') }} />
+      <Tab.Screen name="Requests" component={AdminRequestsStack} options={{ tabBarLabel: t('nav:tabs.requests') }} />
+      <Tab.Screen name="Profile" component={AdminProfileStack} options={{ tabBarLabel: t('nav:tabs.profile') }} />
     </Tab.Navigator>
   );
 }

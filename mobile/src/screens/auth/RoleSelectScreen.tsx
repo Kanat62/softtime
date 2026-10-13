@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   SafeAreaView,
   StyleSheet,
@@ -35,6 +36,7 @@ function RoleCard({ icon, title, description, onPress }: RoleCardProps) {
 }
 
 export function RoleSelectScreen() {
+  const { t } = useTranslation(['auth', 'common']);
   const navigation = useAuthNavigation();
 
   return (
@@ -45,7 +47,7 @@ export function RoleSelectScreen() {
           style={styles.backBtn}
           onPress={() => navigation.goBack()}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          accessibilityLabel="Назад"
+          accessibilityLabel={t('common:back')}
         >
           <ChevronLeft
             size={24}
@@ -54,7 +56,7 @@ export function RoleSelectScreen() {
           />
         </TouchableOpacity>
 
-        <Text style={styles.topBarTitle}>Кто вы?</Text>
+        <Text style={styles.topBarTitle}>{t('auth:roleSelect.title')}</Text>
 
         {/* placeholder для выравнивания заголовка по центру */}
         <View style={styles.backBtn} />
@@ -70,8 +72,8 @@ export function RoleSelectScreen() {
               strokeWidth={iconStrokeWidth}
             />
           }
-          title="Я администратор"
-          description="Создаю компанию"
+          title={t('auth:roleSelect.adminTitle')}
+          description={t('auth:roleSelect.adminDescription')}
           onPress={() => navigation.navigate('RegisterAdmin')}
         />
 
@@ -83,8 +85,8 @@ export function RoleSelectScreen() {
               strokeWidth={iconStrokeWidth}
             />
           }
-          title="Я сотрудник"
-          description="Есть код компании"
+          title={t('auth:roleSelect.workerTitle')}
+          description={t('auth:roleSelect.workerDescription')}
           onPress={() => navigation.navigate('RegisterWorker')}
         />
       </View>

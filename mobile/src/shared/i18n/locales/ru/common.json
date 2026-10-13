@@ -5,6 +5,34 @@
   },
   "duration": {
     "hoursShort": "ч",
-    "minutesShort": "м"
+    "minutesShort": "м",
+    "minutesMed": "мин"
+  },
+  "back": "Назад",
+  "cancel": "Отмена",
+  "save": "Сохранить",
+  "saving": "Сохранение…",
+  "delete": "Удалить",
+  "retry": "Повторить",
+  "done": "Готово",
+  "apply": "Применить",
+  "all": "Все",
+  "error": "Ошибка",
+  "loadFailed": "Не удалось загрузить",
+  "offline": "Нет подключения к интернету",
+  "noConnection": "Нет соединения. Проверьте интернет.",
+  "checking": "Проверяем...",
+  "employee": "Сотрудник",
+  "checkIn": "Приход",
+  "checkOut": "Уход",
+  "login": "Войти",
+  "register": "Зарегистрироваться",
+  "logout": "Выйти",
+  "time": {
+    "invalid": "Введите корректное время (ЧЧ:ММ)",
+    "hoursPlaceholder": "ЧЧ",
+    "minutesPlaceholder": "ММ",
+    "hours": "часы",
+    "minutes": "минуты"
   }
 }

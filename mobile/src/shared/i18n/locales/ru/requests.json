@@ -1,0 +1,35 @@
+{
+  "title": "Заявки",
+  "tabs": {
+    "new": "Новая заявка",
+    "my": "Мои заявки"
+  },
+  "errors": {
+    "duplicate": "Заявка на этот период уже существует.",
+    "badForm": "Проверьте правильность заполнения формы.",
+    "submitFailed": "Не удалось отправить заявку."
+  },
+  "form": {
+    "typeLabel": "ТИП ЗАЯВКИ",
+    "typePlaceholder": "Выберите тип заявки...",
+    "periodLabel": "ПЕРИОД",
+    "startDate": "Дата начала",
+    "endDate": "Дата окончания",
+    "pickDate": "Выберите дату",
+    "endDateOptional": "Не выбрано (необязательно)",
+    "commentLabel": "КОММЕНТАРИЙ",
+    "commentPlaceholder": "Опишите причину...",
+    "submit": "Отправить заявку"
+  },
+  "emptyTitle": "Нет заявок",
+  "emptyDescription": "Здесь появятся ваши заявки",
+  "typeTitle": "Тип заявки",
+  "detailTitle": "Детали заявки",
+  "detail": {
+    "type": "Тип",
+    "period": "Период",
+    "status": "Статус",
+    "yourComment": "Ваш комментарий",
+    "adminComment": "Комментарий администратора"
+  }
+}

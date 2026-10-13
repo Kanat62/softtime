@@ -1,0 +1,20 @@
+{
+  "title": "Profile",
+  "changePhoto": "Change photo",
+  "email": "Email",
+  "company": "Company",
+  "subscriptionAction": "Subscription and billing",
+  "openWebPanel": "Open web panel",
+  "changePassword": "Change password",
+  "logoutAction": "Log out",
+  "logoutTitle": "Log out",
+  "logoutMessage": "Are you sure you want to log out?",
+  "photoTitle": "Profile photo",
+  "photoMessage": "Photo upload will be available in the next version.",
+  "browserError": "Could not open the browser.",
+  "passwordModal": {
+    "title": "Change password",
+    "description": "Changing your password will be available in the next version of the app.",
+    "close": "Close"
+  }
+}

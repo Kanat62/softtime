@@ -1,0 +1,19 @@
+{
+  "title": "Новости",
+  "detailTitle": "Новость",
+  "badge": "Новость",
+  "emptyTitle": "Новостей пока нет",
+  "emptyDescription": "Новости компании появятся здесь",
+  "readMore": "Читать далее →",
+  "readMarked": "Отмечено как прочитанное",
+  "createLabel": "Создать новость",
+  "createTitle": "Создать новость",
+  "titlePlaceholder": "Заголовок новости",
+  "bodyPlaceholder": "Текст новости...",
+  "imagePlaceholder": "URL картинки (необязательно)",
+  "publish": "Опубликовать",
+  "errors": {
+    "forbidden": "Нет прав для публикации новостей.",
+    "publishFailed": "Не удалось опубликовать новость."
+  }
+}

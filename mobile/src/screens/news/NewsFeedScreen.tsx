@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   FlatList,
   Image,
@@ -32,27 +33,29 @@ import { Button, EmptyState, ErrorState, OfflineBanner, Skeleton } from '@/share
 import { useIsOnline } from '@/shared/lib/network';
 import { useAuth } from '@/app/providers/AuthProvider';
 import { useNewsNavigation } from '@/shared/navigation/hooks';
+import i18n from '@/shared/i18n';
+import { formatDayMonthYearShort } from '@/shared/lib/date';
 import type { NewsWithRead } from '@/entities/news/api/news';
 import { useNewsFeed } from '@/features/news/feed/model/useNewsFeed';
 import { useCreateNews } from '@/features/news/create/model/useCreateNews';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const MONTHS_SHORT = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
 
 function formatShortDate(date: Date): string {
-  return `${date.getDate()} ${MONTHS_SHORT[date.getMonth()]} ${date.getFullYear()}`;
+  return formatDayMonthYearShort(date);
 }
 
 function mapCreateError(err: AppError): string {
-  if (err.isNetworkError) return 'Нет соединения. Проверьте интернет.';
-  if (err.statusCode === 403) return 'Нет прав для публикации новостей.';
-  return err.message ?? 'Не удалось опубликовать новость.';
+  if (err.isNetworkError) return i18n.t('common:noConnection');
+  if (err.statusCode === 403) return i18n.t('news:errors.forbidden');
+  return err.message ?? i18n.t('news:errors.publishFailed');
 }
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export function NewsFeedScreen() {
+  const { t } = useTranslation(['news', 'common']);
   const navigation = useNewsNavigation();
   const { userRole } = useAuth();
   const isAdmin = userRole === UserRole.ADMIN;
@@ -100,7 +103,7 @@ export function NewsFeedScreen() {
   return (
     <SafeAreaView style={styles.root} edges={['top']}>
       <View style={styles.pageHeader}>
-        <Text style={styles.pageTitle}>Новости</Text>
+        <Text style={styles.pageTitle}>{t('news:title')}</Text>
       </View>
       <OfflineBanner variant="block" />
 
@@ -123,8 +126,8 @@ export function NewsFeedScreen() {
             isLoading ? null : (
               <EmptyState
                 icon={<Newspaper size={48} color={colors.textDisabled} strokeWidth={iconStrokeWidth} />}
-                title="Новостей пока нет"
-                description="Новости компании появятся здесь"
+                title={t('news:emptyTitle')}
+                description={t('news:emptyDescription')}
               />
             )
           }
@@ -146,7 +149,7 @@ export function NewsFeedScreen() {
           style={[styles.fab, !isOnline && styles.fabDisabled]}
           onPress={() => { if (isOnline) setSheetVisible(true); }}
           activeOpacity={0.85}
-          accessibilityLabel="Создать новость"
+          accessibilityLabel={t('news:createLabel')}
         >
           <Plus size={24} color={colors.surface} strokeWidth={iconStrokeWidth} />
         </TouchableOpacity>
@@ -176,6 +179,7 @@ export function NewsFeedScreen() {
 // ─── News card ────────────────────────────────────────────────────────────────
 
 function NewsCard({ item, onPress }: { item: NewsWithRead; onPress: () => void }) {
+  const { t } = useTranslation(['news', 'common']);
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.8}>
       {/* Photo (task 6) */}
@@ -189,7 +193,7 @@ function NewsCard({ item, onPress }: { item: NewsWithRead; onPress: () => void }
 
       <View style={styles.cardMeta}>
         <View style={styles.newsBadge}>
-          <Text style={styles.newsBadgeText}>Новость</Text>
+          <Text style={styles.newsBadgeText}>{t('news:badge')}</Text>
         </View>
         {/* Task 8: unread → primary dot instead of date */}
         {item.isRead ? (
@@ -207,7 +211,7 @@ function NewsCard({ item, onPress }: { item: NewsWithRead; onPress: () => void }
         <Text style={styles.cardDateBelow}>{formatShortDate(item.createdAt)}</Text>
       )}
 
-      <Text style={styles.readMore}>Читать далее →</Text>
+      <Text style={styles.readMore}>{t('news:readMore')}</Text>
     </TouchableOpacity>
   );
 }
@@ -263,6 +267,7 @@ function CreateNewsModal({
   onClose,
   onPublish,
 }: CreateNewsModalProps) {
+  const { t } = useTranslation(['news', 'common']);
   return (
     <Modal
       visible={visible}
@@ -279,7 +284,7 @@ function CreateNewsModal({
           <Pressable style={styles.modalBox} onPress={() => {}}>
             {/* Header */}
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Создать новость</Text>
+              <Text style={styles.modalTitle}>{t('news:createTitle')}</Text>
               <TouchableOpacity onPress={onClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                 <X size={20} color={colors.textSecondary} strokeWidth={iconStrokeWidth} />
               </TouchableOpacity>
@@ -294,14 +299,14 @@ function CreateNewsModal({
                 style={styles.sheetInput}
                 value={titleValue}
                 onChangeText={onTitleChange}
-                placeholder="Заголовок новости"
+                placeholder={t('news:titlePlaceholder')}
                 placeholderTextColor={colors.textDisabled}
               />
               <TextInput
                 style={styles.sheetTextarea}
                 value={bodyValue}
                 onChangeText={onBodyChange}
-                placeholder="Текст новости..."
+                placeholder={t('news:bodyPlaceholder')}
                 placeholderTextColor={colors.textDisabled}
                 multiline
                 numberOfLines={5}
@@ -315,7 +320,7 @@ function CreateNewsModal({
                   style={styles.photoInput}
                   value={photoUrlValue}
                   onChangeText={onPhotoUrlChange}
-                  placeholder="URL картинки (необязательно)"
+                  placeholder={t('news:imagePlaceholder')}
                   placeholderTextColor={colors.textDisabled}
                   autoCapitalize="none"
                   keyboardType="url"
@@ -344,7 +349,7 @@ function CreateNewsModal({
                 disabled={!canPublish}
                 loading={publishing}
               >
-                Опубликовать
+                {t('news:publish')}
               </Button>
             </ScrollView>
           </Pressable>

@@ -1,0 +1,19 @@
+{
+  "title": "News",
+  "detailTitle": "News",
+  "badge": "News",
+  "emptyTitle": "No news yet",
+  "emptyDescription": "Company news will appear here",
+  "readMore": "Read more →",
+  "readMarked": "Marked as read",
+  "createLabel": "Create a post",
+  "createTitle": "Create a post",
+  "titlePlaceholder": "Post title",
+  "bodyPlaceholder": "Post text…",
+  "imagePlaceholder": "Image URL (optional)",
+  "publish": "Publish",
+  "errors": {
+    "forbidden": "You do not have permission to publish news.",
+    "publishFailed": "Could not publish the post."
+  }
+}

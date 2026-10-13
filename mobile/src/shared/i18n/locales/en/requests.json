@@ -1,0 +1,35 @@
+{
+  "title": "Requests",
+  "tabs": {
+    "new": "New request",
+    "my": "My requests"
+  },
+  "errors": {
+    "duplicate": "A request for this period already exists.",
+    "badForm": "Check that the form is filled in correctly.",
+    "submitFailed": "Could not submit the request."
+  },
+  "form": {
+    "typeLabel": "REQUEST TYPE",
+    "typePlaceholder": "Select a request type…",
+    "periodLabel": "PERIOD",
+    "startDate": "Start date",
+    "endDate": "End date",
+    "pickDate": "Select a date",
+    "endDateOptional": "Not set (optional)",
+    "commentLabel": "COMMENT",
+    "commentPlaceholder": "Describe the reason…",
+    "submit": "Submit request"
+  },
+  "emptyTitle": "No requests",
+  "emptyDescription": "Your requests will appear here",
+  "typeTitle": "Request type",
+  "detailTitle": "Request details",
+  "detail": {
+    "type": "Type",
+    "period": "Period",
+    "status": "Status",
+    "yourComment": "Your comment",
+    "adminComment": "Administrator's comment"
+  }
+}

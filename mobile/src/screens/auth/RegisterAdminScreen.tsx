@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -35,6 +36,7 @@ import { useAuthNavigation } from '@/shared/navigation/hooks';
 import { useRegisterAdmin } from '@/features/auth/register-admin/model/useRegisterAdmin';
 
 export function RegisterAdminScreen() {
+  const { t } = useTranslation(['auth', 'common']);
   const navigation = useAuthNavigation();
   const { form, onSubmit, isLoading, companyCode, serverError } = useRegisterAdmin();
   const [showPassword, setShowPassword] = useState(false);
@@ -62,11 +64,11 @@ export function RegisterAdminScreen() {
           style={styles.backBtn}
           onPress={() => navigation.goBack()}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          accessibilityLabel="Назад"
+          accessibilityLabel={t('common:back')}
         >
           <ChevronLeft size={24} color={colors.textPrimary} strokeWidth={iconStrokeWidth} />
         </TouchableOpacity>
-        <Text style={styles.topBarTitle}>Создать компанию</Text>
+        <Text style={styles.topBarTitle}>{t('auth:registerAdmin.title')}</Text>
         <View style={styles.backBtn} />
       </View>
 
@@ -91,8 +93,8 @@ export function RegisterAdminScreen() {
               name="companyName"
               render={({ field: { onChange, onBlur, value } }) => (
                 <Input
-                  label="Название компании"
-                  placeholder="ООО «Моя компания»"
+                  label={t('auth:registerAdmin.companyName')}
+                  placeholder={t('auth:registerAdmin.companyNamePlaceholder')}
                   autoCapitalize="words"
                   value={value}
                   onChangeText={onChange}
@@ -115,8 +117,8 @@ export function RegisterAdminScreen() {
               name="fullName"
               render={({ field: { onChange, onBlur, value } }) => (
                 <Input
-                  label="ФИО"
-                  placeholder="Иванов Иван Иванович"
+                  label={t('auth:fullName')}
+                  placeholder={t('auth:fullNamePlaceholder')}
                   autoCapitalize="words"
                   value={value}
                   onChangeText={onChange}
@@ -165,8 +167,8 @@ export function RegisterAdminScreen() {
               name="password"
               render={({ field: { onChange, onBlur, value } }) => (
                 <Input
-                  label="Пароль"
-                  placeholder="Минимум 8 символов"
+                  label={t('auth:password')}
+                  placeholder={t('auth:passwordPlaceholder')}
                   secureTextEntry={!showPassword}
                   value={value}
                   onChangeText={onChange}
@@ -204,7 +206,7 @@ export function RegisterAdminScreen() {
             />
 
             <Button variant="primary" size="full" loading={isLoading} onPress={onSubmit}>
-              Создать
+              {t('auth:registerAdmin.submit')}
             </Button>
           </View>
         </ScrollView>
@@ -223,6 +225,7 @@ interface SuccessViewProps {
 }
 
 function SuccessView({ code, copied, onCopy, onLogin }: SuccessViewProps) {
+  const { t } = useTranslation(['auth', 'common']);
   return (
     <SafeAreaView style={styles.root}>
       <View style={styles.successContainer}>
@@ -232,8 +235,8 @@ function SuccessView({ code, copied, onCopy, onLogin }: SuccessViewProps) {
         </View>
 
         {/* Title */}
-        <Text style={styles.successTitle}>Компания создана!</Text>
-        <Text style={styles.successSubtitle}>Код для сотрудников</Text>
+        <Text style={styles.successTitle}>{t('auth:registerAdmin.successTitle')}</Text>
+        <Text style={styles.successSubtitle}>{t('auth:registerAdmin.codeSubtitle')}</Text>
 
         {/* Code */}
         <View style={styles.codeCard}>
@@ -248,20 +251,20 @@ function SuccessView({ code, copied, onCopy, onLogin }: SuccessViewProps) {
             <Copy size={iconSize.md} color={colors.primary} strokeWidth={iconStrokeWidth} />
           )}
           <Text style={[styles.copyBtnText, copied && styles.copyBtnTextCopied]}>
-            {copied ? 'Скопировано!' : 'Скопировать код'}
+            {copied ? t('auth:registerAdmin.copied') : t('auth:registerAdmin.copyCode')}
           </Text>
         </TouchableOpacity>
 
         {/* Hint */}
         <Text style={styles.hint}>
-          Передайте код сотрудникам для регистрации
+          {t('auth:registerAdmin.shareHint')}
         </Text>
       </View>
 
       {/* Login button pinned to bottom */}
       <View style={styles.successFooter}>
         <Button variant="primary" size="full" onPress={onLogin}>
-          Войти
+          {t('common:login')}
         </Button>
       </View>
     </SafeAreaView>

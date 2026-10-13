@@ -1,0 +1,43 @@
+{
+  "qr": {
+    "checkInTitle": "Отметить приход",
+    "checkOutTitle": "Отметить уход",
+    "subtitle": "Наведите камеру на QR-код офиса",
+    "wifiConnected": "Офисная сеть подключена",
+    "wifiNotFound": "WiFi не обнаружен",
+    "noCameraAccess": "Нет доступа к камере. Разрешите в настройках устройства."
+  },
+  "result": {
+    "worked": "Отработано"
+  },
+  "history": {
+    "title": "История посещаемости",
+    "periods": {
+      "week": "Неделя",
+      "month": "Месяц",
+      "range": "Период"
+    },
+    "lastThreeMonths": "Последние 3 месяца",
+    "clearTodayLabel": "Очистить данные за сегодня",
+    "clearTitle": "Очистить данные",
+    "clearMessage": "Удалить приход и уход за сегодня?",
+    "clearFailed": "Не удалось очистить данные",
+    "totalHours": "всего часов",
+    "late_one": "опоздание",
+    "late_few": "опоздания",
+    "late_many": "опозданий",
+    "late_other": "опоздания",
+    "absence_one": "пропуск",
+    "absence_few": "пропуска",
+    "absence_many": "пропусков",
+    "absence_other": "пропуска",
+    "detail": {
+      "status": "Статус",
+      "note": "Примечание",
+      "worked": "Отработано"
+    },
+    "pickPeriod": "Выберите период",
+    "rangeStart": "Начало",
+    "rangeEnd": "Конец"
+  }
+}

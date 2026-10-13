@@ -1,0 +1,12 @@
+{
+  "title": "In the office now",
+  "noAccessTitle": "No access",
+  "noAccessDescription": "Office view becomes available after you update the app.",
+  "emptyTitle": "Nobody is in the office yet",
+  "emptyDescription": "The list appears after the first check-in",
+  "saveError": "Could not save",
+  "since": "since {{time}}",
+  "actions": "Actions",
+  "setLeaveTitle": "Set check-out time",
+  "leaveTime": "Check-out time"
+}
