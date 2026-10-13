@@ -10,8 +10,10 @@ import {
 
 import ruCommon from "./locales/ru/common.json";
 import ruSettings from "./locales/ru/settings.json";
+import ruEmployees from "./locales/ru/employees.json";
 import enCommon from "./locales/en/common.json";
 import enSettings from "./locales/en/settings.json";
+import enEmployees from "./locales/en/employees.json";
 
 import { LANGUAGE_KEY, languageStorage } from "./language-storage";
 
@@ -21,9 +23,8 @@ export { languageStorage } from "./language-storage";
  * Namespace:
  *  - enums, validation — общий словарь из @softtime/shared (один источник
  *    с mobile и backend, чтобы тексты не разошлись);
- *  - common, settings   — веб-строки, JSON в ./locales/{ru,en}/.
- *
- * Экраны на этом этапе не переводятся — пока только переключатель языка.
+ *  - common, settings и по домену страницы — веб-строки,
+ *    JSON в ./locales/{ru,en}/.
  */
 const resources = {
   ru: {
@@ -31,12 +32,14 @@ const resources = {
     validation: dictionaries.ru.validation,
     common: ruCommon,
     settings: ruSettings,
+    employees: ruEmployees,
   },
   en: {
     enums: dictionaries.en.enums,
     validation: dictionaries.en.validation,
     common: enCommon,
     settings: enSettings,
+    employees: enEmployees,
   },
 } as const;
 
@@ -51,7 +54,7 @@ i18n
     // Без этого ru-RU и en-US не сводятся к ru / en.
     load: "languageOnly",
     nonExplicitSupportedLngs: true,
-    ns: ["common", "settings", "enums", "validation"],
+    ns: ["common", "settings", "employees", "enums", "validation"],
     defaultNS: "common",
     detection: {
       order: ["localStorage", "navigator"],

@@ -2,5 +2,20 @@
   "language": {
     "ru": "Русский",
     "en": "English"
+  },
+  "all": "Все",
+  "cancel": "Отмена",
+  "retry": "Повторить",
+  "back": "Назад",
+  "next": "Вперёд",
+  "delete": "Удалить",
+  "actions": "Действия",
+  "loadFailed": "Не удалось загрузить данные",
+  "pagination": {
+    "range": "{{from}}–{{to}} из {{total}}"
+  },
+  "duration": {
+    "hoursShort": "ч",
+    "minutesShort": "м"
   }
 }

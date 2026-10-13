@@ -3,6 +3,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useReactTable, getCoreRowModel, flexRender, type ColumnDef } from "@tanstack/react-table";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { UserStatus } from "@softtime/shared";
+import { useTranslation } from "react-i18next";
 import {
   MoreHorizontal,
   Users,
@@ -47,7 +48,7 @@ import {
 } from "@/shared/ui/dropdown-menu";
 import { cn } from "@/shared/lib/cn";
 import { format } from "date-fns";
-import { ru } from "date-fns/locale";
+import { dateFnsLocale } from "@/shared/lib/date-locale";
 import { useApproveEmployee } from "@/features/employee/approve-employee";
 import { useRejectEmployee } from "@/features/employee/reject-employee";
 import { useChangeEmployeeStatus } from "@/features/employee/change-employee-status";
@@ -57,12 +58,12 @@ import { useSoftDeleteEmployee } from "@/features/employee/soft-delete-employee"
 
 const PAGE_SIZE = 20;
 
-const STATUS_TABS: { label: string; value: UserStatus | "" }[] = [
-  { label: "Все", value: "" },
-  { label: "Активные", value: UserStatus.ACTIVE },
-  { label: "Ожидают", value: UserStatus.PENDING },
-  { label: "Внимание", value: UserStatus.WARNING },
-  { label: "Заблокированы", value: UserStatus.BLOCKED },
+const STATUS_TABS: (UserStatus | "")[] = [
+  "",
+  UserStatus.ACTIVE,
+  UserStatus.PENDING,
+  UserStatus.WARNING,
+  UserStatus.BLOCKED,
 ];
 
 // ─── Action state ───────────────────────────────────────────────────────────
@@ -79,7 +80,7 @@ interface PendingAction {
 function formatDate(iso: string | null): string {
   if (!iso) return "—";
   try {
-    return format(new Date(iso), "d MMM yyyy", { locale: ru });
+    return format(new Date(iso), "d MMM yyyy", { locale: dateFnsLocale() });
   } catch {
     return "—";
   }
@@ -97,6 +98,7 @@ function initials(name: string): string {
 // ─── Widget ─────────────────────────────────────────────────────────────────
 
 export function EmployeesTable() {
+  const { t } = useTranslation(["employees", "common"]);
   const navigate = useNavigate();
   const qc = useQueryClient();
 
@@ -135,7 +137,7 @@ export function EmployeesTable() {
   const columns: ColumnDef<Employee>[] = [
     {
       id: "name",
-      header: "ФИО / Email",
+      header: t("employees:columns.name"),
       cell: ({ row }) => {
         const e = row.original;
         return (
@@ -153,12 +155,12 @@ export function EmployeesTable() {
     },
     {
       id: "status",
-      header: "Статус",
+      header: t("employees:columns.status"),
       cell: ({ row }) => <StatusBadge status={row.original.status} />,
     },
 {
       id: "lastActivity",
-      header: "Последняя активность",
+      header: t("employees:columns.lastActivity"),
       cell: ({ row }) => (
         <span className="text-sm text-muted-foreground">
           {formatDate(row.original.lastActivityAt)}
@@ -198,11 +200,11 @@ export function EmployeesTable() {
 
   // ─── Summary line ───────────────────────────────────────────────────────
 
-  const summary = total > 0 ? `${total} сотрудник${total === 1 ? "" : total < 5 ? "а" : "ов"}` : "";
+  const summary = total > 0 ? t("employees:count", { count: total }) : "";
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Сотрудники" />
+      <PageHeader title={t("employees:title")} />
 
       {/* Filters */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -210,7 +212,7 @@ export function EmployeesTable() {
         <div className="relative w-full sm:max-w-72">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Поиск по имени или email..."
+            placeholder={t("employees:searchPlaceholder")}
             className="pl-9"
             value={searchRaw}
             onChange={(e) => setSearchRaw(e.target.value)}
@@ -221,20 +223,20 @@ export function EmployeesTable() {
         <div className="flex flex-wrap gap-1">
           {STATUS_TABS.map((tab) => (
             <button
-              key={tab.value}
+              key={tab}
               type="button"
               onClick={() => {
-                setStatusFilter(tab.value);
+                setStatusFilter(tab);
                 setPage(0);
               }}
               className={cn(
                 "rounded-full px-3 py-1 text-xs font-medium transition-colors",
-                statusFilter === tab.value
+                statusFilter === tab
                   ? "bg-primary text-primary-foreground"
                   : "bg-muted text-muted-foreground hover:bg-muted/70",
               )}
             >
-              {tab.label}
+              {tab ? t(`employees:tabs.${tab}`) : t("common:all")}
             </button>
           ))}
         </div>
@@ -244,14 +246,14 @@ export function EmployeesTable() {
       <div className="overflow-hidden rounded-2xl bg-card shadow-sm">
         {isError ? (
           <div className="px-6 py-12 text-center">
-            <p className="text-sm text-muted-foreground">Не удалось загрузить сотрудников.</p>
+            <p className="text-sm text-muted-foreground">{t("employees:loadFailed")}</p>
             <Button
               variant="outline"
               size="sm"
               className="mt-3"
               onClick={() => qc.invalidateQueries({ queryKey: ["employees"] })}
             >
-              Повторить
+              {t("common:retry")}
             </Button>
           </div>
         ) : (
@@ -316,11 +318,11 @@ export function EmployeesTable() {
               <div className="px-6 py-16">
                 <EmptyState
                   icon={<Users className="h-10 w-10" />}
-                  title="Сотрудников нет"
+                  title={t("employees:empty.title")}
                   description={
                     search || statusFilter
-                      ? "По вашему запросу ничего не найдено. Попробуйте изменить фильтры."
-                      : "Сотрудники появятся здесь после регистрации через мобильное приложение."
+                      ? t("employees:empty.filtered")
+                      : t("employees:empty.none")
                   }
                   action={
                     search || statusFilter ? (
@@ -333,7 +335,7 @@ export function EmployeesTable() {
                           setStatusFilter("");
                         }}
                       >
-                        Сбросить фильтры
+                        {t("employees:empty.resetFilters")}
                       </Button>
                     ) : undefined
                   }
@@ -345,7 +347,11 @@ export function EmployeesTable() {
             {!isLoading && total > 0 && (
               <div className="flex items-center justify-between border-t border-border px-4 py-3 text-xs text-muted-foreground">
                 <span>
-                  {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, total)} из {total}
+                  {t("common:pagination.range", {
+                    from: page * PAGE_SIZE + 1,
+                    to: Math.min((page + 1) * PAGE_SIZE, total),
+                    total,
+                  })}
                 </span>
                 <div className="flex gap-1">
                   <Button
@@ -354,7 +360,7 @@ export function EmployeesTable() {
                     disabled={page === 0}
                     onClick={() => setPage((p) => p - 1)}
                   >
-                    Назад
+                    {t("common:back")}
                   </Button>
                   <Button
                     variant="outline"
@@ -362,7 +368,7 @@ export function EmployeesTable() {
                     disabled={page >= pageCount - 1}
                     onClick={() => setPage((p) => p + 1)}
                   >
-                    Вперёд
+                    {t("common:next")}
                   </Button>
                 </div>
               </div>
@@ -378,15 +384,15 @@ export function EmployeesTable() {
       >
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>Новый сотрудник</DialogTitle>
+            <DialogTitle>{t("employees:approveDialog.title")}</DialogTitle>
             <DialogDescription>
-              {action?.employee.fullName} запрашивает доступ к системе.
+              {t("employees:approveDialog.description", { name: action?.employee.fullName })}
             </DialogDescription>
           </DialogHeader>
           {action?.employee && (
             <div className="space-y-3 rounded-xl bg-muted/40 px-4 py-4 text-sm">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">ФИО</span>
+                <span className="text-muted-foreground">{t("employees:approveDialog.fullName")}</span>
                 <span className="font-medium">{action.employee.fullName}</span>
               </div>
               <div className="flex justify-between">
@@ -403,7 +409,7 @@ export function EmployeesTable() {
               onClick={() => action && rejectMutation.mutate(action.employee.id)}
             >
               <XCircle className="mr-2 h-4 w-4" strokeWidth={1.5} />
-              Отклонить
+              {t("employees:approveDialog.reject")}
             </Button>
             <Button
               className="flex-1"
@@ -411,7 +417,7 @@ export function EmployeesTable() {
               onClick={() => action && approveMutation.mutate(action.employee.id)}
             >
               <CheckCircle2 className="mr-2 h-4 w-4" strokeWidth={1.5} />
-              Принять
+              {t("employees:approveDialog.approve")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -424,14 +430,13 @@ export function EmployeesTable() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Заблокировать сотрудника?</AlertDialogTitle>
+            <AlertDialogTitle>{t("employees:blockDialog.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {action?.employee.fullName} потеряет доступ к системе. Вы сможете разблокировать его
-              позже.
+              {t("employees:blockDialog.description", { name: action?.employee.fullName })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogCancel>{t("common:cancel")}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={() =>
@@ -439,7 +444,7 @@ export function EmployeesTable() {
                 statusMutation.mutate({ id: action.employee.id, status: UserStatus.BLOCKED })
               }
             >
-              Заблокировать
+              {t("employees:blockDialog.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -452,20 +457,20 @@ export function EmployeesTable() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Активировать сотрудника?</AlertDialogTitle>
+            <AlertDialogTitle>{t("employees:activateDialog.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {action?.employee.fullName} получит доступ к системе.
+              {t("employees:activateDialog.description", { name: action?.employee.fullName })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogCancel>{t("common:cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() =>
                 action &&
                 statusMutation.mutate({ id: action.employee.id, status: UserStatus.ACTIVE })
               }
             >
-              Активировать
+              {t("employees:activateDialog.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -478,19 +483,18 @@ export function EmployeesTable() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Удалить сотрудника?</AlertDialogTitle>
+            <AlertDialogTitle>{t("employees:deleteDialog.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Это действие нельзя отменить. Данные {action?.employee.fullName} будут безвозвратно
-              удалены из системы, включая историю посещаемости.
+              {t("employees:deleteDialog.description", { name: action?.employee.fullName })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogCancel>{t("common:cancel")}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={() => action && deleteMutation.mutate(action.employee.id)}
             >
-              Удалить
+              {t("common:delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -510,6 +514,7 @@ function RowActions({
   onAction: (a: PendingAction) => void;
   onView: (id: string) => void;
 }) {
+  const { t } = useTranslation(["employees", "common"]);
   const isPending = employee.status === UserStatus.PENDING;
   const isBlocked = employee.status === UserStatus.BLOCKED;
 
@@ -518,13 +523,13 @@ function RowActions({
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="h-8 w-8">
           <MoreHorizontal className="h-4 w-4" />
-          <span className="sr-only">Действия</span>
+          <span className="sr-only">{t("common:actions")}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
         <DropdownMenuItem onClick={() => onView(employee.id)}>
           <Eye className="mr-2 h-4 w-4" strokeWidth={1.5} />
-          Открыть профиль
+          {t("employees:rowActions.openProfile")}
         </DropdownMenuItem>
 
         {isPending && (
@@ -532,7 +537,7 @@ function RowActions({
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => onAction({ type: "approve-reject", employee })}>
               <CheckCircle2 className="mr-2 h-4 w-4 text-success" strokeWidth={1.5} />
-              Принять / Отклонить
+              {t("employees:rowActions.approveReject")}
             </DropdownMenuItem>
           </>
         )}
@@ -543,7 +548,7 @@ function RowActions({
             {isBlocked ? (
               <DropdownMenuItem onClick={() => onAction({ type: "activate", employee })}>
                 <CheckCircle2 className="mr-2 h-4 w-4 text-success" strokeWidth={1.5} />
-                Активировать
+                {t("employees:rowActions.activate")}
               </DropdownMenuItem>
             ) : (
               <DropdownMenuItem
@@ -551,7 +556,7 @@ function RowActions({
                 onClick={() => onAction({ type: "block", employee })}
               >
                 <ShieldAlert className="mr-2 h-4 w-4" strokeWidth={1.5} />
-                Заблокировать
+                {t("employees:rowActions.block")}
               </DropdownMenuItem>
             )}
           </>
@@ -563,7 +568,7 @@ function RowActions({
           onClick={() => onAction({ type: "delete", employee })}
         >
           <UserX className="mr-2 h-4 w-4" strokeWidth={1.5} />
-          Удалить
+          {t("common:delete")}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

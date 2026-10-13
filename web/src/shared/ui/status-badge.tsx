@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { cn } from "@/shared/lib/cn";
 
 type Tone = "success" | "warning" | "danger" | "info" | "muted";
@@ -10,31 +11,37 @@ const TONES: Record<Tone, string> = {
   muted: "bg-muted text-muted-foreground border-border",
 };
 
-const STATUS_MAP: Record<string, { tone: Tone; label?: string }> = {
-  ACTIVE: { tone: "success", label: "Активен" },
-  PRESENT: { tone: "success", label: "В офисе" },
-  ON_TIME: { tone: "success", label: "Вовремя" },
-  PAID: { tone: "success", label: "Оплачено" },
-  APPROVED: { tone: "success", label: "Одобрено" },
-  GRACE: { tone: "warning", label: "Льготный период" },
-  TRIAL: { tone: "warning", label: "Триал" },
-  LATE: { tone: "warning", label: "Опоздание" },
-  WARNING: { tone: "warning", label: "Внимание" },
-  SUSPENDED: { tone: "danger", label: "Приостановлено" },
-  EXPIRED: { tone: "danger", label: "Истёк" },
-  CANCELLED: { tone: "danger", label: "Отменена" },
-  FAILED: { tone: "danger", label: "Ошибка оплаты" },
-  ABSENT: { tone: "danger", label: "Отсутствует" },
-  INCOMPLETE: { tone: "danger", label: "Не завершён" },
-  BLOCKED: { tone: "danger", label: "Заблокирован" },
-  REJECTED: { tone: "danger", label: "Отклонено" },
-  PENDING: { tone: "info", label: "На рассмотрении" },
-  APPROVED_ABSENCE: { tone: "info", label: "Согласованное отсутствие" },
-  MANUAL: { tone: "muted", label: "Ручная правка" },
-  EARLY_LEAVE: { tone: "muted", label: "Ранний уход" },
-  LEFT_EARLY: { tone: "muted", label: "Ранний уход" },
-  OVERTIME: { tone: "muted", label: "Сверхурочно" },
-  EARLY_ARRIVAL: { tone: "info", label: "Ранний приход" },
+/**
+ * Подписи не дублируются здесь: каждый статус указывает путём в общий
+ * словарь enums (@softtime/shared) — один источник истины для web,
+ * mobile и backend. Путь явный, потому что одно и то же значение в
+ * разных енумах значит разное (PENDING у заявки и у платежа).
+ */
+const STATUS_MAP: Record<string, { tone: Tone; labelKey: string }> = {
+  ACTIVE: { tone: "success", labelKey: "enums:userStatus.ACTIVE" },
+  PRESENT: { tone: "success", labelKey: "enums:dayStatus.PRESENT" },
+  ON_TIME: { tone: "success", labelKey: "enums:checkInStatus.ON_TIME" },
+  PAID: { tone: "success", labelKey: "enums:paymentStatus.PAID" },
+  APPROVED: { tone: "success", labelKey: "enums:requestStatus.APPROVED" },
+  GRACE: { tone: "warning", labelKey: "enums:subStatus.GRACE" },
+  TRIAL: { tone: "warning", labelKey: "enums:subStatus.TRIAL" },
+  LATE: { tone: "warning", labelKey: "enums:dayStatus.LATE" },
+  WARNING: { tone: "warning", labelKey: "enums:userStatus.WARNING" },
+  SUSPENDED: { tone: "danger", labelKey: "enums:companyStatus.SUSPENDED" },
+  EXPIRED: { tone: "danger", labelKey: "enums:subStatus.EXPIRED" },
+  CANCELLED: { tone: "danger", labelKey: "enums:subStatus.CANCELLED" },
+  FAILED: { tone: "danger", labelKey: "enums:paymentStatus.FAILED" },
+  ABSENT: { tone: "danger", labelKey: "enums:dayStatus.ABSENT" },
+  INCOMPLETE: { tone: "danger", labelKey: "enums:dayStatus.INCOMPLETE" },
+  BLOCKED: { tone: "danger", labelKey: "enums:userStatus.BLOCKED" },
+  REJECTED: { tone: "danger", labelKey: "enums:requestStatus.REJECTED" },
+  PENDING: { tone: "info", labelKey: "enums:requestStatus.PENDING" },
+  APPROVED_ABSENCE: { tone: "info", labelKey: "enums:dayStatus.APPROVED_ABSENCE" },
+  MANUAL: { tone: "muted", labelKey: "enums:dayStatus.MANUAL" },
+  EARLY_LEAVE: { tone: "muted", labelKey: "enums:dayStatus.EARLY_LEAVE" },
+  LEFT_EARLY: { tone: "muted", labelKey: "enums:checkOutStatus.LEFT_EARLY" },
+  OVERTIME: { tone: "muted", labelKey: "enums:dayStatus.OVERTIME" },
+  EARLY_ARRIVAL: { tone: "info", labelKey: "enums:checkInStatus.EARLY_ARRIVAL" },
 };
 
 export function StatusBadge({
@@ -46,16 +53,18 @@ export function StatusBadge({
   className?: string;
   children?: React.ReactNode;
 }) {
-  const meta = STATUS_MAP[status] ?? { tone: "muted" as Tone, label: status };
+  const { t } = useTranslation("enums");
+  const meta = STATUS_MAP[status];
+  const tone: Tone = meta?.tone ?? "muted";
   return (
     <span
       className={cn(
         "inline-flex items-center whitespace-nowrap rounded-full border px-2.5 py-0.5 text-xs font-medium",
-        TONES[meta.tone],
+        TONES[tone],
         className,
       )}
     >
-      {children ?? meta.label}
+      {children ?? (meta ? t(meta.labelKey) : status)}
     </span>
   );
 }

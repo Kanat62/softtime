@@ -1,16 +1,17 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { userApi } from "@/entities/user/api";
+import i18n from "@/shared/i18n";
 
 export function useSoftDeleteEmployee(onSuccess?: () => void) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => userApi.softDelete(id),
     onSuccess: () => {
-      toast.success("Сотрудник удалён");
+      toast.success(i18n.t("employees:toast.deleted"));
       qc.invalidateQueries({ queryKey: ["employees"] });
       onSuccess?.();
     },
-    onError: () => toast.error("Ошибка при удалении"),
+    onError: () => toast.error(i18n.t("employees:toast.deleteFailed")),
   });
 }

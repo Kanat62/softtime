@@ -1,16 +1,17 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { userApi } from "@/entities/user/api";
+import i18n from "@/shared/i18n";
 
 export function useRejectEmployee(onSuccess?: () => void) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => userApi.rejectEmployee(id),
     onSuccess: () => {
-      toast.success("Сотрудник отклонён");
+      toast.success(i18n.t("employees:toast.rejected"));
       qc.invalidateQueries({ queryKey: ["employees"] });
       onSuccess?.();
     },
-    onError: () => toast.error("Ошибка при отклонении"),
+    onError: () => toast.error(i18n.t("employees:toast.rejectFailed")),
   });
 }
