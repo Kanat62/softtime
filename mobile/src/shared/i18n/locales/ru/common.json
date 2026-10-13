@@ -34,5 +34,11 @@
     "minutesPlaceholder": "ММ",
     "hours": "часы",
     "minutes": "минуты"
-  }
+  },
+  "today": "Сегодня",
+  "dayOff": "Выходной",
+  "approve": "Одобрить",
+  "reject": "Отклонить",
+  "accept": "Принять",
+  "confirm": "Подтвердить"
 }

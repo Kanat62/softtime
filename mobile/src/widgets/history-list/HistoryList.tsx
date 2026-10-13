@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   StyleSheet,
   Text,
@@ -18,17 +19,24 @@ import {
   typography,
 } from '@/shared/config/theme';
 import { StatusBadge } from '@/shared/ui';
+import i18n from '@/shared/i18n';
 
 // ─── Formatters ───────────────────────────────────────────────────────────────
 
-const WEEKDAYS = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
-const MONTHS = [
-  'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
-  'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря',
-];
+const LOCALE_TAGS: Record<string, string> = {
+  ru: 'ru-RU',
+  en: 'en-US',
+};
 
+/** "Пн, 13 октября" / "Mon, October 13". */
 export function formatDate(date: Date): string {
-  return `${WEEKDAYS[date.getDay()]}, ${date.getDate()} ${MONTHS[date.getMonth()]}`;
+  const tag = LOCALE_TAGS[i18n.language] ?? LOCALE_TAGS.ru;
+  const formatted = date.toLocaleDateString(tag, {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'long',
+  });
+  return formatted.charAt(0).toUpperCase() + formatted.slice(1);
 }
 
 export function formatTime(date: Date | null): string {
@@ -42,7 +50,9 @@ export function formatMinutes(minutes: number | null | undefined): string {
   if (!minutes) return '—';
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
-  return m === 0 ? `${h} ч` : `${h} ч ${m} м`;
+  const hoursShort = i18n.t('common:duration.hoursShort');
+  const minutesShort = i18n.t('common:duration.minutesShort');
+  return m === 0 ? `${h} ${hoursShort}` : `${h} ${hoursShort} ${m} ${minutesShort}`;
 }
 
 // ─── Widget ───────────────────────────────────────────────────────────────────
@@ -53,10 +63,11 @@ interface HistoryListProps {
 }
 
 export function HistoryList({ items, onItemPress }: HistoryListProps) {
+  const { t } = useTranslation('attendance');
   if (items.length === 0) {
     return (
       <View style={styles.empty}>
-        <Text style={styles.emptyText}>Нет данных за период</Text>
+        <Text style={styles.emptyText}>{t('attendance:history.emptyPeriod')}</Text>
       </View>
     );
   }

@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/shared/i18n';
 import {
   ActivityIndicator,
   Modal,
@@ -26,31 +28,22 @@ import {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const REQUEST_TYPE_LABELS: Record<RequestType, string> = {
-  [RequestType.SICK]: 'Больничный',
-  [RequestType.FAMILY]: 'По семейным обстоятельствам',
-  [RequestType.VACATION]: 'Отпуск',
-  [RequestType.BUSINESS_TRIP]: 'Командировка',
-  [RequestType.REMOTE]: 'Удалённая работа',
-  [RequestType.LATE_REASON]: 'Причина опоздания',
-  [RequestType.EARLY_LEAVE]: 'Ранний уход',
-  [RequestType.OTHER]: 'Другое',
-};
-
 type FilterTab = 'all' | 'pending' | 'resolved';
 
-const FILTERS: { key: FilterTab; label: string }[] = [
-  { key: 'all', label: 'Все' },
-  { key: 'pending', label: 'На рассмотрении' },
-  { key: 'resolved', label: 'Решённые' },
-];
+const FILTERS: FilterTab[] = ['all', 'pending', 'resolved'];
+
+const LOCALE_TAGS: Record<string, string> = {
+  ru: 'ru-RU',
+  en: 'en-US',
+};
 
 function formatDateRange(start: Date, end: Date | null): string {
+  const tag = LOCALE_TAGS[i18n.language] ?? LOCALE_TAGS.ru;
   const opts: Intl.DateTimeFormatOptions = { day: '2-digit', month: '2-digit' };
   if (!end || start.toDateString() === end.toDateString()) {
-    return start.toLocaleDateString('ru-RU', { ...opts, year: 'numeric' });
+    return start.toLocaleDateString(tag, { ...opts, year: 'numeric' });
   }
-  return `${start.toLocaleDateString('ru-RU', opts)} – ${end.toLocaleDateString('ru-RU', opts)}`;
+  return `${start.toLocaleDateString(tag, opts)} – ${end.toLocaleDateString(tag, opts)}`;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -68,6 +61,7 @@ export function IncomingRequests({
   onReject,
   processingId,
 }: IncomingRequestsProps) {
+  const { t } = useTranslation(['management', 'enums', 'common']);
   const [filter, setFilter] = useState<FilterTab>('all');
   const [selected, setSelected] = useState<RequestWithUser | null>(null);
 
@@ -97,13 +91,13 @@ export function IncomingRequests({
       >
         {FILTERS.map((f) => (
           <TouchableOpacity
-            key={f.key}
-            style={[s.filterChip, filter === f.key && s.filterChipActive]}
-            onPress={() => setFilter(f.key)}
+            key={f}
+            style={[s.filterChip, filter === f && s.filterChipActive]}
+            onPress={() => setFilter(f)}
             activeOpacity={0.8}
           >
-            <Text style={[s.filterLabel, filter === f.key && s.filterLabelActive]}>
-              {f.label}
+            <Text style={[s.filterLabel, filter === f && s.filterLabelActive]}>
+              {t(`management:incoming.filters.${f}`)}
             </Text>
           </TouchableOpacity>
         ))}
@@ -113,13 +107,17 @@ export function IncomingRequests({
       {filtered.length === 0 ? (
         <EmptyState
           icon={<FileText size={40} color={colors.textDisabled} strokeWidth={iconStrokeWidth} />}
-          title="Нет заявок"
-          description={filter === 'pending' ? 'Все заявки рассмотрены' : 'Заявки отсутствуют'}
+          title={t('management:incoming.emptyTitle')}
+          description={
+            filter === 'pending'
+              ? t('management:incoming.emptyAllResolved')
+              : t('management:incoming.emptyNone')
+          }
         />
       ) : (
         <View style={s.list}>
           {filtered.map((req, idx) => {
-            const name = req.user?.fullName ?? 'Сотрудник';
+            const name = req.user?.fullName ?? t('common:employee');
             return (
               <React.Fragment key={req.id}>
                 {idx > 0 && <View style={s.divider} />}
@@ -138,7 +136,7 @@ export function IncomingRequests({
       {/* Detail sheet */}
       <RequestDetailSheet
         request={selected}
-        name={selected ? (selected.user?.fullName ?? 'Сотрудник') : ''}
+        name={selected ? (selected.user?.fullName ?? t('common:employee')) : ''}
         onClose={() => setSelected(null)}
         onApprove={handleApprove}
         onReject={handleReject}
@@ -157,13 +155,14 @@ interface RequestRowProps {
 }
 
 function RequestRow({ request, name, onPress, isProcessing }: RequestRowProps) {
+  const { t } = useTranslation(['management', 'enums', 'common']);
   return (
     <TouchableOpacity style={s.row} onPress={onPress} activeOpacity={0.85}>
       <Avatar uri={request.user?.avatarUrl ?? null} name={name} size={40} />
 
       <View style={s.rowInfo}>
         <Text style={s.rowName} numberOfLines={1}>{name}</Text>
-        <Text style={s.rowType}>{REQUEST_TYPE_LABELS[request.type]}</Text>
+        <Text style={s.rowType}>{t(`enums:requestType.${request.type}`)}</Text>
         <Text style={s.rowDate}>{formatDateRange(request.startDate, request.endDate)}</Text>
       </View>
 
@@ -195,6 +194,7 @@ function RequestDetailSheet({
   onApprove,
   onReject,
 }: RequestDetailSheetProps) {
+  const { t } = useTranslation(['management', 'enums', 'common']);
   const [step, setStep] = useState<SheetStep>('view');
   const [comment, setComment] = useState('');
 
@@ -229,7 +229,9 @@ function RequestDetailSheet({
           {/* Header */}
           <View style={s.sheetHeader}>
             <Text style={s.sheetTitle}>
-              {step === 'reject' ? 'Причина отклонения' : 'Детали заявки'}
+              {step === 'reject'
+                ? t('management:incoming.rejectTitle')
+                : t('management:incoming.detailTitle')}
             </Text>
             <TouchableOpacity
               onPress={handleClose}
@@ -252,16 +254,19 @@ function RequestDetailSheet({
 
               {/* Fields */}
               <View style={s.fieldList}>
-                <DetailField label="Тип" value={REQUEST_TYPE_LABELS[request.type]} />
                 <DetailField
-                  label="Даты"
+                  label={t('management:incoming.fieldType')}
+                  value={t(`enums:requestType.${request.type}`)}
+                />
+                <DetailField
+                  label={t('management:incoming.fieldDates')}
                   value={formatDateRange(request.startDate, request.endDate)}
                 />
                 {request.comment ? (
-                  <DetailField label="Комментарий" value={request.comment} />
+                  <DetailField label={t('management:incoming.fieldComment')} value={request.comment} />
                 ) : null}
                 {request.decisionNote ? (
-                  <DetailField label="Решение" value={request.decisionNote} />
+                  <DetailField label={t('management:incoming.fieldDecision')} value={request.decisionNote} />
                 ) : null}
               </View>
 
@@ -274,7 +279,7 @@ function RequestDetailSheet({
                     style={s.sheetBtn}
                     onPress={() => setStep('reject')}
                   >
-                    Отклонить
+                    {t('common:reject')}
                   </Button>
                   <Button
                     variant="primary"
@@ -282,19 +287,19 @@ function RequestDetailSheet({
                     style={s.sheetBtn}
                     onPress={() => onApprove(request.id)}
                   >
-                    Одобрить
+                    {t('common:approve')}
                   </Button>
                 </View>
               )}
             </View>
           ) : (
             <View style={s.sheetBody}>
-              <Text style={s.rejectLabel}>Укажите причину (необязательно)</Text>
+              <Text style={s.rejectLabel}>{t('management:incoming.rejectReasonLabel')}</Text>
               <TextInput
                 style={s.rejectInput}
                 value={comment}
                 onChangeText={setComment}
-                placeholder="Например: нет замены на этот период"
+                placeholder={t('management:incoming.rejectReasonPlaceholder')}
                 placeholderTextColor={colors.textDisabled}
                 multiline
                 numberOfLines={3}
@@ -307,7 +312,7 @@ function RequestDetailSheet({
                   style={s.sheetBtn}
                   onPress={() => setStep('view')}
                 >
-                  Назад
+                  {t('common:back')}
                 </Button>
                 <Button
                   variant="danger"
@@ -315,7 +320,7 @@ function RequestDetailSheet({
                   style={s.sheetBtn}
                   onPress={handleRejectConfirm}
                 >
-                  Подтвердить
+                  {t('common:confirm')}
                 </Button>
               </View>
             </View>

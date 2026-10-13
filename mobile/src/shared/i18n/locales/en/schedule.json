@@ -1,3 +1,8 @@
 {
-  "title": "My schedule"
+  "title": "My schedule",
+  "week": {
+    "workload": "My workload",
+    "perWeek_one": "per week · {{count}} working day",
+    "perWeek_other": "per week · {{count}} working days"
+  }
 }

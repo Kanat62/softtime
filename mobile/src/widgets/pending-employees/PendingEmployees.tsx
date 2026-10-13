@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { UserCheck, UserX } from 'lucide-react-native';
 import type { User } from '@softtime/shared';
@@ -25,12 +26,13 @@ export function PendingEmployees({
   onReject,
   processingId,
 }: PendingEmployeesProps) {
+  const { t } = useTranslation(['management', 'common']);
   if (workers.length === 0) {
     return (
       <EmptyState
         icon={<UserCheck size={40} color={colors.textDisabled} strokeWidth={iconStrokeWidth} />}
-        title="Нет новых заявок"
-        description="Все сотрудники подтверждены"
+        title={t('management:pending.emptyTitle')}
+        description={t('management:pending.emptyDescription')}
       />
     );
   }
@@ -62,6 +64,7 @@ interface PendingRowProps {
 }
 
 function PendingRow({ worker, onAccept, onReject, isProcessing }: PendingRowProps) {
+  const { t } = useTranslation(['management', 'common']);
   return (
     <View style={s.row}>
       <Avatar uri={worker.avatarUrl} name={worker.fullName} size={44} />
@@ -79,7 +82,7 @@ function PendingRow({ worker, onAccept, onReject, isProcessing }: PendingRowProp
             style={[s.actionBtn, s.rejectBtn]}
             onPress={onReject}
             activeOpacity={0.85}
-            accessibilityLabel="Отклонить"
+            accessibilityLabel={t('common:reject')}
           >
             <UserX size={16} color={colors.surface} strokeWidth={iconStrokeWidth} />
           </TouchableOpacity>
@@ -87,7 +90,7 @@ function PendingRow({ worker, onAccept, onReject, isProcessing }: PendingRowProp
             style={[s.actionBtn, s.acceptBtn]}
             onPress={onAccept}
             activeOpacity={0.85}
-            accessibilityLabel="Принять"
+            accessibilityLabel={t('common:accept')}
           >
             <UserCheck size={16} color={colors.surface} strokeWidth={iconStrokeWidth} />
           </TouchableOpacity>

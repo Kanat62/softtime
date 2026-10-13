@@ -1,3 +1,10 @@
 {
-  "title": "Мой график"
+  "title": "Мой график",
+  "week": {
+    "workload": "Моя нагрузка",
+    "perWeek_one": "в неделю · {{count}} рабочий день",
+    "perWeek_few": "в неделю · {{count}} рабочих дня",
+    "perWeek_many": "в неделю · {{count}} рабочих дней",
+    "perWeek_other": "в неделю · {{count}} рабочих дня"
+  }
 }

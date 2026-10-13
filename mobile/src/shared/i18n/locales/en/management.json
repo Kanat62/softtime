@@ -9,5 +9,27 @@
   "setLeaveLabel": "Set check-out",
   "setLeaveTitle": "Set check-out time",
   "leaveTime": "Check-out time",
-  "since": "since {{time}}"
+  "since": "since {{time}}",
+  "pending": {
+    "emptyTitle": "No new requests",
+    "emptyDescription": "All employees are approved"
+  },
+  "incoming": {
+    "filters": {
+      "all": "All",
+      "pending": "Pending",
+      "resolved": "Resolved"
+    },
+    "emptyTitle": "No requests",
+    "emptyAllResolved": "All requests have been reviewed",
+    "emptyNone": "There are no requests",
+    "detailTitle": "Request details",
+    "rejectTitle": "Reason for rejection",
+    "fieldType": "Type",
+    "fieldDates": "Dates",
+    "fieldComment": "Comment",
+    "fieldDecision": "Decision",
+    "rejectReasonLabel": "State a reason (optional)",
+    "rejectReasonPlaceholder": "For example: no cover for this period"
+  }
 }

@@ -34,5 +34,11 @@
     "minutesPlaceholder": "MM",
     "hours": "hours",
     "minutes": "minutes"
-  }
+  },
+  "today": "Today",
+  "dayOff": "Day off",
+  "approve": "Approve",
+  "reject": "Reject",
+  "accept": "Accept",
+  "confirm": "Confirm"
 }

@@ -38,6 +38,7 @@
     },
     "pickPeriod": "Выберите период",
     "rangeStart": "Начало",
-    "rangeEnd": "Конец"
+    "rangeEnd": "Конец",
+    "emptyPeriod": "Нет данных за период"
   }
 }

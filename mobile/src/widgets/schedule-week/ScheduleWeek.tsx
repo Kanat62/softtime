@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { CalendarDays } from 'lucide-react-native';
 import { Weekday } from '@softtime/shared';
@@ -20,17 +21,6 @@ const WEEKDAY_ORDER: Weekday[] = [
   Weekday.THU, Weekday.FRI, Weekday.SAT, Weekday.SUN,
 ];
 
-const WEEKDAY_SHORT: Record<Weekday, string> = {
-  [Weekday.MON]: 'Пн', [Weekday.TUE]: 'Вт', [Weekday.WED]: 'Ср',
-  [Weekday.THU]: 'Чт', [Weekday.FRI]: 'Пт', [Weekday.SAT]: 'Сб', [Weekday.SUN]: 'Вс',
-};
-
-const WEEKDAY_FULL: Record<Weekday, string> = {
-  [Weekday.MON]: 'Понедельник', [Weekday.TUE]: 'Вторник',  [Weekday.WED]: 'Среда',
-  [Weekday.THU]: 'Четверг',    [Weekday.FRI]: 'Пятница',   [Weekday.SAT]: 'Суббота',
-  [Weekday.SUN]: 'Воскресенье',
-};
-
 // JS Date.getDay(): 0=Sun, 1=Mon … 6=Sat
 const JS_DAY_TO_WEEKDAY: Record<number, Weekday> = {
   0: Weekday.SUN, 1: Weekday.MON, 2: Weekday.TUE, 3: Weekday.WED,
@@ -44,21 +34,15 @@ function timeToMinutes(time: string): number {
   return h * 60 + m;
 }
 
-function formatDuration(minutes: number): string {
+function formatDuration(minutes: number, hoursShort: string, minutesShort: string): string {
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
-  return m === 0 ? `${h} ч` : `${h} ч ${m} м`;
+  return m === 0 ? `${h} ${hoursShort}` : `${h} ${hoursShort} ${m} ${minutesShort}`;
 }
 
 function getWorkMinutes(entry: EmployeeSchedule): number {
   if (!entry.isWorkingDay || !entry.startTime || !entry.endTime) return 0;
   return timeToMinutes(entry.endTime) - timeToMinutes(entry.startTime);
-}
-
-function daysLabel(n: number): string {
-  if (n === 1) return 'день';
-  if (n >= 2 && n <= 4) return 'дня';
-  return 'дней';
 }
 
 // ─── Widget ───────────────────────────────────────────────────────────────────
@@ -68,6 +52,9 @@ interface ScheduleWeekProps {
 }
 
 export function ScheduleWeek({ schedule }: ScheduleWeekProps) {
+  const { t } = useTranslation(['schedule', 'enums', 'common']);
+  const duration = (mins: number) =>
+    formatDuration(mins, t('common:duration.hoursShort'), t('common:duration.minutesShort'));
   const todayWeekday = JS_DAY_TO_WEEKDAY[new Date().getDay()];
   const scheduleMap = Object.fromEntries(schedule.map((s) => [s.weekday, s]));
 
@@ -83,10 +70,10 @@ export function ScheduleWeek({ schedule }: ScheduleWeekProps) {
       {/* ── Hero card ─────────────────────────────────────────── */}
       <View style={styles.hero}>
         <View style={styles.heroContent}>
-          <Text style={styles.heroLabel}>Моя нагрузка</Text>
-          <Text style={styles.heroHours}>{formatDuration(totalMinutes)}</Text>
+          <Text style={styles.heroLabel}>{t('schedule:week.workload')}</Text>
+          <Text style={styles.heroHours}>{duration(totalMinutes)}</Text>
           <Text style={styles.heroSub}>
-            в неделю · {workingDays} рабочих {daysLabel(workingDays)}
+            {t('schedule:week.perWeek', { count: workingDays })}
           </Text>
         </View>
         <CalendarDays size={44} color="rgba(255,255,255,0.35)" strokeWidth={iconStrokeWidth} />
@@ -108,7 +95,7 @@ export function ScheduleWeek({ schedule }: ScheduleWeekProps) {
               {/* Short label circle */}
               <View style={[styles.dayCircle, isToday && styles.dayCircleToday]}>
                 <Text style={[styles.dayCircleText, isToday && styles.dayCircleTextToday]}>
-                  {WEEKDAY_SHORT[weekday]}
+                  {t(`enums:weekdayShort.${weekday}`)}
                 </Text>
               </View>
 
@@ -116,11 +103,11 @@ export function ScheduleWeek({ schedule }: ScheduleWeekProps) {
               <View style={styles.dayInfo}>
                 <View style={styles.dayNameRow}>
                   <Text style={styles.dayName} numberOfLines={1}>
-                    {WEEKDAY_FULL[weekday]}
+                    {t(`enums:weekdayLong.${weekday}`)}
                   </Text>
                   {isToday && (
                     <View style={styles.todayPill}>
-                      <Text style={styles.todayPillText}>Сегодня</Text>
+                      <Text style={styles.todayPillText}>{t('common:today')}</Text>
                     </View>
                   )}
                 </View>
@@ -130,13 +117,13 @@ export function ScheduleWeek({ schedule }: ScheduleWeekProps) {
                     {entry.startTime} – {entry.endTime}
                   </Text>
                 ) : (
-                  <Text style={styles.dayOff}>Выходной</Text>
+                  <Text style={styles.dayOff}>{t('common:dayOff')}</Text>
                 )}
               </View>
 
               {/* Duration */}
               {isWorking && workMins > 0 && (
-                <Text style={styles.dayDuration}>{formatDuration(workMins)}</Text>
+                <Text style={styles.dayDuration}>{duration(workMins)}</Text>
               )}
             </View>
           );

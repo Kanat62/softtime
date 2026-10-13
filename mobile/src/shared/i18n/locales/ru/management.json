@@ -11,5 +11,27 @@
   "setLeaveLabel": "Указать уход",
   "setLeaveTitle": "Указать время ухода",
   "leaveTime": "Время ухода",
-  "since": "с {{time}}"
+  "since": "с {{time}}",
+  "pending": {
+    "emptyTitle": "Нет новых заявок",
+    "emptyDescription": "Все сотрудники подтверждены"
+  },
+  "incoming": {
+    "filters": {
+      "all": "Все",
+      "pending": "На рассмотрении",
+      "resolved": "Решённые"
+    },
+    "emptyTitle": "Нет заявок",
+    "emptyAllResolved": "Все заявки рассмотрены",
+    "emptyNone": "Заявки отсутствуют",
+    "detailTitle": "Детали заявки",
+    "rejectTitle": "Причина отклонения",
+    "fieldType": "Тип",
+    "fieldDates": "Даты",
+    "fieldComment": "Комментарий",
+    "fieldDecision": "Решение",
+    "rejectReasonLabel": "Укажите причину (необязательно)",
+    "rejectReasonPlaceholder": "Например: нет замены на этот период"
+  }
 }

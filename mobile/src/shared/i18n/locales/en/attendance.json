@@ -34,6 +34,7 @@
     },
     "pickPeriod": "Select period",
     "rangeStart": "Start",
-    "rangeEnd": "End"
+    "rangeEnd": "End",
+    "emptyPeriod": "No data for this period"
   }
 }
