@@ -17,5 +17,10 @@
   "duration": {
     "hoursShort": "h",
     "minutesShort": "m"
-  }
+  },
+  "login": "Log in",
+  "password": "Password",
+  "noData": "No data",
+  "showPassword": "Show password",
+  "hidePassword": "Hide password"
 }

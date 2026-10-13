@@ -1,4 +1,5 @@
 import { useNavigate, Link } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
@@ -12,12 +13,13 @@ import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 
 const FEATURES = [
-  { icon: Clock, label: "Автоматический учёт рабочего времени" },
-  { icon: Users, label: "Управление сотрудниками и расписаниями" },
-  { icon: BarChart2, label: "Подробная аналитика и отчёты" },
+  { icon: Clock, labelKey: "tracking" },
+  { icon: Users, labelKey: "employees" },
+  { icon: BarChart2, labelKey: "analytics" },
 ] as const;
 
 export function LoginPage() {
+  const { t } = useTranslation(["auth", "common"]);
   const { login } = useAuth();
   const navigate = useNavigate();
   const [submitting, setSubmitting] = useState(false);
@@ -32,19 +34,19 @@ export function LoginPage() {
     setSubmitting(true);
     try {
       const user = await login(values.email, values.password);
-      toast.success("Вход выполнен");
+      toast.success(t("auth:login.success"));
       navigate({ to: user.role === "PROVIDER" ? "/provider/dashboard" : "/admin/dashboard" });
     } catch (err) {
       if (isNormalizedError(err)) {
         if (err.statusCode === 429) {
           toast.error(err.message);
         } else if (err.statusCode === 0) {
-          toast.error("Нет соединения с сервером");
+          toast.error(t("auth:login.noConnection"));
         } else {
-          toast.error("Неверный email или пароль");
+          toast.error(t("auth:login.badCredentials"));
         }
       } else {
-        toast.error("Ошибка соединения с сервером");
+        toast.error(t("auth:login.serverError"));
       }
     } finally {
       setSubmitting(false);
@@ -64,19 +66,19 @@ export function LoginPage() {
 
         <div className="mt-auto">
           <h1 className="text-[28px] font-bold leading-snug">
-            Управляйте рабочим временем без лишних усилий
+            {t("auth:login.heroTitle")}
           </h1>
           <p className="mt-4 text-sm leading-relaxed text-white/65">
-            Учёт посещаемости, расписания и автоматические отчёты — всё в одном месте.
+            {t("auth:login.heroSubtitle")}
           </p>
 
           <ul className="mt-10 space-y-4">
-            {FEATURES.map(({ icon: Icon, label }) => (
-              <li key={label} className="flex items-center gap-3">
+            {FEATURES.map(({ icon: Icon, labelKey }) => (
+              <li key={labelKey} className="flex items-center gap-3">
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/15">
                   <Icon className="h-4 w-4" strokeWidth={1.5} />
                 </span>
-                <span className="text-sm text-white/75">{label}</span>
+                <span className="text-sm text-white/75">{t(`auth:login.features.${labelKey}`)}</span>
               </li>
             ))}
           </ul>
@@ -97,9 +99,9 @@ export function LoginPage() {
 
         <div className="w-full max-w-100">
           <div className="mb-8">
-            <h2 className="text-2xl font-bold text-foreground">Вход в систему</h2>
+            <h2 className="text-2xl font-bold text-foreground">{t("auth:login.title")}</h2>
             <p className="mt-1.5 text-base text-muted-foreground">
-              Введите email и пароль для доступа к панели управления
+              {t("auth:login.subtitle")}
             </p>
           </div>
 
@@ -133,7 +135,7 @@ export function LoginPage() {
             {/* Password */}
             <div>
               <Label htmlFor="password" className="text-base font-medium">
-                Пароль
+                {t("common:password")}
               </Label>
               <div className="relative mt-1.5">
                 <Lock
@@ -144,7 +146,7 @@ export function LoginPage() {
                   id="password"
                   type={showPassword ? "text" : "password"}
                   autoComplete="current-password"
-                  placeholder="Введите пароль"
+                  placeholder={t("auth:login.passwordPlaceholder")}
                   className="pl-9 pr-10"
                   {...form.register("password")}
                 />
@@ -153,7 +155,7 @@ export function LoginPage() {
                   onClick={() => setShowPassword((v) => !v)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
                   tabIndex={-1}
-                  aria-label={showPassword ? "Скрыть пароль" : "Показать пароль"}
+                  aria-label={showPassword ? t("common:hidePassword") : t("common:showPassword")}
                 >
                   {showPassword ? (
                     <EyeOff className="h-4 w-4" strokeWidth={1.5} />
@@ -177,21 +179,21 @@ export function LoginPage() {
               {submitting ? (
                 <span className="flex items-center gap-2">
                   <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                  Входим...
+                  {t("auth:login.submitting")}
                 </span>
               ) : (
-                "Войти"
+                t("common:login")
               )}
             </Button>
           </form>
 
           <p className="mt-6 text-center text-base text-muted-foreground">
-            Нет аккаунта?{" "}
+            {t("auth:login.noAccount")}{" "}
             <Link
               to="/register"
               className="font-semibold text-primary transition-colors hover:text-primary/80"
             >
-              Зарегистрировать компанию
+              {t("auth:login.registerLink")}
             </Link>
           </p>
         </div>

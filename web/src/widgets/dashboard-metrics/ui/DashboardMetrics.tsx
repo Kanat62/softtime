@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { Users, UserCheck, Clock, Inbox } from "lucide-react";
 import { format, subDays } from "date-fns";
-import { ru } from "date-fns/locale";
+import { dateFnsLocale } from "@/shared/lib/date-locale";
 import { UserStatus, RequestStatus } from "@softtime/shared";
 import {
   BarChart,
@@ -50,6 +51,7 @@ function MetricCard({
 // ─── WeeklyChart ─────────────────────────────────────────────────────────────
 
 function WeeklyChart() {
+  const { t } = useTranslation("dashboard");
   const today = new Date();
   const from = format(subDays(today, 6), "yyyy-MM-dd");
   const to = format(today, "yyyy-MM-dd");
@@ -66,7 +68,7 @@ function WeeklyChart() {
     for (let i = 6; i >= 0; i--) {
       const d = subDays(today, i);
       const dateStr = format(d, "yyyy-MM-dd");
-      const label = format(d, "EEE", { locale: ru });
+      const label = format(d, "EEE", { locale: dateFnsLocale() });
       const present = records.filter(
         (r) => r.date === dateStr && r.checkInAt !== null,
       ).length;
@@ -78,7 +80,7 @@ function WeeklyChart() {
   return (
     <div className="rounded-2xl bg-card p-5 shadow-sm">
       <h2 className="mb-4 text-sm font-semibold text-foreground">
-        Посещаемость за последние 7 дней
+        {t("dashboard:weekChart.title")}
       </h2>
       {weekQuery.isLoading ? (
         <Skeleton className="h-40 w-full rounded" />
@@ -101,8 +103,8 @@ function WeeklyChart() {
               className="text-muted-foreground"
             />
             <Tooltip
-              formatter={(v: number) => [v, "Присутствовали"]}
-              labelFormatter={(l) => `День: ${l}`}
+              formatter={(v: number) => [v, t("dashboard:weekChart.present")]}
+              labelFormatter={(l) => t("dashboard:weekChart.day", { day: l })}
               contentStyle={{
                 background: "hsl(var(--card))",
                 border: "1px solid hsl(var(--border))",
@@ -121,6 +123,7 @@ function WeeklyChart() {
 // ─── DashboardMetrics ────────────────────────────────────────────────────────
 
 export function DashboardMetrics() {
+  const { t } = useTranslation("dashboard");
   const totalQ = useQuery({
     queryKey: queryKeys.employees({ page: 1, limit: 1 }),
     queryFn: () => userApi.listEmployees({ page: 1, limit: 1 }),
@@ -146,25 +149,25 @@ export function DashboardMetrics() {
     <div className="space-y-4">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard
-          label="Сотрудников всего"
+          label={t("dashboard:metrics.totalEmployees")}
           value={totalQ.data?.meta.total ?? 0}
           icon={Users}
           loading={totalQ.isLoading}
         />
         <MetricCard
-          label="Сейчас в офисе"
+          label={t("dashboard:metrics.inOffice")}
           value={inOfficeCountQ.data?.length ?? 0}
           icon={UserCheck}
           loading={inOfficeCountQ.isLoading}
         />
         <MetricCard
-          label="Ожидают подтверждения"
+          label={t("dashboard:metrics.pending")}
           value={pendingEmpQ.data?.meta.total ?? 0}
           icon={Clock}
           loading={pendingEmpQ.isLoading}
         />
         <MetricCard
-          label="Новых заявок"
+          label={t("dashboard:metrics.newRequests")}
           value={pendingReqQ.data?.meta.total ?? 0}
           icon={Inbox}
           loading={pendingReqQ.isLoading}

@@ -1,0 +1,54 @@
+{
+  "title": "Подписка",
+  "suspendedTitle": "Аккаунт приостановлен",
+  "suspendedText": "Подписка была отменена. Для восстановления доступа обратитесь в службу поддержки.",
+  "planName": "Подписка SoftTime",
+  "perMonth": "/ месяц",
+  "nextCharge": " · следующее списание {{date}}",
+  "pay": "Оплатить",
+  "cancelAction": "Отменить подписку",
+  "untilTrialEnd": "До конца триала",
+  "untilNextCharge": "До следующего списания",
+  "daysLeft_one": "{{count}} дн.",
+  "daysLeft_few": "{{count}} дн.",
+  "daysLeft_many": "{{count}} дн.",
+  "daysLeft_other": "{{count}} дн.",
+  "dateLabel": "Дата: {{date}}",
+  "graceNoticeHead": "После окончания триала компания перейдёт в",
+  "graceNoticeLink": "льготный период",
+  "graceNoticeTail": "на 3 дня.",
+  "cancelled": "Подписка отменена.",
+  "noBillingDate": "Нет данных о дате списания.",
+  "historyTitle": "История оплат",
+  "historyEmpty": "История оплат пуста.",
+  "columns": {
+    "date": "Дата",
+    "period": "Период",
+    "amount": "Сумма",
+    "provider": "Провайдер",
+    "reference": "Референс",
+    "status": "Статус",
+    "receipt": "Чек"
+  },
+  "downloadReceipt": "Скачать чек",
+  "cancelDialog": {
+    "title": "Отменить подписку?",
+    "description": "Подписка будет отменена. Компания перейдёт в статус «Приостановлена», и сотрудники потеряют доступ к check-in / check-out.",
+    "confirm": "Да, отменить",
+    "pending": "Отменяем..."
+  },
+  "toast": {
+    "redirecting": "Перенаправляем на страницу оплаты…",
+    "payFailed": "Ошибка при инициации оплаты",
+    "cancelled": "Подписка отменена",
+    "cancelFailed": "Ошибка при отмене",
+    "receiptFailed": "Не удалось скачать чек"
+  },
+  "features": {
+    "employees": "Безлимит сотрудников",
+    "checkins": "Безлимит приходов и уходов",
+    "reports": "Отчёты и экспорт",
+    "news": "Внутренние новости",
+    "support": "Email-поддержка"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "groups": {
+    "main": "Главная",
+    "manage": "Управление",
+    "account": "Аккаунт",
+    "platform": "Платформа"
+  },
+  "items": {
+    "dashboard": "Дашборд",
+    "employees": "Сотрудники",
+    "attendance": "Посещаемость",
+    "schedules": "Расписания",
+    "requests": "Заявки",
+    "news": "Новости",
+    "reports": "Отчёты",
+    "settings": "Настройки",
+    "companies": "Компании",
+    "payments": "Оплаты / Выручка"
+  },
+  "support": "Тех. поддержка",
+  "logout": "Выйти"
+}

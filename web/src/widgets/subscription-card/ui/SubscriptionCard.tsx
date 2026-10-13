@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { format } from "date-fns";
-import { ru } from "date-fns/locale";
+import { dateFnsLocale } from "@/shared/lib/date-locale";
 import { toast } from "sonner";
 import { AlertTriangle, Check, CreditCard, Download, ExternalLink, Loader2 } from "lucide-react";
 import { subscriptionApi } from "@/entities/subscription/api";
@@ -22,17 +23,17 @@ import {
 import { useState } from "react";
 
 const FEATURES = [
-  "Безлимит сотрудников",
-  "Безлимит приходов и уходов",
-  "Отчёты и экспорт",
-  "Внутренние новости",
-  "Email-поддержка",
+  "employees",
+  "checkins",
+  "reports",
+  "news",
+  "support",
 ];
 
 function fmtDate(iso: string | null | undefined) {
   if (!iso) return "—";
   try {
-    return format(new Date(iso), "d MMMM yyyy", { locale: ru });
+    return format(new Date(iso), "d MMMM yyyy", { locale: dateFnsLocale() });
   } catch {
     return iso;
   }
@@ -40,13 +41,14 @@ function fmtDate(iso: string | null | undefined) {
 
 function fmtPeriod(start: string, end: string) {
   try {
-    return `${format(new Date(start), "d MMM", { locale: ru })} – ${format(new Date(end), "d MMM yyyy", { locale: ru })}`;
+    return `${format(new Date(start), "d MMM", { locale: dateFnsLocale() })} – ${format(new Date(end), "d MMM yyyy", { locale: dateFnsLocale() })}`;
   } catch {
     return `${start} – ${end}`;
   }
 }
 
 export function SubscriptionCard() {
+  const { t } = useTranslation(["subscription", "common"]);
   const qc = useQueryClient();
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
 
@@ -64,19 +66,19 @@ export function SubscriptionCard() {
     mutationFn: subscriptionApi.pay,
     onSuccess: ({ checkoutUrl }) => {
       window.open(checkoutUrl, "_blank", "noopener,noreferrer");
-      toast.success("Перенаправляем на страницу оплаты…");
+      toast.success(t("subscription:toast.redirecting"));
     },
-    onError: () => toast.error("Ошибка при инициации оплаты"),
+    onError: () => toast.error(t("subscription:toast.payFailed")),
   });
 
   const cancelMutation = useMutation({
     mutationFn: subscriptionApi.cancel,
     onSuccess: () => {
-      toast.success("Подписка отменена");
+      toast.success(t("subscription:toast.cancelled"));
       setCancelDialogOpen(false);
       qc.invalidateQueries({ queryKey: queryKeys.subscription });
     },
-    onError: () => toast.error("Ошибка при отмене"),
+    onError: () => toast.error(t("subscription:toast.cancelFailed")),
   });
 
   const receiptMutation = useMutation({
@@ -91,7 +93,7 @@ export function SubscriptionCard() {
       a.remove();
       URL.revokeObjectURL(url);
     },
-    onError: () => toast.error("Не удалось скачать чек"),
+    onError: () => toast.error(t("subscription:toast.receiptFailed")),
   });
 
   const sub = subQuery.data;
@@ -103,16 +105,16 @@ export function SubscriptionCard() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Подписка" />
+      <PageHeader title={t("subscription:title")} />
 
       {/* ── CANCELLED / SUSPENDED banner ───────────────────────────────────── */}
       {isCancelled && (
         <div className="flex items-start gap-3 rounded-2xl border border-destructive/30 bg-destructive/5 p-5">
           <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
           <div>
-            <p className="font-semibold text-destructive">Аккаунт приостановлен</p>
+            <p className="font-semibold text-destructive">{t("subscription:suspendedTitle")}</p>
             <p className="mt-1 text-sm text-muted-foreground">
-              Подписка была отменена. Для восстановления доступа обратитесь в службу поддержки.
+              {t("subscription:suspendedText")}
             </p>
           </div>
         </div>
@@ -131,14 +133,14 @@ export function SubscriptionCard() {
             <>
               <div className="flex items-start justify-between">
                 <div>
-                  <div className="text-sm text-muted-foreground">Подписка SoftTime</div>
+                  <div className="text-sm text-muted-foreground">{t("subscription:planName")}</div>
                   <div className="mt-1 text-2xl font-semibold text-foreground">
-                    ${sub.priceUsd} / месяц
+                    ${sub.priceUsd} {t("subscription:perMonth")}
                   </div>
                   <div className="mt-1 text-sm text-muted-foreground">
                     {fmtDate(sub.periodStart)} – {fmtDate(sub.periodEnd)}
                     {sub.nextBillingAt
-                      ? ` · следующее списание ${fmtDate(sub.nextBillingAt)}`
+                      ? t("subscription:nextCharge", { date: fmtDate(sub.nextBillingAt) })
                       : ""}
                   </div>
                 </div>
@@ -148,7 +150,7 @@ export function SubscriptionCard() {
                 {FEATURES.map((f) => (
                   <div key={f} className="flex items-center gap-2 text-sm text-foreground">
                     <Check className="h-4 w-4 shrink-0 text-success" />
-                    {f}
+                    {t(`subscription:features.${f}`)}
                   </div>
                 ))}
               </div>
@@ -156,13 +158,13 @@ export function SubscriptionCard() {
                 {canPay && (
                   <Button onClick={() => window.open("https://wa.me/996702928197", "_blank", "noopener,noreferrer")}>
                     <CreditCard className="mr-2 h-4 w-4" />
-                    Оплатить ${sub.priceUsd}
+                    {t("subscription:pay")} ${sub.priceUsd}
                     <ExternalLink className="ml-2 h-3.5 w-3.5" />
                   </Button>
                 )}
                 {sub.status === "ACTIVE" && (
                   <Button variant="outline" onClick={() => setCancelDialogOpen(true)}>
-                    Отменить подписку
+                    {t("subscription:cancelAction")}
                   </Button>
                 )}
               </div>
@@ -180,10 +182,12 @@ export function SubscriptionCard() {
           ) : sub && !isCancelled ? (
             <>
               <div className="text-sm text-muted-foreground">
-                {sub.status === "TRIAL" ? "До конца триала" : "До следующего списания"}
+                {sub.status === "TRIAL"
+                  ? t("subscription:untilTrialEnd")
+                  : t("subscription:untilNextCharge")}
               </div>
               <div className="mt-1 text-3xl font-semibold text-foreground">
-                {Math.max(0, daysLeft)} дн.
+                {t("subscription:daysLeft", { count: Math.max(0, daysLeft) })}
               </div>
               <div className="mt-4 h-2 overflow-hidden rounded-full bg-muted">
                 <div
@@ -193,20 +197,22 @@ export function SubscriptionCard() {
               </div>
               {sub.nextBillingAt && (
                 <div className="mt-2 text-xs text-muted-foreground">
-                  Дата: {fmtDate(sub.nextBillingAt)}
+                  {t("subscription:dateLabel", { date: fmtDate(sub.nextBillingAt) })}
                 </div>
               )}
               {sub.status === "TRIAL" && (
                 <div className="mt-4 rounded-md bg-muted/50 p-3 text-xs text-muted-foreground">
-                  После окончания триала компания перейдёт в{" "}
-                  <span className="font-medium text-warning-foreground">льготный период</span> на 3
-                  дня.
+                  {t("subscription:graceNoticeHead")}{" "}
+                  <span className="font-medium text-warning-foreground">
+                    {t("subscription:graceNoticeLink")}
+                  </span>{" "}
+                  {t("subscription:graceNoticeTail")}
                 </div>
               )}
             </>
           ) : (
             <p className="text-sm text-muted-foreground">
-              {isCancelled ? "Подписка отменена." : "Нет данных о дате списания."}
+              {isCancelled ? t("subscription:cancelled") : t("subscription:noBillingDate")}
             </p>
           )}
         </div>
@@ -215,12 +221,12 @@ export function SubscriptionCard() {
       {/* ── Payment history ─────────────────────────────────────────────────── */}
       <div className="overflow-hidden rounded-2xl bg-card shadow-sm">
         <div className="border-b border-border px-5 py-4">
-          <h2 className="font-semibold text-foreground">История оплат</h2>
+          <h2 className="font-semibold text-foreground">{t("subscription:historyTitle")}</h2>
         </div>
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border bg-muted/40">
-              {["Дата", "Период", "Сумма", "Провайдер", "Референс", "Статус", "Чек"].map((h) => (
+              {["date", "period", "amount", "provider", "reference", "status", "receipt"].map((h) => (
                 <th
                   key={h}
                   className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
@@ -244,7 +250,7 @@ export function SubscriptionCard() {
             ) : payments.length === 0 ? (
               <tr>
                 <td colSpan={7} className="px-4 py-10 text-center text-sm text-muted-foreground">
-                  История оплат пуста.
+                  {t("subscription:historyEmpty")}
                 </td>
               </tr>
             ) : (
@@ -267,7 +273,7 @@ export function SubscriptionCard() {
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8"
-                      title="Скачать чек"
+                      title={t("subscription:downloadReceipt")}
                       disabled={
                         receiptMutation.isPending && receiptMutation.variables === p.id
                       }
@@ -278,7 +284,7 @@ export function SubscriptionCard() {
                       ) : (
                         <Download className="h-4 w-4" strokeWidth={1.5} />
                       )}
-                      <span className="sr-only">Скачать чек</span>
+                      <span className="sr-only">{t("subscription:downloadReceipt")}</span>
                     </Button>
                   </td>
                 </tr>
@@ -292,20 +298,21 @@ export function SubscriptionCard() {
       <AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Отменить подписку?</AlertDialogTitle>
+            <AlertDialogTitle>{t("subscription:cancelDialog.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Подписка будет отменена. Компания перейдёт в статус «Приостановлена», и сотрудники
-              потеряют доступ к check-in / check-out.
+              {t("subscription:cancelDialog.description")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={cancelMutation.isPending}>Назад</AlertDialogCancel>
+            <AlertDialogCancel disabled={cancelMutation.isPending}>{t("common:back")}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-white hover:bg-destructive/90"
               disabled={cancelMutation.isPending}
               onClick={() => cancelMutation.mutate()}
             >
-              {cancelMutation.isPending ? "Отменяем..." : "Да, отменить"}
+              {cancelMutation.isPending
+                ? t("subscription:cancelDialog.pending")
+                : t("subscription:cancelDialog.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

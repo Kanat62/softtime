@@ -1,0 +1,52 @@
+{
+  "title": "Subscription",
+  "suspendedTitle": "Account suspended",
+  "suspendedText": "The subscription was cancelled. Contact support to restore access.",
+  "planName": "SoftTime subscription",
+  "perMonth": "/ month",
+  "nextCharge": " · next charge {{date}}",
+  "pay": "Pay",
+  "cancelAction": "Cancel subscription",
+  "untilTrialEnd": "Until the trial ends",
+  "untilNextCharge": "Until the next charge",
+  "daysLeft_one": "{{count}} day",
+  "daysLeft_other": "{{count}} days",
+  "dateLabel": "Date: {{date}}",
+  "graceNoticeHead": "When the trial ends the company moves to a",
+  "graceNoticeLink": "grace period",
+  "graceNoticeTail": "for 3 days.",
+  "cancelled": "Subscription cancelled.",
+  "noBillingDate": "No billing date available.",
+  "historyTitle": "Payment history",
+  "historyEmpty": "No payments yet.",
+  "columns": {
+    "date": "Date",
+    "period": "Period",
+    "amount": "Amount",
+    "provider": "Provider",
+    "reference": "Reference",
+    "status": "Status",
+    "receipt": "Receipt"
+  },
+  "downloadReceipt": "Download receipt",
+  "cancelDialog": {
+    "title": "Cancel the subscription?",
+    "description": "The subscription will be cancelled. The company moves to “Suspended” status and employees lose access to check in / check out.",
+    "confirm": "Yes, cancel",
+    "pending": "Cancelling…"
+  },
+  "toast": {
+    "redirecting": "Redirecting to the payment page…",
+    "payFailed": "Could not start the payment",
+    "cancelled": "Subscription cancelled",
+    "cancelFailed": "Could not cancel the subscription",
+    "receiptFailed": "Could not download the receipt"
+  },
+  "features": {
+    "employees": "Unlimited employees",
+    "checkins": "Unlimited check ins and outs",
+    "reports": "Reports and export",
+    "news": "Internal news",
+    "support": "Email support"
+  }
+}

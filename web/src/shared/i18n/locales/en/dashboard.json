@@ -1,0 +1,22 @@
+{
+  "title": "Dashboard",
+  "metrics": {
+    "totalEmployees": "Employees total",
+    "inOffice": "In office now",
+    "pending": "Awaiting approval",
+    "newRequests": "New requests"
+  },
+  "weekChart": {
+    "title": "Attendance over the last 7 days",
+    "present": "Present",
+    "day": "Day: {{day}}"
+  },
+  "chart": {
+    "title": "Attendance this week",
+    "subtitle": "By day — on time / late / absent",
+    "loadFailed": "Could not load the chart data",
+    "onTime": "On time",
+    "late": "Late",
+    "absent": "Absent"
+  }
+}

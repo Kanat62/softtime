@@ -17,5 +17,10 @@
   "duration": {
     "hoursShort": "ч",
     "minutesShort": "м"
-  }
+  },
+  "login": "Войти",
+  "password": "Пароль",
+  "noData": "Нет данных",
+  "showPassword": "Показать пароль",
+  "hidePassword": "Скрыть пароль"
 }

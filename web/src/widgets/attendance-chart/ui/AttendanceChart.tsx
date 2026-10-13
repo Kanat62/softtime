@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import {
   BarChart,
   Bar,
@@ -10,7 +11,7 @@ import {
   Legend,
 } from "recharts";
 import { format, parseISO } from "date-fns";
-import { ru } from "date-fns/locale";
+import { dateFnsLocale } from "@/shared/lib/date-locale";
 import { DayStatus } from "@softtime/shared";
 
 import { Skeleton, ErrorState } from "@/shared/ui";
@@ -45,7 +46,7 @@ function buildWeeklyChart(records: AttendanceRow[]) {
     }
   }
   return Object.entries(buckets).map(([date, v]) => ({
-    day: format(parseISO(date), "EEE", { locale: ru }),
+    day: format(parseISO(date), "EEE", { locale: dateFnsLocale() }),
     date,
     ...v,
   }));
@@ -54,6 +55,7 @@ function buildWeeklyChart(records: AttendanceRow[]) {
 // ─── AttendanceChart ──────────────────────────────────────────────────────────
 
 export function AttendanceChart() {
+  const { t } = useTranslation("dashboard");
   const from = weekAgoISO();
   const to = todayISO();
 
@@ -66,15 +68,15 @@ export function AttendanceChart() {
 
   return (
     <div className="rounded-2xl bg-card shadow-sm p-5">
-      <div className="mb-1 font-semibold text-foreground">Посещаемость за неделю</div>
+      <div className="mb-1 font-semibold text-foreground">{t("dashboard:chart.title")}</div>
       <div className="mb-4 text-xs text-muted-foreground">
-        По дням — вовремя / опоздание / отсутствие
+        {t("dashboard:chart.subtitle")}
       </div>
 
       {isLoading && <Skeleton className="h-48 w-full rounded-xl" />}
 
       {isError && (
-        <ErrorState message="Не удалось загрузить данные графика" onRetry={() => refetch()} />
+        <ErrorState message={t("dashboard:chart.loadFailed")} onRetry={() => refetch()} />
       )}
 
       {!isLoading && !isError && (
@@ -98,9 +100,9 @@ export function AttendanceChart() {
               labelStyle={{ color: "#111827", fontWeight: 600 }}
             />
             <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />
-            <Bar dataKey="present" name="Вовремя" fill="#22C55E" radius={[3, 3, 0, 0]} />
-            <Bar dataKey="late" name="Опоздание" fill="#F59E0B" radius={[3, 3, 0, 0]} />
-            <Bar dataKey="absent" name="Отсутствие" fill="#EF4444" radius={[3, 3, 0, 0]} />
+            <Bar dataKey="present" name={t("dashboard:chart.onTime")} fill="#22C55E" radius={[3, 3, 0, 0]} />
+            <Bar dataKey="late" name={t("dashboard:chart.late")} fill="#F59E0B" radius={[3, 3, 0, 0]} />
+            <Bar dataKey="absent" name={t("dashboard:chart.absent")} fill="#EF4444" radius={[3, 3, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       )}

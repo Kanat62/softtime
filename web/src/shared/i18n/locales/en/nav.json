@@ -1,0 +1,22 @@
+{
+  "groups": {
+    "main": "Home",
+    "manage": "Management",
+    "account": "Account",
+    "platform": "Platform"
+  },
+  "items": {
+    "dashboard": "Dashboard",
+    "employees": "Employees",
+    "attendance": "Attendance",
+    "schedules": "Schedules",
+    "requests": "Requests",
+    "news": "News",
+    "reports": "Reports",
+    "settings": "Settings",
+    "companies": "Companies",
+    "payments": "Payments / Revenue"
+  },
+  "support": "Support",
+  "logout": "Log out"
+}

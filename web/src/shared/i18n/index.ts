@@ -11,9 +11,17 @@ import {
 import ruCommon from "./locales/ru/common.json";
 import ruSettings from "./locales/ru/settings.json";
 import ruEmployees from "./locales/ru/employees.json";
+import ruSubscription from "./locales/ru/subscription.json";
+import ruAuth from "./locales/ru/auth.json";
+import ruDashboard from "./locales/ru/dashboard.json";
+import ruNav from "./locales/ru/nav.json";
 import enCommon from "./locales/en/common.json";
 import enSettings from "./locales/en/settings.json";
 import enEmployees from "./locales/en/employees.json";
+import enSubscription from "./locales/en/subscription.json";
+import enAuth from "./locales/en/auth.json";
+import enDashboard from "./locales/en/dashboard.json";
+import enNav from "./locales/en/nav.json";
 
 import { LANGUAGE_KEY, languageStorage } from "./language-storage";
 
@@ -33,6 +41,10 @@ const resources = {
     common: ruCommon,
     settings: ruSettings,
     employees: ruEmployees,
+    subscription: ruSubscription,
+    auth: ruAuth,
+    dashboard: ruDashboard,
+    nav: ruNav,
   },
   en: {
     enums: dictionaries.en.enums,
@@ -40,6 +52,10 @@ const resources = {
     common: enCommon,
     settings: enSettings,
     employees: enEmployees,
+    subscription: enSubscription,
+    auth: enAuth,
+    dashboard: enDashboard,
+    nav: enNav,
   },
 } as const;
 
@@ -54,7 +70,17 @@ i18n
     // Без этого ru-RU и en-US не сводятся к ru / en.
     load: "languageOnly",
     nonExplicitSupportedLngs: true,
-    ns: ["common", "settings", "employees", "enums", "validation"],
+    ns: [
+      "common",
+      "nav",
+      "settings",
+      "auth",
+      "dashboard",
+      "employees",
+      "subscription",
+      "enums",
+      "validation",
+    ],
     defaultNS: "common",
     detection: {
       order: ["localStorage", "navigator"],

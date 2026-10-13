@@ -19,6 +19,7 @@ import { useAuth, type UserRole } from "@/entities/session";
 import { cn } from "@/shared/lib";
 import { Button } from "@/shared/ui/button";
 import { Skeleton } from "@/shared/ui/skeleton";
+import { useTranslation } from "react-i18next";
 import { LanguageSwitcher } from "@/features/language-switcher";
 
 function PageFallback() {
@@ -39,46 +40,49 @@ function PageFallback() {
 }
 
 interface NavGroup {
-  label: string;
-  items: { to: string; label: string; icon: LucideIcon }[];
+  /** Ключ в nav:groups.* */
+  labelKey: string;
+  /** labelKey — ключ в nav:items.* */
+  items: { to: string; labelKey: string; icon: LucideIcon }[];
 }
 
 const ADMIN_NAV: NavGroup[] = [
   {
-    label: "Главная",
-    items: [{ to: "/admin/dashboard", label: "Дашборд", icon: LayoutDashboard }],
+    labelKey: "main",
+    items: [{ to: "/admin/dashboard", labelKey: "dashboard", icon: LayoutDashboard }],
   },
   {
-    label: "Управление",
+    labelKey: "manage",
     items: [
-      { to: "/admin/employees", label: "Сотрудники", icon: Users },
-      { to: "/admin/attendance", label: "Посещаемость", icon: ClipboardCheck },
-      { to: "/admin/schedules", label: "Расписания", icon: CalendarDays },
-      { to: "/admin/requests", label: "Заявки", icon: Inbox },
-      { to: "/admin/news", label: "Новости", icon: Newspaper },
-      { to: "/admin/reports", label: "Отчёты", icon: BarChart3 },
+      { to: "/admin/employees", labelKey: "employees", icon: Users },
+      { to: "/admin/attendance", labelKey: "attendance", icon: ClipboardCheck },
+      { to: "/admin/schedules", labelKey: "schedules", icon: CalendarDays },
+      { to: "/admin/requests", labelKey: "requests", icon: Inbox },
+      { to: "/admin/news", labelKey: "news", icon: Newspaper },
+      { to: "/admin/reports", labelKey: "reports", icon: BarChart3 },
     ],
   },
   {
-    label: "Аккаунт",
+    labelKey: "account",
     items: [
-      { to: "/admin/settings", label: "Настройки", icon: Settings },
+      { to: "/admin/settings", labelKey: "settings", icon: Settings },
     ],
   },
 ];
 
 const PROVIDER_NAV: NavGroup[] = [
   {
-    label: "Платформа",
+    labelKey: "platform",
     items: [
-      { to: "/provider/dashboard", label: "Дашборд", icon: LayoutDashboard },
-      { to: "/provider/companies", label: "Компании", icon: Building2 },
-      { to: "/provider/payments", label: "Оплаты / Выручка", icon: Wallet },
+      { to: "/provider/dashboard", labelKey: "dashboard", icon: LayoutDashboard },
+      { to: "/provider/companies", labelKey: "companies", icon: Building2 },
+      { to: "/provider/payments", labelKey: "payments", icon: Wallet },
     ],
   },
 ];
 
 function Sidebar({ role }: { role: UserRole }) {
+  const { t } = useTranslation("nav");
   const { user, logout } = useAuth();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const groups = role === "ADMIN" ? ADMIN_NAV : PROVIDER_NAV;
@@ -94,9 +98,9 @@ function Sidebar({ role }: { role: UserRole }) {
 
       <nav className="flex-1 px-3 py-4">
         {groups.map((group) => (
-          <div key={group.label} className="mb-5">
+          <div key={group.labelKey} className="mb-5">
             <div className="mb-1.5 px-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-              {group.label}
+              {t(`nav:groups.${group.labelKey}`)}
             </div>
             <ul className="space-y-0.5">
               {group.items.map((item) => {
@@ -114,7 +118,7 @@ function Sidebar({ role }: { role: UserRole }) {
                       )}
                     >
                       <Icon className="h-4 w-4" />
-                      <span>{item.label}</span>
+                      <span>{t(`nav:items.${item.labelKey}`)}</span>
                     </Link>
                   </li>
                 );
@@ -132,7 +136,7 @@ function Sidebar({ role }: { role: UserRole }) {
           onClick={() => window.open("https://wa.me/996702928197", "_blank", "noopener,noreferrer")}
         >
           <Headphones className="mr-2 h-4 w-4" />
-          Тех. поддержка
+          {t("nav:support")}
         </Button>
         <Button
           variant="ghost"
@@ -141,7 +145,7 @@ function Sidebar({ role }: { role: UserRole }) {
           onClick={logout}
         >
           <LogOut className="mr-2 h-4 w-4" />
-          Выйти
+          {t("nav:logout")}
         </Button>
       </div>
     </aside>
@@ -149,6 +153,7 @@ function Sidebar({ role }: { role: UserRole }) {
 }
 
 function Topbar() {
+  const { t } = useTranslation(["enums", "common"]);
   const { user } = useAuth();
   return (
     <header className="flex h-14 items-center justify-between border-b border-border bg-card px-6">
@@ -160,7 +165,7 @@ function Topbar() {
         <div className="text-right">
           <div className="text-sm font-medium text-foreground">{user?.fullName}</div>
           <div className="text-xs text-muted-foreground">
-            {user?.role === "ADMIN" ? "Администратор" : "Provider"}
+            {t(`enums:userRole.${user?.role === "ADMIN" ? "ADMIN" : "PROVIDER"}`)}
           </div>
         </div>
         <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
