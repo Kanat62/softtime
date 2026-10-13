@@ -14,16 +14,20 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   Building2,
   Camera,
+  Check,
   ChevronRight,
   CreditCard,
   ExternalLink,
+  Globe,
   KeyRound,
   Lock,
   LogOut,
   Mail,
   ShieldCheck,
 } from 'lucide-react-native';
-import { UserRole } from '@softtime/shared';
+import { useTranslation } from 'react-i18next';
+import { SUPPORTED_LANGUAGES, UserRole, type Language } from '@softtime/shared';
+import { changeLanguage } from '@/shared/i18n';
 import { useAuth } from '@/app/providers/AuthProvider';
 import { useProfile } from '@/features/profile/model/useProfile';
 import {
@@ -85,6 +89,7 @@ function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string;
 function ActionRow({
   icon,
   label,
+  value,
   onPress,
   variant = 'default',
   showChevron = false,
@@ -92,6 +97,8 @@ function ActionRow({
 }: {
   icon: React.ReactNode;
   label: string;
+  /** Текущее значение справа от подписи (например, выбранный язык). */
+  value?: string;
   onPress: () => void;
   variant?: 'default' | 'danger';
   showChevron?: boolean;
@@ -107,6 +114,7 @@ function ActionRow({
     >
       <View style={s.actionIcon}>{icon}</View>
       <Text style={[s.actionLabel, isDanger && s.actionLabelDanger]}>{label}</Text>
+      {value !== undefined && <Text style={s.actionValue}>{value}</Text>}
       {showChevron && (
         <ChevronRight size={iconSize.md} color={colors.textSecondary} strokeWidth={iconStrokeWidth} />
       )}
@@ -140,12 +148,68 @@ function ChangePasswordModal({ visible, onClose }: { visible: boolean; onClose: 
   );
 }
 
+// ─── Language Modal ───────────────────────────────────────────────────────────
+
+function LanguageModal({ visible, onClose }: { visible: boolean; onClose: () => void }) {
+  const { t, i18n } = useTranslation(['settings', 'common']);
+  const current = i18n.language as Language;
+
+  async function handleSelect(language: Language) {
+    if (language !== current) await changeLanguage(language);
+    onClose();
+  }
+
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <TouchableOpacity style={s.overlay} activeOpacity={1} onPress={onClose}>
+        <TouchableOpacity activeOpacity={1} style={s.modal}>
+          <View style={s.modalHandle} />
+          <View style={s.modalIconRow}>
+            <View style={s.modalIconBg}>
+              <Globe size={24} color={colors.primary} strokeWidth={iconStrokeWidth} />
+            </View>
+          </View>
+          <Text style={s.modalTitle}>{t('settings:language.sheetTitle')}</Text>
+
+          <View style={s.langList}>
+            {SUPPORTED_LANGUAGES.map((language) => {
+              const isActive = language === current;
+              return (
+                <TouchableOpacity
+                  key={language}
+                  style={[s.langRow, isActive && s.langRowActive]}
+                  onPress={() => handleSelect(language)}
+                  activeOpacity={0.85}
+                  accessibilityLabel={t(`common:language.${language}`)}
+                >
+                  <Text style={[s.langLabel, isActive && s.langLabelActive]}>
+                    {t(`common:language.${language}`)}
+                  </Text>
+                  {isActive && (
+                    <Check size={iconSize.md} color={colors.primary} strokeWidth={iconStrokeWidth} />
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          <TouchableOpacity style={s.modalBtn} onPress={onClose} activeOpacity={0.85}>
+            <Text style={s.modalBtnText}>{t('settings:language.close')}</Text>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </TouchableOpacity>
+    </Modal>
+  );
+}
+
 // ─── ProfileScreen ────────────────────────────────────────────────────────────
 
 export function ProfileScreen() {
   const { userRole, logout } = useAuth();
   const navigation = useNavigation<any>();
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showLanguageModal, setShowLanguageModal] = useState(false);
+  const { t, i18n } = useTranslation(['settings', 'common']);
 
   const { user, isLoading } = useProfile();
 
@@ -237,6 +301,14 @@ export function ProfileScreen() {
             onPress={() => setShowPasswordModal(true)}
             showChevron
           />
+          <View style={s.divider} />
+          <ActionRow
+            icon={<Globe size={iconSize.md} color={colors.textPrimary} strokeWidth={iconStrokeWidth} />}
+            label={t('settings:language.title')}
+            value={t(`common:language.${i18n.language}`)}
+            onPress={() => setShowLanguageModal(true)}
+            showChevron
+          />
         </View>
 
         <TouchableOpacity
@@ -253,6 +325,7 @@ export function ProfileScreen() {
       </ScrollView>
 
       <ChangePasswordModal visible={showPasswordModal} onClose={() => setShowPasswordModal(false)} />
+      <LanguageModal visible={showLanguageModal} onClose={() => setShowLanguageModal(false)} />
     </SafeAreaView>
   );
 }
@@ -349,6 +422,23 @@ const s = StyleSheet.create({
   actionIcon: { width: 20, alignItems: 'center' },
   actionLabel: { flex: 1, ...typography.base, color: colors.textPrimary },
   actionLabelDanger: { color: colors.danger },
+  actionValue: { ...typography.sm, color: colors.textSecondary },
+
+  langList: { alignSelf: 'stretch', gap: space[1], marginTop: space[1] },
+  langRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: space[3],
+    paddingHorizontal: space[3],
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    minHeight: 48,
+  },
+  langRowActive: { borderColor: colors.primary, backgroundColor: colors.primaryLight },
+  langLabel: { ...typography.base, color: colors.textPrimary },
+  langLabelActive: { fontFamily: fontFamily.semiBold, color: colors.primary },
 
   logoutBtn: {
     flexDirection: 'row',
