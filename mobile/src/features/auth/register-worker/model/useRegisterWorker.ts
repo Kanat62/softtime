@@ -7,6 +7,7 @@ import { tokenStorage } from '@/shared/storage/secure';
 import { decodeJwtPayload } from '@/shared/lib/jwt';
 import { useAuth } from '@/app/providers/AuthProvider';
 import type { AppError } from '@/shared/api/errors';
+import i18n from '@/shared/i18n';
 
 export function useRegisterWorker() {
   const { setAuth } = useAuth();
@@ -42,13 +43,13 @@ export function useRegisterWorker() {
     } catch (err) {
       const appErr = err as AppError;
       if (appErr.isNetworkError) {
-        setServerError('Нет подключения к интернету');
+        setServerError(i18n.t('errors:network'));
       } else if (appErr.statusCode === 404) {
-        setServerError('Компания с таким кодом не найдена. Проверьте код.');
+        setServerError(i18n.t('errors:register.companyNotFound'));
       } else if (appErr.statusCode === 409) {
-        setServerError('Email уже зарегистрирован в этой компании.');
+        setServerError(i18n.t('errors:register.emailTakenInCompany'));
       } else {
-        setServerError(appErr.message || 'Произошла ошибка. Попробуйте ещё раз.');
+        setServerError(appErr.message || i18n.t('errors:generic'));
       }
     } finally {
       setIsLoading(false);

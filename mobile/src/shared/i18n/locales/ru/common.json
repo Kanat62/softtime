@@ -40,5 +40,12 @@
   "approve": "Одобрить",
   "reject": "Отклонить",
   "accept": "Принять",
-  "confirm": "Подтвердить"
+  "confirm": "Подтвердить",
+  "state": {
+    "errorTitle": "Что-то пошло не так",
+    "errorDescription": "Не удалось загрузить данные. Проверьте соединение."
+  },
+  "offlineStale": "Данные могли устареть",
+  "otpCell": "Символ {{index}} из {{total}}",
+  "notificationChannel": "Основные уведомления"
 }

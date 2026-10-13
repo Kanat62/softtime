@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { WifiOff, Clock } from 'lucide-react-native';
 import { useIsOnline } from '@/shared/lib/network';
@@ -15,6 +16,7 @@ interface OfflineBannerProps {
 }
 
 export function OfflineBanner({ variant = 'block' }: OfflineBannerProps) {
+  const { t } = useTranslation('common');
   const isOnline = useIsOnline();
   if (isOnline) return null;
 
@@ -28,7 +30,7 @@ export function OfflineBanner({ variant = 'block' }: OfflineBannerProps) {
         <Clock size={14} color={colors.warningText} strokeWidth={iconStrokeWidth} />
       )}
       <Text style={[s.text, isBlock ? s.textBlock : s.textStale]}>
-        {isBlock ? 'Нет подключения к интернету' : 'Данные могли устареть'}
+        {isBlock ? t('common:offline') : t('common:offlineStale')}
       </Text>
     </View>
   );

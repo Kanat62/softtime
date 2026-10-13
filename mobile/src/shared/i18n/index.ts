@@ -21,6 +21,7 @@ import ruProfile from './locales/ru/profile.json';
 import ruRequests from './locales/ru/requests.json';
 import ruSchedule from './locales/ru/schedule.json';
 import ruSubscription from './locales/ru/subscription.json';
+import ruErrors from './locales/ru/errors.json';
 import enCommon from './locales/en/common.json';
 import enSettings from './locales/en/settings.json';
 import enHome from './locales/en/home.json';
@@ -34,6 +35,7 @@ import enProfile from './locales/en/profile.json';
 import enRequests from './locales/en/requests.json';
 import enSchedule from './locales/en/schedule.json';
 import enSubscription from './locales/en/subscription.json';
+import enErrors from './locales/en/errors.json';
 
 import { languageStorage } from './language-storage';
 
@@ -63,6 +65,7 @@ const resources = {
     requests: ruRequests,
     schedule: ruSchedule,
     subscription: ruSubscription,
+    errors: ruErrors,
   },
   en: {
     enums: dictionaries.en.enums,
@@ -80,6 +83,7 @@ const resources = {
     requests: enRequests,
     schedule: enSchedule,
     subscription: enSubscription,
+    errors: enErrors,
   },
 } as const;
 
@@ -109,6 +113,7 @@ i18n.use(initReactI18next).init({
     'profile',
     'management',
     'subscription',
+    'errors',
     'enums',
     'validation',
   ],

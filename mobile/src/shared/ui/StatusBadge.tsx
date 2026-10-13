@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { colors, fontFamily, radius, typography } from '../config/theme';
 
@@ -8,40 +9,46 @@ interface BadgeConfig {
   bg: string;
   text: string;
   dot: string;
-  label: string;
+  /**
+   * Путь в общем словаре enums (@softtime/shared). Подписи не дублируются
+   * здесь: один статус — один источник истины для mobile, web и backend.
+   * Плоский ключ указывает на конкретный енум, потому что одно и то же
+   * значение в разных енумах значит разное (PENDING у заявки и у платежа).
+   */
+  labelKey: string;
 }
 
 const STATUS_MAP: Record<string, BadgeConfig> = {
   // Success — green
-  ACTIVE:           { bg: colors.successLight, text: colors.successText, dot: colors.success, label: 'Активен' },
-  ON_TIME:          { bg: colors.successLight, text: colors.successText, dot: colors.success, label: 'Вовремя' },
-  PRESENT:          { bg: colors.successLight, text: colors.successText, dot: colors.success, label: 'Присутствует' },
-  PAID:             { bg: colors.successLight, text: colors.successText, dot: colors.success, label: 'Оплачено' },
-  APPROVED:         { bg: colors.successLight, text: colors.successText, dot: colors.success, label: 'Одобрено' },
-  EARLY_ARRIVAL:    { bg: colors.infoLight,    text: colors.infoText,    dot: colors.info,    label: 'Ранний приход' },
+  ACTIVE:           { bg: colors.successLight, text: colors.successText, dot: colors.success, labelKey: 'enums:userStatus.ACTIVE' },
+  ON_TIME:          { bg: colors.successLight, text: colors.successText, dot: colors.success, labelKey: 'enums:checkInStatus.ON_TIME' },
+  PRESENT:          { bg: colors.successLight, text: colors.successText, dot: colors.success, labelKey: 'enums:dayStatus.PRESENT' },
+  PAID:             { bg: colors.successLight, text: colors.successText, dot: colors.success, labelKey: 'enums:paymentStatus.PAID' },
+  APPROVED:         { bg: colors.successLight, text: colors.successText, dot: colors.success, labelKey: 'enums:requestStatus.APPROVED' },
+  EARLY_ARRIVAL:    { bg: colors.infoLight,    text: colors.infoText,    dot: colors.info,    labelKey: 'enums:checkInStatus.EARLY_ARRIVAL' },
 
   // Warning — yellow
-  LATE:             { bg: colors.warningLight, text: colors.warningText, dot: colors.warning, label: 'Опоздание' },
-  GRACE:            { bg: colors.warningLight, text: colors.warningText, dot: colors.warning, label: 'Льготный период' },
-  TRIAL:            { bg: colors.warningLight, text: colors.warningText, dot: colors.warning, label: 'Пробный период' },
-  WARNING:          { bg: colors.warningLight, text: colors.warningText, dot: colors.warning, label: 'Внимание' },
+  LATE:             { bg: colors.warningLight, text: colors.warningText, dot: colors.warning, labelKey: 'enums:dayStatus.LATE' },
+  GRACE:            { bg: colors.warningLight, text: colors.warningText, dot: colors.warning, labelKey: 'enums:subStatus.GRACE' },
+  TRIAL:            { bg: colors.warningLight, text: colors.warningText, dot: colors.warning, labelKey: 'enums:subStatus.TRIAL' },
+  WARNING:          { bg: colors.warningLight, text: colors.warningText, dot: colors.warning, labelKey: 'enums:userStatus.WARNING' },
 
   // Danger — red
-  ABSENT:           { bg: colors.dangerLight,  text: colors.dangerText,  dot: colors.danger,  label: 'Не отмечен' },
-  INCOMPLETE:       { bg: colors.dangerLight,  text: colors.dangerText,  dot: colors.danger,  label: 'Незавершён' },
-  SUSPENDED:        { bg: colors.dangerLight,  text: colors.dangerText,  dot: colors.danger,  label: 'Заблокирован' },
-  BLOCKED:          { bg: colors.dangerLight,  text: colors.dangerText,  dot: colors.danger,  label: 'Заблокирован' },
-  REJECTED:         { bg: colors.dangerLight,  text: colors.dangerText,  dot: colors.danger,  label: 'Отклонено' },
+  ABSENT:           { bg: colors.dangerLight,  text: colors.dangerText,  dot: colors.danger,  labelKey: 'enums:dayStatus.ABSENT' },
+  INCOMPLETE:       { bg: colors.dangerLight,  text: colors.dangerText,  dot: colors.danger,  labelKey: 'enums:dayStatus.INCOMPLETE' },
+  SUSPENDED:        { bg: colors.dangerLight,  text: colors.dangerText,  dot: colors.danger,  labelKey: 'enums:companyStatus.SUSPENDED' },
+  BLOCKED:          { bg: colors.dangerLight,  text: colors.dangerText,  dot: colors.danger,  labelKey: 'enums:userStatus.BLOCKED' },
+  REJECTED:         { bg: colors.dangerLight,  text: colors.dangerText,  dot: colors.danger,  labelKey: 'enums:requestStatus.REJECTED' },
 
   // Info — blue
-  PENDING:          { bg: colors.infoLight,    text: colors.infoText,    dot: colors.info,    label: 'Ожидание' },
-  APPROVED_ABSENCE: { bg: colors.infoLight,    text: colors.infoText,    dot: colors.info,    label: 'Одобрено (отсутствие)' },
+  PENDING:          { bg: colors.infoLight,    text: colors.infoText,    dot: colors.info,    labelKey: 'enums:requestStatus.PENDING' },
+  APPROVED_ABSENCE: { bg: colors.infoLight,    text: colors.infoText,    dot: colors.info,    labelKey: 'enums:dayStatus.APPROVED_ABSENCE' },
 
   // Neutral — gray
-  LEFT_EARLY:       { bg: colors.neutralLight, text: colors.neutralText, dot: colors.neutral, label: 'Ушёл раньше' },
-  EARLY_LEAVE:      { bg: colors.neutralLight, text: colors.neutralText, dot: colors.neutral, label: 'Ранний уход' },
-  OVERTIME:         { bg: colors.neutralLight, text: colors.neutralText, dot: colors.neutral, label: 'Переработка' },
-  MANUAL:           { bg: colors.neutralLight, text: colors.neutralText, dot: colors.neutral, label: 'Вручную' },
+  LEFT_EARLY:       { bg: colors.neutralLight, text: colors.neutralText, dot: colors.neutral, labelKey: 'enums:checkOutStatus.LEFT_EARLY' },
+  EARLY_LEAVE:      { bg: colors.neutralLight, text: colors.neutralText, dot: colors.neutral, labelKey: 'enums:dayStatus.EARLY_LEAVE' },
+  OVERTIME:         { bg: colors.neutralLight, text: colors.neutralText, dot: colors.neutral, labelKey: 'enums:dayStatus.OVERTIME' },
+  MANUAL:           { bg: colors.neutralLight, text: colors.neutralText, dot: colors.neutral, labelKey: 'enums:dayStatus.MANUAL' },
 };
 
 interface StatusBadgeProps {
@@ -50,19 +57,18 @@ interface StatusBadgeProps {
 }
 
 export function StatusBadge({ status, label }: StatusBadgeProps) {
-  const config = STATUS_MAP[status] ?? {
-    bg: colors.neutralLight,
-    text: colors.neutralText,
-    dot: colors.neutral,
-    label: status,
-  };
+  const { t } = useTranslation('enums');
+  const config = STATUS_MAP[status];
 
-  const displayLabel = label ?? config.label;
+  const bg = config?.bg ?? colors.neutralLight;
+  const textColor = config?.text ?? colors.neutralText;
+  const dot = config?.dot ?? colors.neutral;
+  const displayLabel = label ?? (config ? t(config.labelKey) : status);
 
   return (
-    <View style={[styles.badge, { backgroundColor: config.bg }]}>
-      <View style={[styles.dot, { backgroundColor: config.dot }]} />
-      <Text style={[styles.text, { color: config.text }]}>{displayLabel}</Text>
+    <View style={[styles.badge, { backgroundColor: bg }]}>
+      <View style={[styles.dot, { backgroundColor: dot }]} />
+      <Text style={[styles.text, { color: textColor }]}>{displayLabel}</Text>
     </View>
   );
 }

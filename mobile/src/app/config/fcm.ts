@@ -10,6 +10,7 @@
 
 import { Platform } from 'react-native';
 import { registerFCMTokenApi } from '@/shared/api/notifications';
+import i18n from '@/shared/i18n';
 
 // Dynamic require — avoids compile error when expo-notifications is not yet installed.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -28,7 +29,7 @@ export async function initFCM(): Promise<void> {
   // Android: create a default notification channel
   if (Platform.OS === 'android') {
     await Notif.setNotificationChannelAsync('default', {
-      name: 'Основные уведомления',
+      name: i18n.t('common:notificationChannel'),
       importance: Notif.AndroidImportance.HIGH,
       vibrationPattern: [0, 250, 250, 250],
       lightColor: '#1877F2',

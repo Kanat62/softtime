@@ -5,18 +5,19 @@ import { loginSchema, type LoginDto, UserRole, type CompanyStatus } from '@softt
 import { useAuth } from '@/app/providers/AuthProvider';
 import { loginApi, getMyCompanyApi } from '@/entities/user/api/auth';
 import type { AppError } from '@/shared/api/errors';
+import i18n from '@/shared/i18n';
 
 function mapLoginError(err: AppError): string {
-  if (err.isNetworkError) return 'Нет подключения к интернету';
-  if (err.statusCode === 429) return 'Слишком много попыток. Повторите через 15 минут.';
-  if (err.statusCode === 401) return 'Неверный email или пароль';
+  if (err.isNetworkError) return i18n.t('errors:network');
+  if (err.statusCode === 429) return i18n.t('errors:login.tooManyAttempts');
+  if (err.statusCode === 401) return i18n.t('errors:login.badCredentials');
   if (err.statusCode === 403) {
     if (err.message.includes('блокир') || err.message.toLowerCase().includes('block')) {
-      return 'Аккаунт заблокирован. Обратитесь к администратору.';
+      return i18n.t('errors:login.blocked');
     }
     return err.message;
   }
-  return err.message || 'Произошла ошибка. Попробуйте ещё раз.';
+  return err.message || i18n.t('errors:generic');
 }
 
 export function useLogin() {

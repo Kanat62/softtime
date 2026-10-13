@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { registerCompanySchema, type RegisterCompanyDto } from '@softtime/shared';
 import { registerCompanyApi, getMyCompanyApi } from '@/entities/user/api/auth';
 import type { AppError } from '@/shared/api/errors';
+import i18n from '@/shared/i18n';
 
 export function useRegisterAdmin() {
   const [isLoading, setIsLoading] = useState(false);
@@ -34,11 +35,11 @@ export function useRegisterAdmin() {
     } catch (err) {
       const appErr = err as AppError;
       if (appErr.isNetworkError) {
-        setServerError('Нет подключения к интернету');
+        setServerError(i18n.t('errors:network'));
       } else if (appErr.statusCode === 409) {
-        setServerError('Email уже используется. Войдите или используйте другой email.');
+        setServerError(i18n.t('errors:register.emailTaken'));
       } else {
-        setServerError(appErr.message || 'Произошла ошибка. Попробуйте ещё раз.');
+        setServerError(appErr.message || i18n.t('errors:generic'));
       }
     } finally {
       setIsLoading(false);

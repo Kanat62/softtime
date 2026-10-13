@@ -40,5 +40,12 @@
   "approve": "Approve",
   "reject": "Reject",
   "accept": "Accept",
-  "confirm": "Confirm"
+  "confirm": "Confirm",
+  "state": {
+    "errorTitle": "Something went wrong",
+    "errorDescription": "Could not load the data. Check your connection."
+  },
+  "offlineStale": "This data may be out of date",
+  "otpCell": "Character {{index}} of {{total}}",
+  "notificationChannel": "General notifications"
 }

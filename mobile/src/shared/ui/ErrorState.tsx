@@ -1,4 +1,5 @@
 import { XCircle } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { colors, iconStrokeWidth, space, typography } from '../config/theme';
@@ -12,19 +13,20 @@ interface ErrorStateProps {
 }
 
 export function ErrorState({
-  title = 'Что-то пошло не так',
-  description = 'Не удалось загрузить данные. Проверьте соединение.',
+  title,
+  description,
   onRetry,
-  retryLabel = 'Повторить',
+  retryLabel,
 }: ErrorStateProps) {
+  const { t } = useTranslation('common');
   return (
     <View style={styles.container}>
       <XCircle size={48} color={colors.danger} strokeWidth={iconStrokeWidth} />
-      <Text style={styles.title}>{title}</Text>
-      <Text style={styles.description}>{description}</Text>
+      <Text style={styles.title}>{title ?? t('common:state.errorTitle')}</Text>
+      <Text style={styles.description}>{description ?? t('common:state.errorDescription')}</Text>
       {onRetry && (
         <Button variant="outline" size="md" onPress={onRetry} style={styles.button}>
-          {retryLabel}
+          {retryLabel ?? t('common:retry')}
         </Button>
       )}
     </View>

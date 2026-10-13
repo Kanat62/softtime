@@ -1,4 +1,5 @@
 import React, { useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   NativeSyntheticEvent,
   StyleSheet,
@@ -19,6 +20,7 @@ interface OtpInputProps {
 }
 
 export function OtpInput({ value, onChange, error, label }: OtpInputProps) {
+  const { t } = useTranslation('common');
   const inputRefs = useRef<(TextInput | null)[]>([]);
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
 
@@ -101,7 +103,7 @@ export function OtpInput({ value, onChange, error, label }: OtpInputProps) {
               keyboardType="default"
               selectTextOnFocus
               caretHidden
-              accessibilityLabel={`Символ ${index + 1} из ${CELL_COUNT}`}
+              accessibilityLabel={t('common:otpCell', { index: index + 1, total: CELL_COUNT })}
             />
           );
         })}

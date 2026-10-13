@@ -1,0 +1,22 @@
+{
+  "network": "No internet connection",
+  "generic": "Something went wrong. Please try again.",
+  "login": {
+    "tooManyAttempts": "Too many attempts. Try again in 15 minutes.",
+    "badCredentials": "Incorrect email or password",
+    "blocked": "Your account is blocked. Contact your administrator."
+  },
+  "register": {
+    "companyNotFound": "No company found with that code. Check the code.",
+    "emailTakenInCompany": "This email is already registered in this company.",
+    "emailTaken": "This email is already in use. Log in or use another email."
+  },
+  "checkIn": {
+    "subscriptionSuspended": "The company subscription is suspended",
+    "outsideOfficeNetwork": "You are outside the office network",
+    "nonWorkingDay": "Today is a non-working day on your schedule",
+    "invalidQr": "The QR code is invalid or expired",
+    "alreadyCheckedIn": "You have already checked in today",
+    "checkInFirst": "Check in first"
+  }
+}

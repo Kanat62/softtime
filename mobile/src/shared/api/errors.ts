@@ -1,4 +1,5 @@
 import { AxiosError } from 'axios';
+import i18n from '@/shared/i18n';
 
 export interface AppError {
   message: string;
@@ -18,7 +19,7 @@ export function normalizeError(error: unknown): AppError {
   if (error instanceof AxiosError) {
     if (!error.response) {
       return {
-        message: 'Нет подключения к интернету',
+        message: i18n.t('errors:network'),
         statusCode: 0,
         isNetworkError: true,
       };
@@ -28,7 +29,7 @@ export function normalizeError(error: unknown): AppError {
     const message =
       typeof data?.message === 'string'
         ? data.message
-        : 'Произошла ошибка. Попробуйте ещё раз.';
+        : i18n.t('errors:generic');
     const code = typeof data?.code === 'string' ? data.code : undefined;
 
     return {
@@ -40,7 +41,7 @@ export function normalizeError(error: unknown): AppError {
   }
 
   return {
-    message: 'Произошла ошибка. Попробуйте ещё раз.',
+    message: i18n.t('errors:generic'),
     statusCode: -1,
     isNetworkError: false,
   };
