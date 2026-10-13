@@ -10,8 +10,10 @@ import {
 
 import ruCommon from './locales/ru/common.json';
 import ruSettings from './locales/ru/settings.json';
+import ruHome from './locales/ru/home.json';
 import enCommon from './locales/en/common.json';
 import enSettings from './locales/en/settings.json';
+import enHome from './locales/en/home.json';
 
 import { languageStorage } from './language-storage';
 
@@ -21,10 +23,7 @@ export { languageStorage } from './language-storage';
  * Namespace:
  *  - enums, validation — общий словарь из @softtime/shared (один источник
  *    с web и backend, чтобы тексты не разошлись);
- *  - common, settings   — мобильные строки (JSON рядом с этим файлом).
- *
- * Экраны на этом этапе не переводятся — в common/settings пока только
- * строки переключателя языка.
+ *  - common, settings, home — мобильные строки (JSON рядом с этим файлом).
  */
 const resources = {
   ru: {
@@ -32,12 +31,14 @@ const resources = {
     validation: dictionaries.ru.validation,
     common: ruCommon,
     settings: ruSettings,
+    home: ruHome,
   },
   en: {
     enums: dictionaries.en.enums,
     validation: dictionaries.en.validation,
     common: enCommon,
     settings: enSettings,
+    home: enHome,
   },
 } as const;
 
@@ -53,7 +54,7 @@ i18n.use(initReactI18next).init({
   resources,
   lng: getDeviceLanguage(),
   fallbackLng: FALLBACK_LANGUAGE,
-  ns: ['common', 'settings', 'enums', 'validation'],
+  ns: ['common', 'settings', 'home', 'enums', 'validation'],
   defaultNS: 'common',
   interpolation: {
     // React сам экранирует вывод.

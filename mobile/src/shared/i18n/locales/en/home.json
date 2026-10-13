@@ -1,0 +1,29 @@
+{
+  "title": "Home",
+  "greeting": "Hi, {{name}}",
+  "error": {
+    "title": "Could not load data",
+    "description": "Check your internet connection and try again.",
+    "retry": "Retry"
+  },
+  "today": {
+    "title": "Today",
+    "totalEmployees_one": "{{count}} employee in total",
+    "totalEmployees_other": "{{count}} employees in total",
+    "inOffice": "In office",
+    "left": "Left",
+    "absent": "Away"
+  },
+  "attendance": {
+    "title": "Attendance",
+    "schedule": "Schedule: {{start}} – {{end}}",
+    "checkIn": "Check in",
+    "checkOut": "Check out",
+    "noSchedule": "Your administrator has not set up a schedule yet",
+    "suspended": "Subscription unpaid"
+  },
+  "schedule": {
+    "title": "My schedule",
+    "more": "Details"
+  }
+}

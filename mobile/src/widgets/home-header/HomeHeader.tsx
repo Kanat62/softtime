@@ -1,6 +1,7 @@
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { CalendarDays, ChevronDown } from "lucide-react-native";
+import { useTranslation } from "react-i18next";
 import { Avatar } from "@/shared/ui";
 import {
   colors,
@@ -13,32 +14,24 @@ import {
   typography,
 } from "@/shared/config/theme";
 
-const WEEKDAYS_RU = [
-  "Воскресенье",
-  "Понедельник",
-  "Вторник",
-  "Среда",
-  "Четверг",
-  "Пятница",
-  "Суббота",
-];
-const MONTHS_RU = [
-  "января",
-  "февраля",
-  "марта",
-  "апреля",
-  "мая",
-  "июня",
-  "июля",
-  "августа",
-  "сентября",
-  "октября",
-  "ноября",
-  "декабря",
-];
+const LOCALE_TAGS: Record<string, string> = {
+  ru: "ru-RU",
+  en: "en-US",
+};
 
-function formatDate(date: Date): string {
-  return `${WEEKDAYS_RU[date.getDay()]}, ${date.getDate()} ${MONTHS_RU[date.getMonth()]}`;
+/**
+ * "Вторник, 13 октября" / "Tuesday, October 13".
+ * Intl отдаёт день недели со строчной буквы в русском — приводим к виду,
+ * который был здесь до перевода.
+ */
+function formatHeaderDate(date: Date, language: string): string {
+  const tag = LOCALE_TAGS[language] ?? LOCALE_TAGS.ru;
+  const formatted = date.toLocaleDateString(tag, {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
+  return formatted.charAt(0).toUpperCase() + formatted.slice(1);
 }
 
 interface HomeHeaderProps {
@@ -52,13 +45,14 @@ export function HomeHeader({
   avatarUrl,
   onAvatarPress,
 }: HomeHeaderProps) {
+  const { t, i18n } = useTranslation("home");
   const firstName = name.split(" ")[0];
-  const dateStr = formatDate(new Date());
+  const dateStr = formatHeaderDate(new Date(), i18n.language);
 
   return (
     <View style={styles.card}>
       <View style={styles.left}>
-        <Text style={styles.greeting}>Привет, {firstName}</Text>
+        <Text style={styles.greeting}>{t("greeting", { name: firstName })}</Text>
         <View style={styles.dateRow}>
           <Text style={styles.date}>{dateStr}</Text>
         </View>

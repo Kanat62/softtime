@@ -1,6 +1,7 @@
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { ChevronRight, Users } from "lucide-react-native";
+import { useTranslation } from "react-i18next";
 import {
   colors,
   fontFamily,
@@ -35,6 +36,7 @@ export function EmployeesToday({
   topEmployees,
   onPress,
 }: EmployeesTodayProps) {
+  const { t } = useTranslation("home");
   const shown = topEmployees.slice(0, 5);
   const extra = total - shown.length;
 
@@ -48,8 +50,10 @@ export function EmployeesToday({
             strokeWidth={iconStrokeWidth}
           />
           <View>
-            <Text style={styles.title}>Сегодня</Text>
-            <Text style={styles.subtitle}>Всего {total} сотрудников</Text>
+            <Text style={styles.title}>{t("today.title")}</Text>
+            <Text style={styles.subtitle}>
+              {t("today.totalEmployees", { count: total })}
+            </Text>
           </View>
         </View>
         <ChevronRight
@@ -67,7 +71,7 @@ export function EmployeesToday({
             {inOffice}
           </Text>
           <Text style={[styles.counterLabel, { color: colors.successText }]}>
-            В офисе
+            {t("today.inOffice")}
           </Text>
         </View>
         <View
@@ -77,7 +81,7 @@ export function EmployeesToday({
             {left}
           </Text>
           <Text style={[styles.counterLabel, { color: colors.neutralText }]}>
-            Ушли
+            {t("today.left")}
           </Text>
         </View>
         <View style={[styles.counter, { backgroundColor: colors.dangerLight }]}>
@@ -85,7 +89,7 @@ export function EmployeesToday({
             {absent}
           </Text>
           <Text style={[styles.counterLabel, { color: colors.dangerText }]}>
-            Нет
+            {t("today.absent")}
           </Text>
         </View>
       </View>

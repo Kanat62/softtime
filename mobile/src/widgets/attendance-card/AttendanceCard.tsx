@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Clock, LogIn, LogOut } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import {
   colors,
   fontFamily,
@@ -40,6 +41,7 @@ export function AttendanceCard({
   onCheckIn,
   onCheckOut,
 }: AttendanceCardProps) {
+  const { t } = useTranslation('home');
   const hasCheckedIn = checkInAt !== null;
   const hasCheckedOut = checkOutAt !== null;
 
@@ -50,11 +52,13 @@ export function AttendanceCard({
     <View style={styles.card}>
       <View style={styles.header}>
         <Clock size={iconSize.md} color={colors.primary} strokeWidth={iconStrokeWidth} />
-        <Text style={styles.title}>Посещаемость</Text>
+        <Text style={styles.title}>{t('attendance.title')}</Text>
       </View>
 
       {scheduleStart && scheduleEnd && (
-        <Text style={styles.schedule}>График: {scheduleStart} – {scheduleEnd}</Text>
+        <Text style={styles.schedule}>
+          {t('attendance.schedule', { start: scheduleStart, end: scheduleEnd })}
+        </Text>
       )}
 
       <View style={styles.indicators}>
@@ -62,7 +66,9 @@ export function AttendanceCard({
           <View style={[styles.indicatorBox, { backgroundColor: colors.successLight }]}>
             <LogIn size={iconSize.md} color={colors.successText} strokeWidth={iconStrokeWidth} />
             <View>
-              <Text style={[styles.indicatorLabel, { color: colors.successText }]}>Приход</Text>
+              <Text style={[styles.indicatorLabel, { color: colors.successText }]}>
+                {t('attendance.checkIn')}
+              </Text>
               <Text style={[styles.indicatorTime, { color: colors.successText }]}>
                 {formatTime(checkInAt)}
               </Text>
@@ -73,7 +79,9 @@ export function AttendanceCard({
           <View style={[styles.indicatorBox, { backgroundColor: colors.dangerLight }]}>
             <LogOut size={iconSize.md} color={colors.dangerText} strokeWidth={iconStrokeWidth} />
             <View>
-              <Text style={[styles.indicatorLabel, { color: colors.dangerText }]}>Уход</Text>
+              <Text style={[styles.indicatorLabel, { color: colors.dangerText }]}>
+                {t('attendance.checkOut')}
+              </Text>
               <Text style={[styles.indicatorTime, { color: colors.dangerText }]}>
                 {formatTime(checkOutAt)}
               </Text>
@@ -83,11 +91,11 @@ export function AttendanceCard({
       </View>
 
       {noSchedule && (
-        <Text style={styles.noScheduleText}>Администратор не создал вам расписание</Text>
+        <Text style={styles.noScheduleText}>{t('attendance.noSchedule')}</Text>
       )}
 
       {isSuspended && (
-        <Text style={styles.suspendedText}>Подписка не оплачена</Text>
+        <Text style={styles.suspendedText}>{t('attendance.suspended')}</Text>
       )}
 
       <View style={styles.buttons}>
@@ -98,7 +106,7 @@ export function AttendanceCard({
           activeOpacity={0.85}
         >
           <LogIn size={iconSize.md} color={colors.surface} strokeWidth={iconStrokeWidth} />
-          <Text style={styles.btnText}>Приход</Text>
+          <Text style={styles.btnText}>{t('attendance.checkIn')}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -117,7 +125,7 @@ export function AttendanceCard({
             strokeWidth={iconStrokeWidth}
           />
           <Text style={[styles.btnText, !checkOutActive && styles.btnTextDanger]}>
-            Уход
+            {t('attendance.checkOut')}
           </Text>
         </TouchableOpacity>
       </View>

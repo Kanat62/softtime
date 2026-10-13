@@ -2,5 +2,9 @@
   "language": {
     "ru": "Русский",
     "en": "English"
+  },
+  "duration": {
+    "hoursShort": "h",
+    "minutesShort": "m"
   }
 }

@@ -1,6 +1,7 @@
 import React from 'react';
 import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { CompanyStatus, Weekday } from '@softtime/shared';
 import type { EmployeeSchedule } from '@softtime/shared';
 import { useAuth } from '@/app/providers/AuthProvider';
@@ -32,6 +33,7 @@ function getTodaySchedule(schedule: EmployeeSchedule[] | null) {
 }
 
 export function HomeScreen() {
+  const { t } = useTranslation('home');
   const navigation = useWorkerNavigation();
   const { companyStatus } = useAuth();
   const { profile, schedule, todayAttendance, employeesToday, isLoading, isError, refetchAll } =
@@ -44,7 +46,7 @@ export function HomeScreen() {
   return (
     <SafeAreaView style={styles.root} edges={['top']}>
       <View style={styles.pageHeader}>
-        <Text style={styles.pageTitle}>Главная</Text>
+        <Text style={styles.pageTitle}>{t('title')}</Text>
       </View>
 
       {isLoading ? (
@@ -59,8 +61,9 @@ export function HomeScreen() {
         <>
           <OfflineBanner variant="stale" />
           <ErrorState
-            title="Не удалось загрузить данные"
-            description="Проверьте подключение к интернету и повторите."
+            title={t('error.title')}
+            description={t('error.description')}
+            retryLabel={t('error.retry')}
             onRetry={refetchAll}
           />
         </>

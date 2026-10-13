@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { CalendarDays } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { Weekday } from '@softtime/shared';
 import type { EmployeeSchedule } from '@softtime/shared';
 import {
@@ -17,16 +18,6 @@ import {
 const WEEKDAY_ORDER: Weekday[] = [
   Weekday.MON, Weekday.TUE, Weekday.WED, Weekday.THU, Weekday.FRI, Weekday.SAT, Weekday.SUN,
 ];
-
-const WEEKDAY_LABELS: Record<Weekday, string> = {
-  [Weekday.MON]: 'Пн',
-  [Weekday.TUE]: 'Вт',
-  [Weekday.WED]: 'Ср',
-  [Weekday.THU]: 'Чт',
-  [Weekday.FRI]: 'Пт',
-  [Weekday.SAT]: 'Сб',
-  [Weekday.SUN]: 'Вс',
-};
 
 // JS Date.getDay(): 0=Sun, 1=Mon, ..., 6=Sat
 const JS_DAY_TO_WEEKDAY: Record<number, Weekday> = {
@@ -45,6 +36,7 @@ interface ScheduleMiniProps {
 }
 
 export function ScheduleMini({ schedule, onMorePress }: ScheduleMiniProps) {
+  const { t } = useTranslation(['home', 'enums']);
   const todayWeekday = JS_DAY_TO_WEEKDAY[new Date().getDay()];
   const scheduleMap = Object.fromEntries(schedule.map((s) => [s.weekday, s]));
 
@@ -53,10 +45,10 @@ export function ScheduleMini({ schedule, onMorePress }: ScheduleMiniProps) {
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <CalendarDays size={iconSize.md} color={colors.primary} strokeWidth={iconStrokeWidth} />
-          <Text style={styles.title}>Мой график</Text>
+          <Text style={styles.title}>{t('home:schedule.title')}</Text>
         </View>
         <TouchableOpacity onPress={onMorePress} activeOpacity={0.7}>
-          <Text style={styles.moreLink}>Подробнее &gt;</Text>
+          <Text style={styles.moreLink}>{t('home:schedule.more')} &gt;</Text>
         </TouchableOpacity>
       </View>
 
@@ -71,7 +63,7 @@ export function ScheduleMini({ schedule, onMorePress }: ScheduleMiniProps) {
             <View key={weekday} style={styles.dayCell}>
               <View style={[styles.dayLabelWrap, isToday && styles.dayLabelToday]}>
                 <Text style={[styles.dayLabel, isToday && styles.dayLabelTextToday]}>
-                  {WEEKDAY_LABELS[weekday]}
+                  {t(`enums:weekdayShort.${weekday}`)}
                 </Text>
               </View>
               <Text style={[styles.dayTime, !isWorking && styles.dayTimeOff]}>

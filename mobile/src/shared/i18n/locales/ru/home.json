@@ -1,0 +1,31 @@
+{
+  "title": "Главная",
+  "greeting": "Привет, {{name}}",
+  "error": {
+    "title": "Не удалось загрузить данные",
+    "description": "Проверьте подключение к интернету и повторите.",
+    "retry": "Повторить"
+  },
+  "today": {
+    "title": "Сегодня",
+    "totalEmployees_one": "Всего {{count}} сотрудник",
+    "totalEmployees_few": "Всего {{count}} сотрудника",
+    "totalEmployees_many": "Всего {{count}} сотрудников",
+    "totalEmployees_other": "Всего {{count}} сотрудника",
+    "inOffice": "В офисе",
+    "left": "Ушли",
+    "absent": "Нет"
+  },
+  "attendance": {
+    "title": "Посещаемость",
+    "schedule": "График: {{start}} – {{end}}",
+    "checkIn": "Приход",
+    "checkOut": "Уход",
+    "noSchedule": "Администратор не создал вам расписание",
+    "suspended": "Подписка не оплачена"
+  },
+  "schedule": {
+    "title": "Мой график",
+    "more": "Подробнее"
+  }
+}
