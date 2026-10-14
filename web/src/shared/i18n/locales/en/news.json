@@ -1,0 +1,43 @@
+{
+  "title": "News",
+  "publish": "Publish",
+  "publishing": "Publishing…",
+  "columns": {
+    "title": "Title",
+    "date": "Date",
+    "reads": "Reads"
+  },
+  "emptyTitle": "No news",
+  "emptyDescription": "Publish the first announcement for your employees.",
+  "titleRequired": "Title and text are required",
+  "view": {
+    "content": "Content",
+    "readers": "Readers",
+    "photoAlt": "photo",
+    "readersLoadFailed": "Could not load the readers.",
+    "readCount": "Read ({{count}})",
+    "unreadCount": "Not read ({{count}})",
+    "read": "Read",
+    "unread": "Not read",
+    "nobodyRead": "Nobody has read it yet."
+  },
+  "deleteDialog": {
+    "title": "Delete this post?",
+    "description": "This cannot be undone. The post and its read history will be removed."
+  },
+  "createDialog": {
+    "title": "New post",
+    "description": "It will be published to all active employees",
+    "titleLabel": "Title",
+    "titlePlaceholder": "Post title…",
+    "bodyLabel": "Text",
+    "bodyPlaceholder": "Announcement text…",
+    "photoLabel": "Photo (URL, optional)"
+  },
+  "toast": {
+    "published": "Post published",
+    "publishFailed": "Could not publish the post",
+    "deleted": "Post deleted",
+    "deleteFailed": "Could not delete the post"
+  }
+}

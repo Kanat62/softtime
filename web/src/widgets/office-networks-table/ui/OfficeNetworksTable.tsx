@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -33,19 +34,20 @@ import {
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/shared/ui/form";
 
 const schema = z.object({
-  label: z.string().min(1, "Обязательно").max(100),
+  label: z.string().min(1, "common:required").max(100),
   cidr: z
     .string()
-    .min(1, "Обязательно")
+    .min(1, "common:required")
     .regex(
       /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}(\/\d{1,2})?$/,
-      "Формат: 192.168.1.0/24 или 192.168.1.1",
+      "networks:validation.cidrFormat",
     ),
 });
 
 type FormValues = z.infer<typeof schema>;
 
 export function OfficeNetworksTable() {
+  const { t } = useTranslation(["networks", "common"]);
   const qc = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<OfficeNetwork | null>(null);
@@ -67,31 +69,31 @@ export function OfficeNetworksTable() {
   const createMutation = useMutation({
     mutationFn: networkApi.create,
     onSuccess: () => {
-      toast.success("Сеть добавлена");
+      toast.success(t("networks:toast.added"));
       closeDialog();
       invalidate();
     },
-    onError: () => toast.error("Ошибка при добавлении"),
+    onError: () => toast.error(t("networks:toast.addFailed")),
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, dto }: { id: string; dto: FormValues }) => networkApi.update(id, dto),
     onSuccess: () => {
-      toast.success("Сеть обновлена");
+      toast.success(t("networks:toast.updated"));
       closeDialog();
       invalidate();
     },
-    onError: () => toast.error("Ошибка при обновлении"),
+    onError: () => toast.error(t("networks:toast.updateFailed")),
   });
 
   const deleteMutation = useMutation({
     mutationFn: networkApi.remove,
     onSuccess: () => {
-      toast.success("Сеть удалена");
+      toast.success(t("networks:toast.deleted"));
       setDeleteTarget(null);
       invalidate();
     },
-    onError: () => toast.error("Ошибка при удалении"),
+    onError: () => toast.error(t("networks:toast.deleteFailed")),
   });
 
   function openCreate() {
@@ -117,9 +119,9 @@ export function OfficeNetworksTable() {
     try {
       const { ip, cidr } = await networkApi.detect();
       form.setValue("cidr", cidr, { shouldValidate: true });
-      toast.info(`Обнаружена сеть: ${ip} → ${cidr}`);
+      toast.info(t("networks:toast.detected", { ip, cidr }));
     } catch {
-      toast.error("Не удалось определить сеть");
+      toast.error(t("networks:toast.detectFailed"));
     } finally {
       setDetecting(false);
     }
@@ -139,11 +141,11 @@ export function OfficeNetworksTable() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Офисные сети"
+        title={t("networks:title")}
         actions={
           <Button size="sm" onClick={openCreate}>
             <Plus className="mr-2 h-4 w-4" />
-            Добавить сеть
+            {t("networks:addNetwork")}
           </Button>
         }
       />
@@ -151,9 +153,9 @@ export function OfficeNetworksTable() {
       <div className="overflow-hidden rounded-2xl bg-card shadow-sm">
         {networksQuery.isError ? (
           <div className="px-6 py-12 text-center">
-            <p className="text-sm text-muted-foreground">Не удалось загрузить данные.</p>
+            <p className="text-sm text-muted-foreground">{t("common:loadFailedShort")}</p>
             <Button variant="outline" size="sm" className="mt-3" onClick={invalidate}>
-              Повторить
+              {t("common:retry")}
             </Button>
           </div>
         ) : (
@@ -161,7 +163,7 @@ export function OfficeNetworksTable() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-muted/40">
-                  {["Название", "IP / CIDR", ""].map((h) => (
+                  {[t("networks:columns.label"), t("networks:columns.cidr"), ""].map((h) => (
                     <th
                       key={h}
                       className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
@@ -206,7 +208,7 @@ export function OfficeNetworksTable() {
                               className="h-7 text-xs"
                               onClick={() => openEdit(n)}
                             >
-                              Изменить
+                              {t("common:change")}
                             </Button>
                             <Button
                               variant="ghost"
@@ -214,7 +216,7 @@ export function OfficeNetworksTable() {
                               className="h-7 text-xs text-destructive hover:text-destructive"
                               onClick={() => setDeleteTarget(n)}
                             >
-                              Удалить
+                              {t("common:delete")}
                             </Button>
                           </div>
                         </td>
@@ -226,12 +228,12 @@ export function OfficeNetworksTable() {
               <div className="px-6 py-16">
                 <EmptyState
                   icon={<Wifi className="h-10 w-10" />}
-                  title="Нет сетей"
-                  description="Добавьте разрешённые IP-диапазоны офисов."
+                  title={t("networks:emptyTitle")}
+                  description={t("networks:emptyDescription")}
                   action={
                     <Button size="sm" onClick={openCreate}>
                       <Plus className="mr-2 h-4 w-4" />
-                      Добавить сеть
+                      {t("networks:addNetwork")}
                     </Button>
                   }
                 />
@@ -245,9 +247,11 @@ export function OfficeNetworksTable() {
       <Dialog open={dialogOpen} onOpenChange={(open) => { if (!open) closeDialog(); }}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>{editTarget ? "Редактировать сеть" : "Добавить сеть"}</DialogTitle>
+            <DialogTitle>
+              {editTarget ? t("networks:dialog.editTitle") : t("networks:dialog.addTitle")}
+            </DialogTitle>
             <DialogDescription>
-              Укажите название и IP-диапазон (CIDR) офисной сети.
+              {t("networks:dialog.description")}
             </DialogDescription>
           </DialogHeader>
           <Form {...form}>
@@ -257,9 +261,9 @@ export function OfficeNetworksTable() {
                 name="label"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Название</FormLabel>
+                    <FormLabel>{t("networks:dialog.labelField")}</FormLabel>
                     <FormControl>
-                      <Input placeholder="Главный офис" {...field} />
+                      <Input placeholder={t("networks:dialog.labelPlaceholder")} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -280,7 +284,7 @@ export function OfficeNetworksTable() {
                           className="flex items-center gap-1 text-xs text-primary hover:underline disabled:opacity-50"
                         >
                           <LocateFixed className="h-3 w-3" />
-                          {detecting ? "Определяем..." : "Определить автоматически"}
+                          {detecting ? t("networks:dialog.detecting") : t("networks:dialog.detect")}
                         </button>
                       )}
                     </div>
@@ -289,17 +293,17 @@ export function OfficeNetworksTable() {
                     </FormControl>
                     <FormMessage />
                     <p className="text-xs text-muted-foreground">
-                      Нажмите «Определить», находясь в офисной сети — система заполнит поле автоматически.
+                      {t("networks:dialog.detectHint")}
                     </p>
                   </FormItem>
                 )}
               />
               <DialogFooter className="pt-2">
                 <Button type="button" variant="outline" onClick={closeDialog}>
-                  Отмена
+                  {t("common:cancel")}
                 </Button>
                 <Button type="submit" disabled={isMutating}>
-                  {isMutating ? "Сохраняем..." : editTarget ? "Сохранить" : "Добавить"}
+                  {isMutating ? t("common:saving") : editTarget ? t("common:save") : t("common:add")}
                 </Button>
               </DialogFooter>
             </form>
@@ -311,22 +315,21 @@ export function OfficeNetworksTable() {
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Удалить сеть?</AlertDialogTitle>
+            <AlertDialogTitle>{t("networks:deleteDialog.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Сеть{" "}
+              {t("networks:deleteDialog.head")}{" "}
               <span className="font-medium text-foreground">«{deleteTarget?.label}»</span>{" "}
-              ({deleteTarget?.cidr}) будет удалена. Сотрудники из этой сети потеряют возможность
-              делать check-in по IP.
+              ({deleteTarget?.cidr}) {t("networks:deleteDialog.tail")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleteMutation.isPending}>Отмена</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleteMutation.isPending}>{t("common:cancel")}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-white hover:bg-destructive/90"
               disabled={deleteMutation.isPending}
               onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
             >
-              {deleteMutation.isPending ? "Удаляем..." : "Удалить"}
+              {deleteMutation.isPending ? t("common:deleting") : t("common:delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -334,8 +337,7 @@ export function OfficeNetworksTable() {
 
       {networks.length > 0 && (
         <p className="text-xs text-muted-foreground">
-          Check-in через QR возможен только из разрешённых сетей. Если список пуст — проверка сети
-          отключена.
+          {t("networks:footnote")}
         </p>
       )}
     </div>

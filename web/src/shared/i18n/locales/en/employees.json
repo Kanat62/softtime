@@ -60,5 +60,20 @@
     "deleteFailed": "Could not delete the employee",
     "noteSaved": "Comment saved",
     "noteFailed": "Could not save the comment"
+  },
+  "profile": {
+    "backToList": "Employees",
+    "lastActivity": "Last activity",
+    "attendanceHistory": "Attendance history",
+    "requests": "Requests",
+    "dayStatus": "Day status",
+    "worked": "Worked",
+    "submitted": "Submitted",
+    "emptyAttendanceTitle": "No records",
+    "emptyAttendanceDescription": "Attendance history appears after the employee's first check-in.",
+    "emptyRequestsTitle": "No requests",
+    "emptyRequestsDescription": "The employee's requests will appear here.",
+    "adminNote": "Administrator's comment",
+    "adminNotePlaceholder": "Notes about the employee, visible only to administrators…"
   }
 }

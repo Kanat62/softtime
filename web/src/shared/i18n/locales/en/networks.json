@@ -1,0 +1,39 @@
+{
+  "title": "Office networks",
+  "addNetwork": "Add a network",
+  "columns": {
+    "label": "Name",
+    "cidr": "IP / CIDR"
+  },
+  "emptyTitle": "No networks",
+  "emptyDescription": "Add the allowed office IP ranges.",
+  "dialog": {
+    "editTitle": "Edit network",
+    "addTitle": "Add a network",
+    "description": "Enter a name and the IP range (CIDR) of the office network.",
+    "labelField": "Name",
+    "labelPlaceholder": "Head office",
+    "detect": "Detect automatically",
+    "detecting": "Detecting…",
+    "detectHint": "Press “Detect” while on the office network — the field will be filled in automatically."
+  },
+  "deleteDialog": {
+    "title": "Delete this network?",
+    "head": "The network",
+    "tail": "will be removed. Employees on this network will no longer be able to check in by IP."
+  },
+  "validation": {
+    "cidrFormat": "Format: 192.168.1.0/24 or 192.168.1.1"
+  },
+  "footnote": "QR check-in only works from allowed networks. If the list is empty, the network check is off.",
+  "toast": {
+    "added": "Network added",
+    "addFailed": "Could not add the network",
+    "updated": "Network updated",
+    "updateFailed": "Could not update the network",
+    "deleted": "Network removed",
+    "deleteFailed": "Could not delete the network",
+    "detected": "Network detected: {{ip}} → {{cidr}}",
+    "detectFailed": "Could not detect the network"
+  }
+}

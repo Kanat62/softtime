@@ -11,6 +11,10 @@ import {
 import ruCommon from "./locales/ru/common.json";
 import ruSettings from "./locales/ru/settings.json";
 import ruEmployees from "./locales/ru/employees.json";
+import ruNetworks from "./locales/ru/networks.json";
+import ruAudit from "./locales/ru/audit.json";
+import ruReports from "./locales/ru/reports.json";
+import ruNews from "./locales/ru/news.json";
 import ruQr from "./locales/ru/qr.json";
 import ruRequests from "./locales/ru/requests.json";
 import ruSchedules from "./locales/ru/schedules.json";
@@ -22,6 +26,10 @@ import ruNav from "./locales/ru/nav.json";
 import enCommon from "./locales/en/common.json";
 import enSettings from "./locales/en/settings.json";
 import enEmployees from "./locales/en/employees.json";
+import enNetworks from "./locales/en/networks.json";
+import enAudit from "./locales/en/audit.json";
+import enReports from "./locales/en/reports.json";
+import enNews from "./locales/en/news.json";
 import enQr from "./locales/en/qr.json";
 import enRequests from "./locales/en/requests.json";
 import enSchedules from "./locales/en/schedules.json";
@@ -49,6 +57,10 @@ const resources = {
     common: ruCommon,
     settings: ruSettings,
     employees: ruEmployees,
+    networks: ruNetworks,
+    audit: ruAudit,
+    reports: ruReports,
+    news: ruNews,
     qr: ruQr,
     requests: ruRequests,
     schedules: ruSchedules,
@@ -64,6 +76,10 @@ const resources = {
     common: enCommon,
     settings: enSettings,
     employees: enEmployees,
+    networks: enNetworks,
+    audit: enAudit,
+    reports: enReports,
+    news: enNews,
     qr: enQr,
     requests: enRequests,
     schedules: enSchedules,
@@ -97,6 +113,10 @@ i18n
       "schedules",
       "requests",
       "qr",
+      "news",
+      "reports",
+      "audit",
+      "networks",
       "subscription",
       "enums",
       "validation",

@@ -37,5 +37,14 @@
   "from": "From",
   "to": "To",
   "loadFailedShort": "Could not load the data.",
-  "edit": "Edit"
+  "edit": "Edit",
+  "add": "Add",
+  "change": "Edit",
+  "more": "View details",
+  "fromDate": "From",
+  "toDate": "To",
+  "required": "Required",
+  "allEmployees": "All employees",
+  "noDataTitle": "No data",
+  "noDataDescription": "Nothing found for the selected filters."
 }

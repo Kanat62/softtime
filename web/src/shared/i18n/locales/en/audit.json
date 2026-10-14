@@ -1,0 +1,47 @@
+{
+  "title": "Audit log",
+  "actionType": "Action type",
+  "allActions": "All actions",
+  "columns": {
+    "action": "Action",
+    "targetType": "Object (type)",
+    "actor": "Actor (ID)",
+    "datetime": "Date and time"
+  },
+  "emptyTitle": "No records",
+  "emptyDescription": "No audit records found for the selected filters.",
+  "actions": {
+    "LOGIN": "Signed in",
+    "USER_APPROVED": "Employee approved",
+    "USER_REJECTED": "Employee rejected",
+    "USER_DELETED": "Employee deleted",
+    "USER_STATUS_CHANGED": "Employee status changed",
+    "USER_NOTE_UPDATED": "Employee comment changed",
+    "EMPLOYEE_SALARY_SET": "Employee salary set",
+    "REQUEST_APPROVED": "Request approved",
+    "REQUEST_REJECTED": "Request rejected",
+    "SCHEDULE_UPDATED": "Schedule changed",
+    "SCHEDULE_APPLY_ALL": "Schedule applied to everyone",
+    "ATTENDANCE_MANUAL_CREATE": "Attendance added manually",
+    "ATTENDANCE_MANUAL_EDIT": "Attendance edited manually",
+    "OFFICE_NETWORK_CREATED": "Office network added",
+    "OFFICE_NETWORK_UPDATED": "Office network changed",
+    "OFFICE_NETWORK_DELETED": "Office network removed",
+    "QR_REGENERATED": "QR code regenerated",
+    "NEWS_CREATED": "Post published",
+    "NEWS_DELETED": "Post deleted",
+    "UPDATE_COMPANY_REQUISITES": "Company details changed",
+    "COMPANY_ACTIVATED": "Company activated",
+    "COMPANY_SUSPENDED": "Company suspended",
+    "SETTINGS_UPDATED": "Settings changed",
+    "SUBSCRIPTION_CANCELLED": "Subscription cancelled"
+  },
+  "targets": {
+    "Company": "Company",
+    "EmployeeSchedule": "Schedule",
+    "News": "Post",
+    "OfficeNetwork": "Office network",
+    "QrToken": "QR code",
+    "User": "Employee"
+  }
+}

@@ -62,5 +62,20 @@
     "deleteFailed": "Ошибка при удалении",
     "noteSaved": "Комментарий сохранён",
     "noteFailed": "Не удалось сохранить комментарий"
+  },
+  "profile": {
+    "backToList": "Сотрудники",
+    "lastActivity": "Последняя активность",
+    "attendanceHistory": "История посещаемости",
+    "requests": "Заявки",
+    "dayStatus": "Статус дня",
+    "worked": "Отработано",
+    "submitted": "Подана",
+    "emptyAttendanceTitle": "Нет записей",
+    "emptyAttendanceDescription": "История посещаемости появится после первого прихода сотрудника.",
+    "emptyRequestsTitle": "Заявок нет",
+    "emptyRequestsDescription": "Заявки сотрудника появятся здесь.",
+    "adminNote": "Комментарий администратора",
+    "adminNotePlaceholder": "Заметки о сотруднике, видимые только администратору..."
   }
 }

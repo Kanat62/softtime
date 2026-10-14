@@ -1,0 +1,36 @@
+{
+  "title": "Reports",
+  "downloading": "Downloading…",
+  "charts": {
+    "hoursTop": "Hours worked (top 10)",
+    "hoursTooltip": "Hours",
+    "lateTitle": "Late arrivals",
+    "noLate": "No late arrivals — great!",
+    "lateTooltip": "Late arrivals"
+  },
+  "summary": {
+    "hours": "Hours worked",
+    "late": "Late arrivals",
+    "absent": "Absences"
+  },
+  "detailTitle": "Detailed report",
+  "columns": {
+    "employee": "Employee",
+    "hours": "Hours",
+    "late": "Late",
+    "absent": "Absences",
+    "approvedAbsence": "Appr. absences",
+    "earliestCheckIn": "Earliest check in",
+    "latestCheckOut": "Latest check out"
+  },
+  "export": {
+    "sheetName": "Report",
+    "employee": "Employee",
+    "hours": "Hours worked",
+    "late": "Late arrivals",
+    "absent": "Absences",
+    "approvedAbsence": "Approved absences",
+    "earliestCheckIn": "Earliest check in",
+    "latestCheckOut": "Latest check out"
+  }
+}

@@ -1,7 +1,9 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import i18n from "@/shared/i18n";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { ru } from "date-fns/locale";
+import { dateFnsLocale } from "@/shared/lib/date-locale";
 import { Download, RotateCcw, BarChart2, FileSpreadsheet } from "lucide-react";
 import * as XLSX from "xlsx";
 import {
@@ -36,7 +38,7 @@ function getDefaultDates() {
 function fmtTime(iso: string | null): string {
   if (!iso) return "—";
   try {
-    return format(new Date(iso), "HH:mm", { locale: ru });
+    return format(new Date(iso), "HH:mm", { locale: dateFnsLocale() });
   } catch {
     return "—";
   }
@@ -44,27 +46,28 @@ function fmtTime(iso: string | null): string {
 
 function exportXlsx(rows: ReportRow[], period: string) {
   const data = rows.map((r) => ({
-    Сотрудник: r.fullName,
+    [i18n.t("reports:export.employee")]: r.fullName,
     Email: r.email,
-    "Часов отработано": r.totalWorkedHours,
-    Опозданий: r.lateCount,
-    Отсутствий: r.absentCount,
-    "Согл. отсутствий": r.approvedAbsenceCount,
-    "Ранний приход": fmtTime(r.earliestCheckIn),
-    "Поздний уход": fmtTime(r.latestCheckOut),
+    [i18n.t("reports:export.hours")]: r.totalWorkedHours,
+    [i18n.t("reports:export.late")]: r.lateCount,
+    [i18n.t("reports:export.absent")]: r.absentCount,
+    [i18n.t("reports:export.approvedAbsence")]: r.approvedAbsenceCount,
+    [i18n.t("reports:export.earliestCheckIn")]: fmtTime(r.earliestCheckIn),
+    [i18n.t("reports:export.latestCheckOut")]: fmtTime(r.latestCheckOut),
   }));
   const ws = XLSX.utils.json_to_sheet(data);
   ws["!cols"] = [
     { wch: 28 }, { wch: 28 }, { wch: 16 }, { wch: 12 }, { wch: 12 }, { wch: 16 }, { wch: 14 }, { wch: 14 },
   ];
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Отчёт");
+  XLSX.utils.book_append_sheet(wb, ws, i18n.t("reports:export.sheetName"));
   XLSX.writeFile(wb, `report_${period}.xlsx`);
 }
 
 // ─── Chart ───────────────────────────────────────────────────────────────────
 
 function ReportCharts({ rows, loading }: { rows: ReportRow[]; loading: boolean }) {
+  const { t } = useTranslation(["reports", "common"]);
   const hoursData = rows.slice(0, 10).map((r) => ({
     name: r.fullName.split(" ")[0],
     hours: r.totalWorkedHours,
@@ -97,14 +100,14 @@ function ReportCharts({ rows, loading }: { rows: ReportRow[]; loading: boolean }
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
       <div className="rounded-2xl bg-card p-5 shadow-sm">
-        <h3 className="mb-3 text-sm font-semibold text-foreground">Часов отработано (топ-10)</h3>
+        <h3 className="mb-3 text-sm font-semibold text-foreground">{t("reports:charts.hoursTop")}</h3>
         <ResponsiveContainer width="100%" height={160}>
           <BarChart data={hoursData} margin={{ top: 4, right: 8, bottom: 0, left: -20 }}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-border" />
             <XAxis dataKey="name" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
             <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
             <Tooltip
-              formatter={(v: number) => [`${v} ч`, "Часов"]}
+              formatter={(v: number) => [`${v} ${t("common:duration.hoursShort")}`, t("reports:charts.hoursTooltip")]}
               contentStyle={chartStyle.contentStyle}
             />
             <Bar dataKey="hours" fill="#1877F2" radius={[4, 4, 0, 0]} />
@@ -112,10 +115,10 @@ function ReportCharts({ rows, loading }: { rows: ReportRow[]; loading: boolean }
         </ResponsiveContainer>
       </div>
       <div className="rounded-2xl bg-card p-5 shadow-sm">
-        <h3 className="mb-3 text-sm font-semibold text-foreground">Опоздания</h3>
+        <h3 className="mb-3 text-sm font-semibold text-foreground">{t("reports:charts.lateTitle")}</h3>
         {lateData.length === 0 ? (
           <div className="flex h-40 items-center justify-center">
-            <p className="text-sm text-muted-foreground">Опозданий нет — отлично!</p>
+            <p className="text-sm text-muted-foreground">{t("reports:charts.noLate")}</p>
           </div>
         ) : (
           <ResponsiveContainer width="100%" height={160}>
@@ -124,7 +127,7 @@ function ReportCharts({ rows, loading }: { rows: ReportRow[]; loading: boolean }
               <XAxis dataKey="name" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
               <YAxis allowDecimals={false} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
               <Tooltip
-                formatter={(v: number) => [v, "Опозданий"]}
+                formatter={(v: number) => [v, t("reports:charts.lateTooltip")]}
                 contentStyle={chartStyle.contentStyle}
               />
               <Bar dataKey="late" fill="#F59E0B" radius={[4, 4, 0, 0]} />
@@ -139,6 +142,7 @@ function ReportCharts({ rows, loading }: { rows: ReportRow[]; loading: boolean }
 // ─── ReportsView ─────────────────────────────────────────────────────────────
 
 export function ReportsView() {
+  const { t } = useTranslation(["reports", "common"]);
   const defaults = getDefaultDates();
   const [dateFrom, setDateFrom] = useState(defaults.from);
   const [dateTo, setDateTo] = useState(defaults.to);
@@ -187,7 +191,7 @@ export function ReportsView() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Отчёты"
+        title={t("reports:title")}
         actions={
           <div className="flex gap-2">
             <Button
@@ -197,7 +201,7 @@ export function ReportsView() {
               onClick={handleCsvExport}
             >
               <Download className="mr-2 h-4 w-4" />
-              {csvLoading ? "Скачиваем..." : "CSV"}
+              {csvLoading ? t("reports:downloading") : "CSV"}
             </Button>
             <Button
               size="sm"
@@ -214,7 +218,7 @@ export function ReportsView() {
       {/* ── Filters ────────────────────────────────────────────────────────── */}
       <div className="flex flex-wrap items-end gap-3">
         <div className="space-y-1">
-          <Label className="text-xs">С даты</Label>
+          <Label className="text-xs">{t("common:fromDate")}</Label>
           <Input
             type="date"
             value={dateFrom}
@@ -223,7 +227,7 @@ export function ReportsView() {
           />
         </div>
         <div className="space-y-1">
-          <Label className="text-xs">По дату</Label>
+          <Label className="text-xs">{t("common:toDate")}</Label>
           <Input
             type="date"
             value={dateTo}
@@ -232,13 +236,13 @@ export function ReportsView() {
           />
         </div>
         <div className="space-y-1">
-          <Label className="text-xs">Сотрудник</Label>
+          <Label className="text-xs">{t("common:employee")}</Label>
           <Select value={userId || "_all"} onValueChange={(v) => setUserId(v === "_all" ? "" : v)}>
             <SelectTrigger className="h-8 w-48 text-sm">
-              <SelectValue placeholder="Все сотрудники" />
+              <SelectValue placeholder={t("common:allEmployees")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="_all">Все сотрудники</SelectItem>
+              <SelectItem value="_all">{t("common:allEmployees")}</SelectItem>
               {(empQuery.data?.data ?? []).map((e) => (
                 <SelectItem key={e.id} value={e.id}>
                   {e.fullName}
@@ -254,16 +258,16 @@ export function ReportsView() {
           onClick={handleReset}
         >
           <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
-          Сбросить
+          {t("common:reset")}
         </Button>
       </div>
 
       {/* ── Summary metrics ────────────────────────────────────────────────── */}
       <div className="grid grid-cols-3 gap-4">
         {[
-          { label: "Часов отработано", value: summaryStats.totalHours },
-          { label: "Опозданий", value: summaryStats.totalLate },
-          { label: "Отсутствий", value: summaryStats.totalAbsent },
+          { label: t("reports:summary.hours"), value: summaryStats.totalHours },
+          { label: t("reports:summary.late"), value: summaryStats.totalLate },
+          { label: t("reports:summary.absent"), value: summaryStats.totalAbsent },
         ].map((s) => (
           <div key={s.label} className="rounded-2xl bg-card p-4 shadow-sm">
             <div className="text-xs uppercase tracking-wide text-muted-foreground">{s.label}</div>
@@ -280,18 +284,18 @@ export function ReportsView() {
       {/* ── Detail table ───────────────────────────────────────────────────── */}
       <div className="overflow-hidden rounded-2xl bg-card shadow-sm">
         <div className="border-b border-border px-5 py-4">
-          <h2 className="font-semibold text-foreground">Детальный отчёт</h2>
+          <h2 className="font-semibold text-foreground">{t("reports:detailTitle")}</h2>
         </div>
         {reportQuery.isError ? (
           <div className="px-5 py-12 text-center">
-            <p className="text-sm text-muted-foreground">Не удалось загрузить данные.</p>
+            <p className="text-sm text-muted-foreground">{t("common:loadFailedShort")}</p>
             <Button
               variant="outline"
               size="sm"
               className="mt-3"
               onClick={() => reportQuery.refetch()}
             >
-              Повторить
+              {t("common:retry")}
             </Button>
           </div>
         ) : (
@@ -299,13 +303,13 @@ export function ReportsView() {
             <thead>
               <tr className="border-b border-border bg-muted/40">
                 {[
-                  "Сотрудник",
-                  "Часов",
-                  "Опозданий",
-                  "Отсутствий",
-                  "Согл. отсутствий",
-                  "Ранний приход",
-                  "Поздний уход",
+                  t("reports:columns.employee"),
+                  t("reports:columns.hours"),
+                  t("reports:columns.late"),
+                  t("reports:columns.absent"),
+                  t("reports:columns.approvedAbsence"),
+                  t("reports:columns.earliestCheckIn"),
+                  t("reports:columns.latestCheckOut"),
                 ].map((h) => (
                   <th
                     key={h}
@@ -332,8 +336,8 @@ export function ReportsView() {
                   <td colSpan={7} className="px-4 py-16">
                     <EmptyState
                       icon={<BarChart2 className="h-10 w-10" />}
-                      title="Нет данных"
-                      description="По выбранным фильтрам данных не найдено."
+                      title={t("common:noDataTitle")}
+                      description={t("common:noDataDescription")}
                     />
                   </td>
                 </tr>
@@ -347,7 +351,7 @@ export function ReportsView() {
                       <div className="font-medium text-foreground">{r.fullName}</div>
                       <div className="text-xs text-muted-foreground">{r.email}</div>
                     </td>
-                    <td className="px-4 py-3 text-muted-foreground">{r.totalWorkedHours} ч</td>
+                    <td className="px-4 py-3 text-muted-foreground">{r.totalWorkedHours} {t("common:duration.hoursShort")}</td>
                     <td className="px-4 py-3">
                       <span
                         className={

@@ -1,0 +1,36 @@
+{
+  "title": "Отчёты",
+  "downloading": "Скачиваем...",
+  "charts": {
+    "hoursTop": "Часов отработано (топ-10)",
+    "hoursTooltip": "Часов",
+    "lateTitle": "Опоздания",
+    "noLate": "Опозданий нет — отлично!",
+    "lateTooltip": "Опозданий"
+  },
+  "summary": {
+    "hours": "Часов отработано",
+    "late": "Опозданий",
+    "absent": "Отсутствий"
+  },
+  "detailTitle": "Детальный отчёт",
+  "columns": {
+    "employee": "Сотрудник",
+    "hours": "Часов",
+    "late": "Опозданий",
+    "absent": "Отсутствий",
+    "approvedAbsence": "Согл. отсутствий",
+    "earliestCheckIn": "Ранний приход",
+    "latestCheckOut": "Поздний уход"
+  },
+  "export": {
+    "sheetName": "Отчёт",
+    "employee": "Сотрудник",
+    "hours": "Часов отработано",
+    "late": "Опозданий",
+    "absent": "Отсутствий",
+    "approvedAbsence": "Согл. отсутствий",
+    "earliestCheckIn": "Ранний приход",
+    "latestCheckOut": "Поздний уход"
+  }
+}

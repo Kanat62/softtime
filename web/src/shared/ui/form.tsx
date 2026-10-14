@@ -1,4 +1,5 @@
 import * as React from "react";
+import { useTranslation } from "react-i18next";
 import * as LabelPrimitive from "@radix-ui/react-label";
 import { Slot } from "@radix-ui/react-slot";
 import {
@@ -139,8 +140,14 @@ const FormMessage = React.forwardRef<
   HTMLParagraphElement,
   React.HTMLAttributes<HTMLParagraphElement>
 >(({ className, children, ...props }, ref) => {
+  const { t, i18n } = useTranslation();
   const { error, formMessageId } = useFormField();
-  const body = error ? String(error?.message ?? "") : children;
+  // Сообщения zod бывают двух видов: ключ словаря ("ns:key") или готовый
+  // текст. Переводим ТОЛЬКО то, что реально есть в словарях: иначе
+  // i18next трактует ":" как разделитель namespace и обрезает строку
+  // (например "common:чего-то-нет" -> "чего-то-нет").
+  const raw = error ? String(error?.message ?? "") : "";
+  const body = error ? (raw && i18n.exists(raw) ? t(raw) : raw) : children;
 
   if (!body) {
     return null;

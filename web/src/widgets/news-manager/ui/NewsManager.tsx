@@ -1,7 +1,8 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { ru } from "date-fns/locale";
+import { dateFnsLocale } from "@/shared/lib/date-locale";
 import { toast } from "sonner";
 import { Eye, Newspaper, Plus, Trash2 } from "lucide-react";
 import { newsApi } from "@/entities/news/api";
@@ -25,7 +26,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
 
 function fmtDate(iso: string) {
   try {
-    return format(new Date(iso), "d MMM yyyy", { locale: ru });
+    return format(new Date(iso), "d MMM yyyy", { locale: dateFnsLocale() });
   } catch {
     return iso;
   }
@@ -34,6 +35,7 @@ function fmtDate(iso: string) {
 type DialogMode = "create" | "view" | null;
 
 export function NewsManager() {
+  const { t } = useTranslation(["news", "common"]);
   const qc = useQueryClient();
   const [mode, setMode] = useState<DialogMode>(null);
   const [activeNews, setActiveNews] = useState<News | null>(null);
@@ -59,22 +61,22 @@ export function NewsManager() {
   const deleteMutation = useMutation({
     mutationFn: newsApi.delete,
     onSuccess: () => {
-      toast.success("Новость удалена");
+      toast.success(t("news:toast.deleted"));
       setDeleteTargetId(null);
       setMode(null);
       invalidate();
     },
-    onError: () => toast.error("Ошибка при удалении"),
+    onError: () => toast.error(t("news:toast.deleteFailed")),
   });
 
   const createMutation = useMutation({
     mutationFn: newsApi.create,
     onSuccess: () => {
-      toast.success("Новость опубликована");
+      toast.success(t("news:toast.published"));
       setMode(null);
       invalidate();
     },
-    onError: () => toast.error("Ошибка при публикации"),
+    onError: () => toast.error(t("news:toast.publishFailed")),
   });
 
   function openCreate() {
@@ -92,7 +94,7 @@ export function NewsManager() {
 
   function handleSubmit() {
     if (!formTitle.trim() || !formBody.trim()) {
-      toast.error("Заголовок и текст обязательны");
+      toast.error(t("news:titleRequired"));
       return;
     }
     const photoUrl = formPhotoUrl.trim() || null;
@@ -105,11 +107,11 @@ export function NewsManager() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Новости"
+        title={t("news:title")}
         actions={
           <Button size="sm" onClick={openCreate}>
             <Plus className="mr-2 h-4 w-4" />
-            Опубликовать
+            {t("news:publish")}
           </Button>
         }
       />
@@ -117,9 +119,9 @@ export function NewsManager() {
       <div className="overflow-hidden rounded-2xl bg-card shadow-sm">
         {feedQuery.isError ? (
           <div className="px-6 py-12 text-center">
-            <p className="text-sm text-muted-foreground">Не удалось загрузить данные.</p>
+            <p className="text-sm text-muted-foreground">{t("common:loadFailedShort")}</p>
             <Button variant="outline" size="sm" className="mt-3" onClick={invalidate}>
-              Повторить
+              {t("common:retry")}
             </Button>
           </div>
         ) : (
@@ -127,7 +129,7 @@ export function NewsManager() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-muted/40">
-                  {["Заголовок", "Дата", "Прочитали", ""].map((h) => (
+                  {[t("news:columns.title"), t("news:columns.date"), t("news:columns.reads"), ""].map((h) => (
                     <th
                       key={h}
                       className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
@@ -181,7 +183,7 @@ export function NewsManager() {
                                 openView(n);
                               }}
                             >
-                              Подробнее
+                              {t("common:more")}
                             </Button>
                             <Button
                               variant="ghost"
@@ -204,12 +206,12 @@ export function NewsManager() {
               <div className="px-6 py-16">
                 <EmptyState
                   icon={<Newspaper className="h-10 w-10" />}
-                  title="Нет новостей"
-                  description="Опубликуйте первое объявление для сотрудников."
+                  title={t("news:emptyTitle")}
+                  description={t("news:emptyDescription")}
                   action={
                     <Button size="sm" onClick={openCreate}>
                       <Plus className="mr-2 h-4 w-4" />
-                      Опубликовать
+                      {t("news:publish")}
                     </Button>
                   }
                 />
@@ -231,10 +233,10 @@ export function NewsManager() {
               <Tabs defaultValue="content" className="flex flex-col overflow-hidden">
                 <TabsList className="w-full">
                   <TabsTrigger value="content" className="flex-1">
-                    Содержание
+                    {t("news:view.content")}
                   </TabsTrigger>
                   <TabsTrigger value="readers" className="flex-1">
-                    Читатели
+                    {t("news:view.readers")}
                     {readStats
                       ? ` (${readStats.readCount}/${readStats.total})`
                       : ""}
@@ -245,7 +247,7 @@ export function NewsManager() {
                   {activeNews.photoUrl && (
                     <img
                       src={activeNews.photoUrl}
-                      alt="фото"
+                      alt={t("news:view.photoAlt")}
                       className="mt-3 w-full rounded-lg object-cover"
                     />
                   )}
@@ -256,13 +258,13 @@ export function NewsManager() {
                       <Skeleton key={i} className="h-8 w-full rounded" />
                     ))
                   ) : readsQuery.isError ? (
-                    <p className="text-sm text-muted-foreground">Не удалось загрузить читателей.</p>
+                    <p className="text-sm text-muted-foreground">{t("news:view.readersLoadFailed")}</p>
                   ) : (
                     <>
                       {(readsQuery.data?.read ?? []).length > 0 && (
                         <div>
                           <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-success">
-                            Прочитали ({readsQuery.data!.stats.readCount})
+                            {t("news:view.readCount", { count: readsQuery.data!.stats.readCount })}
                           </p>
                           <ul className="space-y-1">
                             {readsQuery.data!.read.map((r) => (
@@ -271,7 +273,7 @@ export function NewsManager() {
                                 className="flex items-center justify-between rounded-lg bg-muted/40 px-3 py-2 text-sm"
                               >
                                 <span className="text-foreground">{r.fullName}</span>
-                                <StatusBadge status="ACTIVE">Прочитано</StatusBadge>
+                                <StatusBadge status="ACTIVE">{t("news:view.read")}</StatusBadge>
                               </li>
                             ))}
                           </ul>
@@ -280,7 +282,7 @@ export function NewsManager() {
                       {(readsQuery.data?.unread ?? []).length > 0 && (
                         <div>
                           <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                            Не читали ({readsQuery.data!.stats.unreadCount})
+                            {t("news:view.unreadCount", { count: readsQuery.data!.stats.unreadCount })}
                           </p>
                           <ul className="space-y-1">
                             {readsQuery.data!.unread.map((u) => (
@@ -289,7 +291,7 @@ export function NewsManager() {
                                 className="flex items-center justify-between rounded-lg bg-muted/40 px-3 py-2 text-sm"
                               >
                                 <span className="text-foreground">{u.fullName}</span>
-                                <StatusBadge status="PENDING">Не читали</StatusBadge>
+                                <StatusBadge status="PENDING">{t("news:view.unread")}</StatusBadge>
                               </li>
                             ))}
                           </ul>
@@ -298,7 +300,7 @@ export function NewsManager() {
                       {readsQuery.data &&
                         readsQuery.data.read.length === 0 &&
                         readsQuery.data.unread.length === 0 && (
-                          <p className="text-sm text-muted-foreground">Ещё никто не прочитал.</p>
+                          <p className="text-sm text-muted-foreground">{t("news:view.nobodyRead")}</p>
                         )}
                     </>
                   )}
@@ -313,9 +315,9 @@ export function NewsManager() {
       <Dialog open={!!deleteTargetId} onOpenChange={(open) => !open && setDeleteTargetId(null)}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Удалить новость?</DialogTitle>
+            <DialogTitle>{t("news:deleteDialog.title")}</DialogTitle>
             <DialogDescription>
-              Это действие необратимо. Новость и история прочтений будут удалены.
+              {t("news:deleteDialog.description")}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2 sm:flex-row">
@@ -325,7 +327,7 @@ export function NewsManager() {
               onClick={() => setDeleteTargetId(null)}
               disabled={deleteMutation.isPending}
             >
-              Отмена
+              {t("common:cancel")}
             </Button>
             <Button
               variant="destructive"
@@ -333,7 +335,7 @@ export function NewsManager() {
               disabled={deleteMutation.isPending}
               onClick={() => deleteTargetId && deleteMutation.mutate(deleteTargetId)}
             >
-              {deleteMutation.isPending ? "Удаляем..." : "Удалить"}
+              {deleteMutation.isPending ? t("common:deleting") : t("common:delete")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -343,31 +345,31 @@ export function NewsManager() {
       <Dialog open={mode === "create"} onOpenChange={(open) => !open && setMode(null)}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Новая новость</DialogTitle>
-            <DialogDescription>Будет опубликована всем активным сотрудникам</DialogDescription>
+            <DialogTitle>{t("news:createDialog.title")}</DialogTitle>
+            <DialogDescription>{t("news:createDialog.description")}</DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-4">
             <div className="space-y-1.5">
-              <Label htmlFor="news-title">Заголовок</Label>
+              <Label htmlFor="news-title">{t("news:createDialog.titleLabel")}</Label>
               <Input
                 id="news-title"
                 value={formTitle}
                 onChange={(e) => setFormTitle(e.target.value)}
-                placeholder="Заголовок новости..."
+                placeholder={t("news:createDialog.titlePlaceholder")}
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="news-body">Текст</Label>
+              <Label htmlFor="news-body">{t("news:createDialog.bodyLabel")}</Label>
               <Textarea
                 id="news-body"
                 value={formBody}
                 onChange={(e) => setFormBody(e.target.value)}
-                placeholder="Текст объявления..."
+                placeholder={t("news:createDialog.bodyPlaceholder")}
                 rows={7}
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="news-photo">Фото (URL, необязательно)</Label>
+              <Label htmlFor="news-photo">{t("news:createDialog.photoLabel")}</Label>
               <Input
                 id="news-photo"
                 value={formPhotoUrl}
@@ -378,14 +380,14 @@ export function NewsManager() {
           </div>
           <DialogFooter className="gap-2 sm:flex-row">
             <Button variant="outline" className="flex-1" onClick={() => setMode(null)}>
-              Отмена
+              {t("common:cancel")}
             </Button>
             <Button
               className="flex-1"
               disabled={createMutation.isPending}
               onClick={handleSubmit}
             >
-              {createMutation.isPending ? "Публикуем..." : "Опубликовать"}
+              {createMutation.isPending ? t("news:publishing") : t("news:publish")}
             </Button>
           </DialogFooter>
         </DialogContent>

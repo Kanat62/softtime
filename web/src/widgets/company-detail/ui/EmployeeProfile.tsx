@@ -1,4 +1,6 @@
 import { useState, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
+import i18n from "@/shared/i18n";
 import { useParams, Link } from "@tanstack/react-router";
 import { useReactTable, getCoreRowModel, flexRender, type ColumnDef } from "@tanstack/react-table";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -16,14 +18,14 @@ import { Button } from "@/shared/ui/button";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { Textarea } from "@/shared/ui/textarea";
 import { format } from "date-fns";
-import { ru } from "date-fns/locale";
+import { dateFnsLocale } from "@/shared/lib/date-locale";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 function fmt(iso: string | null | undefined): string {
   if (!iso) return "—";
   try {
-    return format(new Date(iso), "d MMM yyyy", { locale: ru });
+    return format(new Date(iso), "d MMM yyyy", { locale: dateFnsLocale() });
   } catch {
     return "—";
   }
@@ -42,23 +44,13 @@ function fmtMinutes(min: number | null | undefined): string {
   if (min == null) return "—";
   const h = Math.floor(min / 60);
   const m = min % 60;
-  return `${h}ч ${m.toString().padStart(2, "0")}м`;
+  return `${h}${i18n.t("common:duration.hoursShort")} ${m.toString().padStart(2, "0")}${i18n.t("common:duration.minutesShort")}`;
 }
-
-const REQUEST_TYPE_LABELS: Record<RequestType, string> = {
-  [RequestType.SICK]: "Больничный",
-  [RequestType.FAMILY]: "Семейные обстоятельства",
-  [RequestType.VACATION]: "Отпуск",
-  [RequestType.BUSINESS_TRIP]: "Командировка",
-  [RequestType.REMOTE]: "Удалённая работа",
-  [RequestType.LATE_REASON]: "Опоздание",
-  [RequestType.EARLY_LEAVE]: "Ранний уход",
-  [RequestType.OTHER]: "Другое",
-};
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
 export function EmployeeProfile() {
+  const { t } = useTranslation(["employees", "attendance", "enums", "common"]);
   const { id } = useParams({ from: "/admin/employees/$id" });
   const qc = useQueryClient();
 
@@ -99,11 +91,11 @@ export function EmployeeProfile() {
   const noteMutation = useMutation({
     mutationFn: (n: string) => userApi.updateNote(id, n),
     onSuccess: () => {
-      toast.success("Комментарий сохранён");
+      toast.success(t("employees:toast.noteSaved"));
       setNoteDirty(false);
       qc.invalidateQueries({ queryKey: queryKeys.employee(id) });
     },
-    onError: () => toast.error("Не удалось сохранить комментарий"),
+    onError: () => toast.error(t("employees:toast.noteFailed")),
   });
 
   // ─── Attendance table ──────────────────────────────────────────────────
@@ -111,33 +103,33 @@ export function EmployeeProfile() {
   const attColumns: ColumnDef<AttendanceRow>[] = [
     {
       id: "date",
-      header: "Дата",
+      header: t("common:date"),
       cell: ({ row }) => (
         <span className="text-sm font-medium text-foreground">{fmt(row.original.date)}</span>
       ),
     },
     {
       id: "checkIn",
-      header: "Приход",
+      header: t("attendance:columns.checkIn"),
       cell: ({ row }) => (
         <span className="text-sm text-muted-foreground">{fmtTime(row.original.checkInAt)}</span>
       ),
     },
     {
       id: "checkOut",
-      header: "Уход",
+      header: t("attendance:columns.checkOut"),
       cell: ({ row }) => (
         <span className="text-sm text-muted-foreground">{fmtTime(row.original.checkOutAt)}</span>
       ),
     },
     {
       id: "status",
-      header: "Статус дня",
+      header: t("employees:profile.dayStatus"),
       cell: ({ row }) => <StatusBadge status={row.original.status} />,
     },
     {
       id: "worked",
-      header: "Отработано",
+      header: t("employees:profile.worked"),
       cell: ({ row }) => (
         <span className="text-sm text-muted-foreground">
           {fmtMinutes(row.original.workedMinutes)}
@@ -159,16 +151,16 @@ export function EmployeeProfile() {
   const reqColumns: ColumnDef<AbsenceRequest>[] = [
     {
       id: "type",
-      header: "Тип",
+      header: t("common:type"),
       cell: ({ row }) => (
         <span className="text-sm font-medium text-foreground">
-          {REQUEST_TYPE_LABELS[row.original.type as RequestType] ?? row.original.type}
+          {t(`enums:requestType.${row.original.type}`)}
         </span>
       ),
     },
     {
       id: "period",
-      header: "Период",
+      header: t("common:period"),
       cell: ({ row }) => {
         const r = row.original;
         return (
@@ -181,12 +173,12 @@ export function EmployeeProfile() {
     },
     {
       id: "status",
-      header: "Статус",
+      header: t("common:status"),
       cell: ({ row }) => <StatusBadge status={row.original.status} />,
     },
     {
       id: "createdAt",
-      header: "Подана",
+      header: t("employees:profile.submitted"),
       cell: ({ row }) => (
         <span className="text-sm text-muted-foreground">{fmt(row.original.createdAt)}</span>
       ),
@@ -212,7 +204,7 @@ export function EmployeeProfile() {
           className="mb-3 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
         >
           <ChevronLeft className="h-4 w-4" strokeWidth={1.5} />
-          Сотрудники
+          {t("employees:profile.backToList")}
         </Link>
 
         {empLoading ? (
@@ -252,14 +244,14 @@ export function EmployeeProfile() {
         </div>
       ) : employee ? (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-<InfoCard label="Последняя активность" value={fmt(employee.lastActivityAt)} />
-          <InfoCard label="Статус" value={<StatusBadge status={employee.status} />} />
+<InfoCard label={t("employees:profile.lastActivity")} value={fmt(employee.lastActivityAt)} />
+          <InfoCard label={t("common:status")} value={<StatusBadge status={employee.status} />} />
           <InfoCard label="Email" value={employee.email} />
         </div>
       ) : null}
 
       {/* ── Attendance history ─────────────────────────────────────────── */}
-      <Section icon={<Clock className="h-5 w-5" strokeWidth={1.5} />} title="История посещаемости">
+      <Section icon={<Clock className="h-5 w-5" strokeWidth={1.5} />} title={t("employees:profile.attendanceHistory")}>
         <PaginatedTable
           table={attTable}
           isLoading={attLoading}
@@ -271,15 +263,15 @@ export function EmployeeProfile() {
           empty={
             <EmptyState
               icon={<Clock className="h-8 w-8" />}
-              title="Нет записей"
-              description="История посещаемости появится после первого прихода сотрудника."
+              title={t("employees:profile.emptyAttendanceTitle")}
+              description={t("employees:profile.emptyAttendanceDescription")}
             />
           }
         />
       </Section>
 
       {/* ── Requests ──────────────────────────────────────────────────── */}
-      <Section icon={<FileText className="h-5 w-5" strokeWidth={1.5} />} title="Заявки">
+      <Section icon={<FileText className="h-5 w-5" strokeWidth={1.5} />} title={t("employees:profile.requests")}>
         <PaginatedTable
           table={reqTable}
           isLoading={reqLoading}
@@ -291,8 +283,8 @@ export function EmployeeProfile() {
           empty={
             <EmptyState
               icon={<FileText className="h-8 w-8" />}
-              title="Заявок нет"
-              description="Заявки сотрудника появятся здесь."
+              title={t("employees:profile.emptyRequestsTitle")}
+              description={t("employees:profile.emptyRequestsDescription")}
             />
           }
         />
@@ -300,9 +292,9 @@ export function EmployeeProfile() {
 
       {/* ── Admin note ─────────────────────────────────────────────────── */}
       <div className="rounded-2xl bg-card p-6 shadow-sm">
-        <h2 className="mb-3 text-base font-semibold text-foreground">Комментарий администратора</h2>
+        <h2 className="mb-3 text-base font-semibold text-foreground">{t("employees:profile.adminNote")}</h2>
         <Textarea
-          placeholder="Заметки о сотруднике, видимые только администратору..."
+          placeholder={t("employees:profile.adminNotePlaceholder")}
           rows={4}
           value={resolvedNote}
           onChange={(e) => {
@@ -318,7 +310,7 @@ export function EmployeeProfile() {
             onClick={() => noteMutation.mutate(resolvedNote)}
           >
             <Save className="mr-2 h-4 w-4" strokeWidth={1.5} />
-            {noteMutation.isPending ? "Сохраняем..." : "Сохранить"}
+            {noteMutation.isPending ? t("common:saving") : t("common:save")}
           </Button>
         </div>
       </div>
@@ -377,6 +369,7 @@ function PaginatedTable<T>({
   skeletonCols: number;
   empty: ReactNode;
 }) {
+  const { t } = useTranslation("common");
   const rows = table.getRowModel().rows;
   const pageCount = Math.ceil(total / limit);
 
@@ -425,7 +418,11 @@ function PaginatedTable<T>({
       {!isLoading && total > 0 && (
         <div className="flex items-center justify-between border-t border-border px-4 py-3 text-xs text-muted-foreground">
           <span>
-            {page * limit + 1}–{Math.min((page + 1) * limit, total)} из {total}
+            {t("common:pagination.range", {
+              from: page * limit + 1,
+              to: Math.min((page + 1) * limit, total),
+              total,
+            })}
           </span>
           <div className="flex gap-1">
             <Button
@@ -434,7 +431,7 @@ function PaginatedTable<T>({
               disabled={page === 0}
               onClick={() => onPageChange(page - 1)}
             >
-              Назад
+              {t("common:back")}
             </Button>
             <Button
               variant="outline"
@@ -442,7 +439,7 @@ function PaginatedTable<T>({
               disabled={page >= pageCount - 1}
               onClick={() => onPageChange(page + 1)}
             >
-              Вперёд
+              {t("common:next")}
             </Button>
           </div>
         </div>

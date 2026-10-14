@@ -1,0 +1,43 @@
+{
+  "title": "Новости",
+  "publish": "Опубликовать",
+  "publishing": "Публикуем...",
+  "columns": {
+    "title": "Заголовок",
+    "date": "Дата",
+    "reads": "Прочитали"
+  },
+  "emptyTitle": "Нет новостей",
+  "emptyDescription": "Опубликуйте первое объявление для сотрудников.",
+  "titleRequired": "Заголовок и текст обязательны",
+  "view": {
+    "content": "Содержание",
+    "readers": "Читатели",
+    "photoAlt": "фото",
+    "readersLoadFailed": "Не удалось загрузить читателей.",
+    "readCount": "Прочитали ({{count}})",
+    "unreadCount": "Не читали ({{count}})",
+    "read": "Прочитано",
+    "unread": "Не читали",
+    "nobodyRead": "Ещё никто не прочитал."
+  },
+  "deleteDialog": {
+    "title": "Удалить новость?",
+    "description": "Это действие необратимо. Новость и история прочтений будут удалены."
+  },
+  "createDialog": {
+    "title": "Новая новость",
+    "description": "Будет опубликована всем активным сотрудникам",
+    "titleLabel": "Заголовок",
+    "titlePlaceholder": "Заголовок новости...",
+    "bodyLabel": "Текст",
+    "bodyPlaceholder": "Текст объявления...",
+    "photoLabel": "Фото (URL, необязательно)"
+  },
+  "toast": {
+    "published": "Новость опубликована",
+    "publishFailed": "Ошибка при публикации",
+    "deleted": "Новость удалена",
+    "deleteFailed": "Ошибка при удалении"
+  }
+}

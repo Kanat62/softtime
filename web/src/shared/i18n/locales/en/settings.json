@@ -2,5 +2,43 @@
   "language": {
     "title": "Language",
     "label": "Interface language"
+  },
+  "title": "Settings",
+  "tabs": {
+    "general": "General",
+    "networks": "Office networks",
+    "qr": "QR codes",
+    "audit": "Audit log",
+    "subscription": "Subscription"
+  },
+  "company": {
+    "title": "Company settings",
+    "description": "Minimum working day length and auto check-out buffer",
+    "minHours": "Min. working hours per day",
+    "buffer": "Auto check-out buffer (min)"
+  },
+  "code": {
+    "title": "Company code",
+    "description": "Share this code with your employees — they use it when signing up in the mobile app.",
+    "copy": "Copy",
+    "copied": "Copied"
+  },
+  "password": {
+    "title": "Change password",
+    "description": "The password must be at least 8 characters",
+    "current": "Current password",
+    "new": "New password",
+    "confirm": "Confirm password",
+    "submit": "Change password",
+    "pending": "Changing…",
+    "currentRequired": "Enter your current password",
+    "minLength": "At least 8 characters",
+    "confirmRequired": "Confirm the password",
+    "mismatch": "The passwords do not match"
+  },
+  "toast": {
+    "saved": "Settings saved",
+    "saveFailed": "Could not save the settings",
+    "passwordChanged": "Password changed"
   }
 }

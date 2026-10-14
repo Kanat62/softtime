@@ -1,7 +1,8 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { ru } from "date-fns/locale";
+import { dateFnsLocale } from "@/shared/lib/date-locale";
 import { RotateCcw, Shield } from "lucide-react";
 import { auditLogApi } from "@/entities/audit-log/api";
 import { queryKeys } from "@/shared/api/query-keys";
@@ -14,59 +15,40 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 const PAGE_SIZE = 20;
 
-const ACTION_LABELS: Record<string, string> = {
-  LOGIN: "Вход в систему",
-  // Сотрудники
-  USER_APPROVED: "Сотрудник принят",
-  USER_REJECTED: "Сотрудник отклонён",
-  USER_DELETED: "Сотрудник удалён",
-  USER_STATUS_CHANGED: "Изменён статус сотрудника",
-  USER_NOTE_UPDATED: "Изменён комментарий к сотруднику",
-  EMPLOYEE_SALARY_SET: "Установлен оклад сотруднику",
-  // Заявки
-  REQUEST_APPROVED: "Заявка одобрена",
-  REQUEST_REJECTED: "Заявка отклонена",
-  // Расписание
-  SCHEDULE_UPDATED: "Изменено расписание",
-  SCHEDULE_APPLY_ALL: "Расписание применено ко всем",
-  // Посещаемость
-  ATTENDANCE_MANUAL_CREATE: "Посещаемость добавлена вручную",
-  ATTENDANCE_MANUAL_EDIT: "Посещаемость изменена вручную",
-  // Офисные сети / QR
-  OFFICE_NETWORK_CREATED: "Добавлена офисная сеть",
-  OFFICE_NETWORK_UPDATED: "Изменена офисная сеть",
-  OFFICE_NETWORK_DELETED: "Удалена офисная сеть",
-  QR_REGENERATED: "Обновлён QR-код",
-  // Новости
-  NEWS_CREATED: "Опубликована новость",
-  NEWS_DELETED: "Новость удалена",
-  // Компания / настройки / подписка
-  UPDATE_COMPANY_REQUISITES: "Изменены реквизиты компании",
-  COMPANY_ACTIVATED: "Компания активирована",
-  COMPANY_SUSPENDED: "Компания приостановлена",
-  SETTINGS_UPDATED: "Изменены настройки",
-  SUBSCRIPTION_CANCELLED: "Подписка отменена",
-};
+// Коды действий; подписи — из словаря audit:actions.*, локальной карты нет.
+const ACTION_CODES = [
+  "LOGIN",
+  "USER_APPROVED",
+  "USER_REJECTED",
+  "USER_DELETED",
+  "USER_STATUS_CHANGED",
+  "USER_NOTE_UPDATED",
+  "EMPLOYEE_SALARY_SET",
+  "REQUEST_APPROVED",
+  "REQUEST_REJECTED",
+  "SCHEDULE_UPDATED",
+  "SCHEDULE_APPLY_ALL",
+  "ATTENDANCE_MANUAL_CREATE",
+  "ATTENDANCE_MANUAL_EDIT",
+  "OFFICE_NETWORK_CREATED",
+  "OFFICE_NETWORK_UPDATED",
+  "OFFICE_NETWORK_DELETED",
+  "QR_REGENERATED",
+  "NEWS_CREATED",
+  "NEWS_DELETED",
+  "UPDATE_COMPANY_REQUISITES",
+  "COMPANY_ACTIVATED",
+  "COMPANY_SUSPENDED",
+  "SETTINGS_UPDATED",
+  "SUBSCRIPTION_CANCELLED",
+] as const;
 
-const ACTION_OPTIONS = [
-  { value: "_all", label: "Все действия" },
-  ...Object.entries(ACTION_LABELS)
-    .filter(([value]) => value !== "LOGIN")
-    .map(([value, label]) => ({ value, label })),
-];
-
-const ENTITY_LABELS: Record<string, string> = {
-  Company: "Компания",
-  EmployeeSchedule: "Расписание",
-  News: "Новость",
-  OfficeNetwork: "Офисная сеть",
-  QrToken: "QR-код",
-  User: "Сотрудник",
-};
+// В фильтре LOGIN не показываем, как было.
+const ACTION_OPTIONS = ACTION_CODES.filter((code) => code !== "LOGIN");
 
 function fmtDateTime(iso: string) {
   try {
-    return format(new Date(iso), "d MMM yyyy, HH:mm", { locale: ru });
+    return format(new Date(iso), "d MMM yyyy, HH:mm", { locale: dateFnsLocale() });
   } catch {
     return iso;
   }
@@ -98,6 +80,7 @@ function actionTone(action: string): string {
 }
 
 export function AuditTable() {
+  const { t } = useTranslation(["audit", "common"]);
   const [page, setPage] = useState(0);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -135,12 +118,12 @@ export function AuditTable() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Аудит-лог" />
+      <PageHeader title={t("audit:title")} />
 
       {/* ── Filters ────────────────────────────────────────────────────────── */}
       <div className="flex flex-wrap items-end gap-3">
         <div className="space-y-1">
-          <Label className="text-xs">С даты</Label>
+          <Label className="text-xs">{t("common:fromDate")}</Label>
           <Input
             type="date"
             value={dateFrom}
@@ -152,7 +135,7 @@ export function AuditTable() {
           />
         </div>
         <div className="space-y-1">
-          <Label className="text-xs">По дату</Label>
+          <Label className="text-xs">{t("common:toDate")}</Label>
           <Input
             type="date"
             value={dateTo}
@@ -164,7 +147,7 @@ export function AuditTable() {
           />
         </div>
         <div className="space-y-1">
-          <Label className="text-xs">Тип действия</Label>
+          <Label className="text-xs">{t("audit:actionType")}</Label>
           <Select
             value={action || "_all"}
             onValueChange={(v) => {
@@ -176,9 +159,10 @@ export function AuditTable() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="_all">{t("audit:allActions")}</SelectItem>
               {ACTION_OPTIONS.map((o) => (
-                <SelectItem key={o.value} value={o.value}>
-                  {o.label}
+                <SelectItem key={o} value={o}>
+                  {t(`audit:actions.${o}`)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -192,7 +176,7 @@ export function AuditTable() {
             onClick={handleReset}
           >
             <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
-            Сбросить
+            {t("common:reset")}
           </Button>
         )}
       </div>
@@ -201,14 +185,14 @@ export function AuditTable() {
       <div className="overflow-hidden rounded-2xl bg-card shadow-sm">
         {logsQuery.isError ? (
           <div className="px-6 py-12 text-center">
-            <p className="text-sm text-muted-foreground">Не удалось загрузить данные.</p>
+            <p className="text-sm text-muted-foreground">{t("common:loadFailedShort")}</p>
             <Button
               variant="outline"
               size="sm"
               className="mt-3"
               onClick={() => logsQuery.refetch()}
             >
-              Повторить
+              {t("common:retry")}
             </Button>
           </div>
         ) : (
@@ -216,7 +200,12 @@ export function AuditTable() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-muted/40">
-                  {["Действие", "Объект (тип)", "Субъект (ID)", "Дата и время"].map((h) => (
+                  {[
+                    t("audit:columns.action"),
+                    t("audit:columns.targetType"),
+                    t("audit:columns.actor"),
+                    t("audit:columns.datetime"),
+                  ].map((h) => (
                     <th
                       key={h}
                       className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
@@ -253,12 +242,12 @@ export function AuditTable() {
                           <span
                             className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${actionTone(log.action)}`}
                           >
-                            {ACTION_LABELS[log.action] ?? log.action}
+                            {t(`audit:actions.${log.action}`, { defaultValue: log.action })}
                           </span>
                         </td>
                         <td className="px-4 py-3 text-muted-foreground">
                           <span className="text-sm">
-                            {ENTITY_LABELS[log.entityType] ?? log.entityType}
+                            {t(`audit:targets.${log.entityType}`, { defaultValue: log.entityType })}
                           </span>
                           {log.entityId && (
                             <span className="ml-1 font-mono text-xs text-muted-foreground/60">
@@ -281,8 +270,8 @@ export function AuditTable() {
               <div className="px-6 py-16">
                 <EmptyState
                   icon={<Shield className="h-10 w-10" />}
-                  title="Нет записей"
-                  description="По выбранным фильтрам записей аудита не найдено."
+                  title={t("audit:emptyTitle")}
+                  description={t("audit:emptyDescription")}
                 />
               </div>
             )}
@@ -290,7 +279,11 @@ export function AuditTable() {
             {!logsQuery.isLoading && total > 0 && (
               <div className="flex items-center justify-between border-t border-border px-4 py-3 text-xs text-muted-foreground">
                 <span>
-                  {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, total)} из {total}
+                  {t("common:pagination.range", {
+                    from: page * PAGE_SIZE + 1,
+                    to: Math.min((page + 1) * PAGE_SIZE, total),
+                    total,
+                  })}
                 </span>
                 <div className="flex gap-1">
                   <Button
@@ -299,7 +292,7 @@ export function AuditTable() {
                     disabled={page === 0}
                     onClick={() => setPage((p) => p - 1)}
                   >
-                    Назад
+                    {t("common:back")}
                   </Button>
                   <Button
                     variant="outline"
@@ -307,7 +300,7 @@ export function AuditTable() {
                     disabled={page >= pageCount - 1}
                     onClick={() => setPage((p) => p + 1)}
                   >
-                    Вперёд
+                    {t("common:next")}
                   </Button>
                 </div>
               </div>
