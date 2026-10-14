@@ -153,6 +153,7 @@ model User {
   avatarUrl    String?
   hiredAt      DateTime?
   adminNote    String?
+  language     String     @default("ru")
   deletedAt    DateTime?
   createdAt    DateTime   @default(now())
 
@@ -283,6 +284,17 @@ model DeviceToken {
   fcmToken  String
   platform  String
   createdAt DateTime @default(now())
+}
+
+model AiInsight {
+  id          String   @id @default(uuid())
+  companyId   String   @unique
+  generatedAt DateTime @default(now())
+  insight     String
+  aggregates  Json
+  isEnough    Boolean  @default(true)
+
+  @@index([companyId])
 }
 
 model CompanyDefaultSchedule {
