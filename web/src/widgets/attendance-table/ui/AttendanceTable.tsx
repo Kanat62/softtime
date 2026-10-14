@@ -1,9 +1,11 @@
 import { useState, useMemo } from "react";
+import { useTranslation } from "react-i18next";
+import i18n from "@/shared/i18n";
 import { useReactTable, getCoreRowModel, flexRender, type ColumnDef } from "@tanstack/react-table";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { DayStatus } from "@softtime/shared";
 import { format } from "date-fns";
-import { ru } from "date-fns/locale";
+import { dateFnsLocale } from "@/shared/lib/date-locale";
 import { PenLine, Plus, RotateCcw, ClipboardX, Trash2 } from "lucide-react";
 import { attendanceApi } from "@/entities/attendance/api";
 import type { AttendanceRow } from "@/entities/attendance/model/types";
@@ -38,23 +40,23 @@ const weekAgo = (() => {
   return d.toISOString().slice(0, 10);
 })();
 
-const STATUS_OPTIONS: { label: string; value: DayStatus | "" }[] = [
-  { label: "Все статусы", value: "" },
-  { label: "В офисе", value: DayStatus.PRESENT },
-  { label: "Опоздание", value: DayStatus.LATE },
-  { label: "Отсутствует", value: DayStatus.ABSENT },
-  { label: "Не завершён", value: DayStatus.INCOMPLETE },
-  { label: "Согласованное отсутствие", value: DayStatus.APPROVED_ABSENCE },
-  { label: "Ручная правка", value: DayStatus.MANUAL },
-  { label: "Ранний уход", value: DayStatus.EARLY_LEAVE },
-  { label: "Сверхурочно", value: DayStatus.OVERTIME },
+// Подписи статусов — из общего словаря enums, локальной карты нет.
+const STATUS_OPTIONS: DayStatus[] = [
+  DayStatus.PRESENT,
+  DayStatus.LATE,
+  DayStatus.ABSENT,
+  DayStatus.INCOMPLETE,
+  DayStatus.APPROVED_ABSENCE,
+  DayStatus.MANUAL,
+  DayStatus.EARLY_LEAVE,
+  DayStatus.OVERTIME,
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function fmtDate(iso: string): string {
   try {
-    return format(new Date(iso), "d MMM yyyy", { locale: ru });
+    return format(new Date(iso), "d MMM yyyy", { locale: dateFnsLocale() });
   } catch {
     return iso;
   }
@@ -92,7 +94,9 @@ function fmtMinutes(min: number | null): string {
   if (min === null || min <= 0) return "—";
   const h = Math.floor(min / 60);
   const m = min % 60;
-  return m > 0 ? `${h}ч ${m}м` : `${h}ч`;
+  const hoursShort = i18n.t("common:duration.hoursShort");
+  const minutesShort = i18n.t("common:duration.minutesShort");
+  return m > 0 ? `${h}${hoursShort} ${m}${minutesShort}` : `${h}${hoursShort}`;
 }
 
 function initials(name: string) {
@@ -136,6 +140,7 @@ function TodayStatCard({
 // ─── Widget ───────────────────────────────────────────────────────────────────
 
 export function AttendanceTable() {
+  const { t } = useTranslation(["attendance", "enums", "common"]);
   const qc = useQueryClient();
 
   // ── Filter state ────────────────────────────────────────────────────────
@@ -237,7 +242,7 @@ export function AttendanceTable() {
   const columns: ColumnDef<AttendanceRow>[] = [
     {
       id: "employee",
-      header: "Сотрудник",
+      header: t("common:employee"),
       cell: ({ row }) => {
         const name = empMap.get(row.original.userId) ?? "—";
         return (
@@ -252,34 +257,34 @@ export function AttendanceTable() {
     },
     {
       id: "date",
-      header: "Дата",
+      header: t("common:date"),
       cell: ({ row }) => (
         <span className="text-sm text-muted-foreground">{fmtDate(row.original.date)}</span>
       ),
     },
     {
       id: "checkIn",
-      header: "Приход",
+      header: t("attendance:columns.checkIn"),
       cell: ({ row }) => (
         <span className="font-mono text-sm text-foreground">{fmtTime(row.original.checkInAt)}</span>
       ),
     },
     {
       id: "checkOut",
-      header: "Уход",
+      header: t("attendance:columns.checkOut"),
       cell: ({ row }) => (
         <span className="font-mono text-sm text-foreground">{fmtTime(row.original.checkOutAt)}</span>
       ),
     },
     {
       id: "status",
-      header: "Статус",
+      header: t("common:status"),
       cell: ({ row }) => (
         <div className="flex items-center gap-1.5">
           <StatusBadge status={row.original.status} />
           {row.original.isManual && (
             <span className="rounded-full border border-border bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
-              ручн.
+              {t("attendance:manualShort")}
             </span>
           )}
         </div>
@@ -287,7 +292,7 @@ export function AttendanceTable() {
     },
     {
       id: "worked",
-      header: "Отработано",
+      header: t("attendance:columns.worked"),
       cell: ({ row }) => (
         <span className="text-sm tabular-nums text-muted-foreground">
           {fmtMinutes(row.original.workedMinutes)}
@@ -304,7 +309,7 @@ export function AttendanceTable() {
             size="icon"
             className="h-7 w-7"
             onClick={() => openEdit(row.original)}
-            title="Исправить запись"
+            title={t("attendance:fixRecord")}
           >
             <PenLine className="h-3.5 w-3.5" strokeWidth={1.5} />
           </Button>
@@ -313,7 +318,7 @@ export function AttendanceTable() {
             size="icon"
             className="h-7 w-7 text-destructive hover:bg-destructive/10 hover:text-destructive"
             onClick={() => setDeleteRowId(row.original.id)}
-            title="Удалить запись"
+            title={t("attendance:deleteRecord")}
           >
             <Trash2 className="h-3.5 w-3.5" strokeWidth={1.5} />
           </Button>
@@ -349,11 +354,11 @@ export function AttendanceTable() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Посещаемость"
+        title={t("attendance:title")}
         actions={
           <Button size="sm" onClick={() => setAbsenceOpen(true)}>
             <Plus className="mr-2 h-4 w-4" strokeWidth={1.5} />
-            Добавить отсутствие
+            {t("attendance:addAbsence")}
           </Button>
         }
       />
@@ -364,19 +369,23 @@ export function AttendanceTable() {
           Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-2xl" />)
         ) : (
           <>
-            <TodayStatCard label="ВОВРЕМЯ" value={todayStats.onTime} valueClass="text-success" />
             <TodayStatCard
-              label="ОПОЗДАНИЯ"
+              label={t("attendance:todayStats.onTime")}
+              value={todayStats.onTime}
+              valueClass="text-success"
+            />
+            <TodayStatCard
+              label={t("attendance:todayStats.late")}
               value={todayStats.late}
               valueClass="text-warning-foreground"
             />
             <TodayStatCard
-              label="ОТСУТСТВУЮТ"
+              label={t("attendance:todayStats.absent")}
               value={todayStats.absent}
               valueClass="text-destructive"
             />
             <TodayStatCard
-              label="НЕ ЗАВЕРШЁН"
+              label={t("attendance:todayStats.incomplete")}
               value={todayStats.incomplete}
               valueClass="text-slate-600"
             />
@@ -387,7 +396,7 @@ export function AttendanceTable() {
       {/* ── Фильтры ───────────────────────────────────────────────────────── */}
       <div className="flex flex-wrap items-end gap-3">
         <div className="space-y-1">
-          <Label className="text-xs">От</Label>
+          <Label className="text-xs">{t("common:from")}</Label>
           <Input
             type="date"
             className="h-8 w-38 text-sm"
@@ -400,7 +409,7 @@ export function AttendanceTable() {
           />
         </div>
         <div className="space-y-1">
-          <Label className="text-xs">До</Label>
+          <Label className="text-xs">{t("common:to")}</Label>
           <Input
             type="date"
             className="h-8 w-38 text-sm"
@@ -415,7 +424,7 @@ export function AttendanceTable() {
         </div>
 
         <div className="space-y-1">
-          <Label className="text-xs">Сотрудник</Label>
+          <Label className="text-xs">{t("common:employee")}</Label>
           <Select
             value={userIdFilter}
             onValueChange={(v) => {
@@ -424,10 +433,10 @@ export function AttendanceTable() {
             }}
           >
             <SelectTrigger className="h-8 w-48 text-sm">
-              <SelectValue placeholder="Все сотрудники" />
+              <SelectValue placeholder={t("attendance:allEmployees")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="_all">Все сотрудники</SelectItem>
+              <SelectItem value="_all">{t("attendance:allEmployees")}</SelectItem>
               {(empQuery.data?.data ?? []).map((e) => (
                 <SelectItem key={e.id} value={e.id}>
                   {e.fullName}
@@ -438,7 +447,7 @@ export function AttendanceTable() {
         </div>
 
         <div className="space-y-1">
-          <Label className="text-xs">Статус</Label>
+          <Label className="text-xs">{t("common:status")}</Label>
           <Select
             value={statusFilter}
             onValueChange={(v) => {
@@ -447,12 +456,13 @@ export function AttendanceTable() {
             }}
           >
             <SelectTrigger className="h-8 w-52 text-sm">
-              <SelectValue placeholder="Все статусы" />
+              <SelectValue placeholder={t("attendance:allStatuses")} />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="_all">{t("attendance:allStatuses")}</SelectItem>
               {STATUS_OPTIONS.map((o) => (
-                <SelectItem key={o.value || "_all"} value={o.value || "_all"}>
-                  {o.label}
+                <SelectItem key={o} value={o}>
+                  {t(`enums:dayStatus.${o}`)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -473,7 +483,7 @@ export function AttendanceTable() {
             }}
           >
             <RotateCcw className="mr-1.5 h-3.5 w-3.5" strokeWidth={1.5} />
-            Сбросить
+            {t("common:reset")}
           </Button>
         )}
       </div>
@@ -482,14 +492,14 @@ export function AttendanceTable() {
       <div className="overflow-hidden rounded-2xl bg-card shadow-sm">
         {attQuery.isError ? (
           <div className="px-6 py-12 text-center">
-            <p className="text-sm text-muted-foreground">Не удалось загрузить данные.</p>
+            <p className="text-sm text-muted-foreground">{t("common:loadFailedShort")}</p>
             <Button
               variant="outline"
               size="sm"
               className="mt-3"
               onClick={() => qc.invalidateQueries({ queryKey: ["attendance"] })}
             >
-              Повторить
+              {t("common:retry")}
             </Button>
           </div>
         ) : (
@@ -556,8 +566,8 @@ export function AttendanceTable() {
               <div className="px-6 py-16">
                 <EmptyState
                   icon={<ClipboardX className="h-10 w-10" />}
-                  title="Записей нет"
-                  description="По выбранным фильтрам данных не найдено."
+                  title={t("attendance:emptyTitle")}
+                  description={t("attendance:emptyDescription")}
                 />
               </div>
             )}
@@ -565,7 +575,11 @@ export function AttendanceTable() {
             {!attQuery.isLoading && total > 0 && (
               <div className="flex items-center justify-between border-t border-border px-4 py-3 text-xs text-muted-foreground">
                 <span>
-                  {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, total)} из {total}
+                  {t("common:pagination.range", {
+                    from: page * PAGE_SIZE + 1,
+                    to: Math.min((page + 1) * PAGE_SIZE, total),
+                    total,
+                  })}
                 </span>
                 <div className="flex gap-1">
                   <Button
@@ -574,7 +588,7 @@ export function AttendanceTable() {
                     disabled={page === 0}
                     onClick={() => setPage((p) => p - 1)}
                   >
-                    Назад
+                    {t("common:back")}
                   </Button>
                   <Button
                     variant="outline"
@@ -582,7 +596,7 @@ export function AttendanceTable() {
                     disabled={page >= pageCount - 1}
                     onClick={() => setPage((p) => p + 1)}
                   >
-                    Вперёд
+                    {t("common:next")}
                   </Button>
                 </div>
               </div>
@@ -595,7 +609,7 @@ export function AttendanceTable() {
       <Dialog open={!!editRow} onOpenChange={(open) => !open && setEditRow(null)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Правка записи</DialogTitle>
+            <DialogTitle>{t("attendance:editDialog.title")}</DialogTitle>
             <DialogDescription>
               {editRow && `${empMap.get(editRow.userId) ?? "—"} · ${fmtDate(editRow.date)}`}
             </DialogDescription>
@@ -605,7 +619,7 @@ export function AttendanceTable() {
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <Label htmlFor="edit-checkin">Приход</Label>
+                  <Label htmlFor="edit-checkin">{t("attendance:columns.checkIn")}</Label>
                   <Input
                     id="edit-checkin"
                     type="time"
@@ -614,7 +628,7 @@ export function AttendanceTable() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="edit-checkout">Уход</Label>
+                  <Label htmlFor="edit-checkout">{t("attendance:columns.checkOut")}</Label>
                   <Input
                     id="edit-checkout"
                     type="time"
@@ -625,10 +639,10 @@ export function AttendanceTable() {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="edit-note">Комментарий</Label>
+                <Label htmlFor="edit-note">{t("common:comment")}</Label>
                 <Textarea
                   id="edit-note"
-                  placeholder="Причина правки..."
+                  placeholder={t("attendance:editDialog.notePlaceholder")}
                   rows={3}
                   value={editState.note}
                   onChange={(e) => setEditState((s) => ({ ...s, note: e.target.value }))}
@@ -636,14 +650,16 @@ export function AttendanceTable() {
               </div>
 
               <p className="rounded-xl bg-muted/50 px-3 py-2.5 text-xs text-muted-foreground">
-                Запись будет помечена как <strong>ручная правка</strong> и залогирована в аудит-лог.
+                {t("attendance:editDialog.noticeHead")}{" "}
+                <strong>{t("attendance:editDialog.noticeStrong")}</strong>{" "}
+                {t("attendance:editDialog.noticeTail")}
               </p>
             </div>
           )}
 
           <DialogFooter>
             <Button className="w-full" disabled={patchMutation.isPending} onClick={saveEdit}>
-              {patchMutation.isPending ? "Сохраняем..." : "Сохранить"}
+              {patchMutation.isPending ? t("common:saving") : t("common:save")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -653,9 +669,9 @@ export function AttendanceTable() {
       <Dialog open={!!deleteRowId} onOpenChange={(open) => !open && setDeleteRowId(null)}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>Удалить запись?</DialogTitle>
+            <DialogTitle>{t("attendance:deleteDialog.title")}</DialogTitle>
             <DialogDescription>
-              Это действие нельзя отменить. Запись о посещаемости будет удалена безвозвратно.
+              {t("attendance:deleteDialog.description")}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2">
@@ -665,7 +681,7 @@ export function AttendanceTable() {
               disabled={deleteMutation.isPending}
               onClick={() => setDeleteRowId(null)}
             >
-              Отмена
+              {t("common:cancel")}
             </Button>
             <Button
               variant="destructive"
@@ -673,7 +689,7 @@ export function AttendanceTable() {
               disabled={deleteMutation.isPending}
               onClick={() => deleteRowId && deleteMutation.mutate(deleteRowId)}
             >
-              {deleteMutation.isPending ? "Удаляем..." : "Удалить"}
+              {deleteMutation.isPending ? t("common:deleting") : t("common:delete")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -683,21 +699,21 @@ export function AttendanceTable() {
       <Dialog open={absenceOpen} onOpenChange={(open) => !open && setAbsenceOpen(false)}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>Добавить запись об отсутствии</DialogTitle>
+            <DialogTitle>{t("attendance:absenceDialog.title")}</DialogTitle>
             <DialogDescription>
-              Запись будет помечена как ручная и отражена в посещаемости.
+              {t("attendance:absenceDialog.description")}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
             <div className="space-y-1.5">
-              <Label>Сотрудник</Label>
+              <Label>{t("common:employee")}</Label>
               <Select
                 value={absenceState.userId}
                 onValueChange={(v) => setAbsenceState((s) => ({ ...s, userId: v }))}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Выберите сотрудника" />
+                  <SelectValue placeholder={t("attendance:absenceDialog.pickEmployee")} />
                 </SelectTrigger>
                 <SelectContent>
                   {(empQuery.data?.data ?? []).map((e) => (
@@ -710,7 +726,7 @@ export function AttendanceTable() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="abs-date">Дата</Label>
+              <Label htmlFor="abs-date">{t("common:date")}</Label>
               <Input
                 id="abs-date"
                 type="date"
@@ -721,7 +737,7 @@ export function AttendanceTable() {
             </div>
 
             <div className="space-y-1.5">
-              <Label>Тип</Label>
+              <Label>{t("attendance:absenceDialog.typeLabel")}</Label>
               <Select
                 value={absenceState.status}
                 onValueChange={(v) => setAbsenceState((s) => ({ ...s, status: v as DayStatus }))}
@@ -730,19 +746,19 @@ export function AttendanceTable() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={DayStatus.ABSENT}>Отсутствует (без причины)</SelectItem>
+                  <SelectItem value={DayStatus.ABSENT}>{t("attendance:absenceDialog.absentNoReason")}</SelectItem>
                   <SelectItem value={DayStatus.APPROVED_ABSENCE}>
-                    Согласованное отсутствие
+                    {t("enums:dayStatus.APPROVED_ABSENCE")}
                   </SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="abs-note">Причина / комментарий</Label>
+              <Label htmlFor="abs-note">{t("attendance:absenceDialog.noteLabel")}</Label>
               <Textarea
                 id="abs-note"
-                placeholder="Например: больничный, отпуск за свой счёт..."
+                placeholder={t("attendance:absenceDialog.notePlaceholder")}
                 rows={3}
                 value={absenceState.note}
                 onChange={(e) => setAbsenceState((s) => ({ ...s, note: e.target.value }))}
@@ -765,7 +781,7 @@ export function AttendanceTable() {
                 })
               }
             >
-              {absenceMutation.isPending ? "Сохраняем..." : "Добавить запись"}
+              {absenceMutation.isPending ? t("common:saving") : t("attendance:absenceDialog.submit")}
             </Button>
           </DialogFooter>
         </DialogContent>

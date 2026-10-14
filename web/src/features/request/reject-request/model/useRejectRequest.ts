@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { requestApi } from "@/entities/request/api";
 import { queryKeys } from "@/shared/api/query-keys";
 import { isNormalizedError } from "@/shared/api/error";
+import i18n from "@/shared/i18n";
 
 export function useRejectRequest() {
   const qc = useQueryClient();
@@ -10,11 +11,11 @@ export function useRejectRequest() {
     mutationFn: ({ id, comment }: { id: string; comment: string }) =>
       requestApi.reject(id, comment),
     onSuccess: () => {
-      toast.success("Заявка отклонена");
+      toast.success(i18n.t("requests:toast.rejected"));
       qc.invalidateQueries({ queryKey: queryKeys.requests({}) });
     },
     onError: (err) => {
-      const msg = isNormalizedError(err) ? err.message : "Ошибка при отклонении заявки";
+      const msg = isNormalizedError(err) ? err.message : i18n.t("requests:toast.rejectFailed");
       toast.error(msg);
     },
   });

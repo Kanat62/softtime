@@ -1,0 +1,41 @@
+{
+  "title": "Schedules",
+  "columns": {
+    "schedule": "Schedule",
+    "hours": "Hours"
+  },
+  "noWorkingDays": "No working days",
+  "working": "Working",
+  "dayOff": "Day off",
+  "minutesShort": "min",
+  "selectAll": "Select all",
+  "selectOne": "Select",
+  "selected": "Selected: {{count}}",
+  "oneForAll": "One for everyone",
+  "emptyTitle": "No employees",
+  "emptyDescription": "Add employees to manage their schedules.",
+  "dialog": {
+    "title": "Employee schedule"
+  },
+  "templateDialog": {
+    "title": "Create a schedule template",
+    "toSelected": "Will be applied to {{count}} selected employees",
+    "toAll": "Will be applied to all employees",
+    "applying": "Applying…",
+    "applyToSelected": "Apply to selected ({{count}})",
+    "applyToAll": "Apply to everyone"
+  },
+  "validation": {
+    "startRequired": "Set a start time",
+    "endRequired": "Set an end time",
+    "minHours": "A working day is at least 6 hours"
+  },
+  "toast": {
+    "saved": "Schedule saved",
+    "saveFailed": "Could not save the schedule",
+    "applied_one": "Template applied to {{count}} employee",
+    "applied_other": "Template applied to {{count}} employees",
+    "applyFailed": "Could not apply the template",
+    "appliedSimple": "Template applied"
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "title": "Requests",
+  "allRequests": "All requests",
+  "columns": {
+    "submitted": "Submitted"
+  },
+  "hints": {
+    "earlyLeave": "Approving means the early leave will not count as a violation.",
+    "absence": "Days in the selected period will be marked as “Approved absence”."
+  },
+  "emptyTitle": "No requests",
+  "emptyDescription": "No requests found for the selected filters.",
+  "dialog": {
+    "title": "Employee request",
+    "desiredTime": "Requested leave time",
+    "adminComment": "Administrator's comment",
+    "decisionNote": "Comment on the decision",
+    "decisionNotePlaceholder": "Optional…",
+    "approve": "Approve",
+    "reject": "Reject"
+  },
+  "rejectDialog": {
+    "title": "Reject this request?",
+    "head": "The request from",
+    "tail": "will be rejected",
+    "withNote": " with the comment: “{{note}}”",
+    "irreversible": ". This cannot be undone.",
+    "confirm": "Yes, reject",
+    "pending": "Rejecting…"
+  },
+  "toast": {
+    "approved": "Request approved",
+    "approveFailed": "Could not approve the request",
+    "rejected": "Request rejected",
+    "rejectFailed": "Could not reject the request"
+  }
+}

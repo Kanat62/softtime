@@ -4,6 +4,7 @@ import { scheduleApi } from "@/entities/schedule/api";
 import type { ScheduleDay } from "@/entities/schedule/model/types";
 import { queryKeys } from "@/shared/api/query-keys";
 import { isNormalizedError } from "@/shared/api/error";
+import i18n from "@/shared/i18n";
 
 export function useEditSchedule() {
   const qc = useQueryClient();
@@ -11,11 +12,11 @@ export function useEditSchedule() {
     mutationFn: ({ userId, days }: { userId: string; days: ScheduleDay[] }) =>
       scheduleApi.saveByUserId(userId, days),
     onSuccess: () => {
-      toast.success("Расписание сохранено");
+      toast.success(i18n.t("schedules:toast.saved"));
       qc.invalidateQueries({ queryKey: queryKeys.schedules() });
     },
     onError: (err) => {
-      const msg = isNormalizedError(err) ? err.message : "Ошибка при сохранении расписания";
+      const msg = isNormalizedError(err) ? err.message : i18n.t("schedules:toast.saveFailed");
       toast.error(msg);
     },
   });

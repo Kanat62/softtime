@@ -1,0 +1,33 @@
+{
+  "title": "QR-код",
+  "regenerate": "Перегенерировать",
+  "create": "Создать",
+  "createQr": "Создать QR-код",
+  "loadFailed": "Не удалось загрузить QR-код.",
+  "emptyTitle": "QR-код не создан",
+  "emptyDescription": "Создайте QR-код для check-in сотрудников в офисе.",
+  "linkedNetwork": "Привязанная сеть",
+  "noLink": "Без привязки",
+  "createdAt": "Создан",
+  "token": "Токен",
+  "download": "Скачать",
+  "print": "Печать",
+  "dialog": {
+    "regenTitle": "Перегенерировать QR-код?",
+    "regenDescription": "Старый QR-код станет недействительным. Замените распечатанный QR на новый.",
+    "createDescription": "Будет создан QR-код для check-in сотрудников.",
+    "networkLabel": "Офисная сеть (необязательно)",
+    "networkPlaceholder": "Без привязки к сети",
+    "creating": "Создаём..."
+  },
+  "poster": {
+    "scanHint": "Отсканируйте для отметки прихода",
+    "companyCode": "КОД КОМПАНИИ"
+  },
+  "toast": {
+    "regenerated": "QR-код обновлён",
+    "regenFailed": "Ошибка при обновлении QR",
+    "prepareFailed": "Не удалось подготовить QR",
+    "popupBlocked": "Разрешите всплывающие окна для печати"
+  }
+}

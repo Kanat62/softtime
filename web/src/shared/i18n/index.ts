@@ -11,6 +11,10 @@ import {
 import ruCommon from "./locales/ru/common.json";
 import ruSettings from "./locales/ru/settings.json";
 import ruEmployees from "./locales/ru/employees.json";
+import ruQr from "./locales/ru/qr.json";
+import ruRequests from "./locales/ru/requests.json";
+import ruSchedules from "./locales/ru/schedules.json";
+import ruAttendance from "./locales/ru/attendance.json";
 import ruSubscription from "./locales/ru/subscription.json";
 import ruAuth from "./locales/ru/auth.json";
 import ruDashboard from "./locales/ru/dashboard.json";
@@ -18,6 +22,10 @@ import ruNav from "./locales/ru/nav.json";
 import enCommon from "./locales/en/common.json";
 import enSettings from "./locales/en/settings.json";
 import enEmployees from "./locales/en/employees.json";
+import enQr from "./locales/en/qr.json";
+import enRequests from "./locales/en/requests.json";
+import enSchedules from "./locales/en/schedules.json";
+import enAttendance from "./locales/en/attendance.json";
 import enSubscription from "./locales/en/subscription.json";
 import enAuth from "./locales/en/auth.json";
 import enDashboard from "./locales/en/dashboard.json";
@@ -41,6 +49,10 @@ const resources = {
     common: ruCommon,
     settings: ruSettings,
     employees: ruEmployees,
+    qr: ruQr,
+    requests: ruRequests,
+    schedules: ruSchedules,
+    attendance: ruAttendance,
     subscription: ruSubscription,
     auth: ruAuth,
     dashboard: ruDashboard,
@@ -52,6 +64,10 @@ const resources = {
     common: enCommon,
     settings: enSettings,
     employees: enEmployees,
+    qr: enQr,
+    requests: enRequests,
+    schedules: enSchedules,
+    attendance: enAttendance,
     subscription: enSubscription,
     auth: enAuth,
     dashboard: enDashboard,
@@ -77,6 +93,10 @@ i18n
       "auth",
       "dashboard",
       "employees",
+      "attendance",
+      "schedules",
+      "requests",
+      "qr",
       "subscription",
       "enums",
       "validation",

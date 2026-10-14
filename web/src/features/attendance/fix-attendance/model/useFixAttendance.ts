@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { attendanceApi } from "@/entities/attendance/api";
 import type { AttendancePatchDto } from "@/entities/attendance/model/types";
+import i18n from "@/shared/i18n";
 
 export function useFixAttendance(onSuccess?: () => void) {
   const qc = useQueryClient();
@@ -9,10 +10,10 @@ export function useFixAttendance(onSuccess?: () => void) {
     mutationFn: ({ id, dto }: { id: string; dto: AttendancePatchDto }) =>
       attendanceApi.patchRecord(id, dto),
     onSuccess: () => {
-      toast.success("Запись обновлена");
+      toast.success(i18n.t("attendance:toast.fixed"));
       qc.invalidateQueries({ queryKey: ["attendance"] });
       onSuccess?.();
     },
-    onError: () => toast.error("Ошибка при сохранении"),
+    onError: () => toast.error(i18n.t("attendance:toast.fixFailed")),
   });
 }

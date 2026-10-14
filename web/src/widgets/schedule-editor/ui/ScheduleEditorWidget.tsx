@@ -1,4 +1,6 @@
 import { useState, useMemo, useEffect, useCallback, type ChangeEvent } from "react";
+import { useTranslation } from "react-i18next";
+import i18n from "@/shared/i18n";
 import { useReactTable, getCoreRowModel, flexRender, type ColumnDef } from "@tanstack/react-table";
 import { useQuery, useQueries, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -48,16 +50,6 @@ const WEEKDAY_ORDER = [
   Weekday.SUN,
 ] as const;
 
-const WEEKDAY_LABEL: Record<Weekday, string> = {
-  [Weekday.MON]: "Пн",
-  [Weekday.TUE]: "Вт",
-  [Weekday.WED]: "Ср",
-  [Weekday.THU]: "Чт",
-  [Weekday.FRI]: "Пт",
-  [Weekday.SAT]: "Сб",
-  [Weekday.SUN]: "Вс",
-};
-
 // ─── Form schema (mirrors backend rule: working day ≥ 6 hours) ───────────────
 
 const dayFormSchema = z
@@ -71,13 +63,13 @@ const dayFormSchema = z
   .superRefine((data, ctx) => {
     if (!data.isWorkingDay) return;
     if (!data.startTime) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Укажите начало", path: ["startTime"] });
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "schedules:validation.startRequired", path: ["startTime"] });
       return;
     }
     if (!data.endTime) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Укажите окончание",
+        message: "schedules:validation.endRequired",
         path: ["endTime"],
       });
       return;
@@ -89,7 +81,7 @@ const dayFormSchema = z
     if (toMin(data.endTime) - toMin(data.startTime) < 360) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Рабочий день не менее 6 часов",
+        message: "schedules:validation.minHours",
         path: ["endTime"],
       });
     }
@@ -137,10 +129,10 @@ function formValuesToScheduleDays(values: ScheduleFormValues): ScheduleDay[] {
 
 function summaryLabel(days: ScheduleDay[]): string {
   const working = days.filter((d) => d.isWorkingDay);
-  if (working.length === 0) return "Нет рабочих дней";
+  if (working.length === 0) return i18n.t("schedules:noWorkingDays");
   const first = working[0];
   const times = first.startTime && first.endTime ? `${first.startTime}–${first.endTime}` : "—";
-  const dayLabels = working.map((d) => WEEKDAY_LABEL[d.weekday]).join(", ");
+  const dayLabels = working.map((d) => i18n.t(`enums:weekdayShort.${d.weekday}`)).join(", ");
   return `${times} · ${dayLabels}`;
 }
 
@@ -168,6 +160,7 @@ function DayRow({
   setValue: UseFormSetValue<ScheduleFormValues>;
   errors: FieldErrors<ScheduleFormValues>;
 }) {
+  const { t } = useTranslation(["schedules", "enums"]);
   const dayErr = errors.days?.[index];
 
   const handleWorkingChange = useCallback(
@@ -183,7 +176,7 @@ function DayRow({
   return (
     <div className="flex flex-wrap items-start gap-3 rounded-xl bg-muted/30 px-4 py-3">
       <span className="w-5 pt-0.5 text-sm font-semibold text-foreground">
-        {WEEKDAY_LABEL[WEEKDAY_ORDER[index]]}
+        {t(`enums:weekdayShort.${WEEKDAY_ORDER[index]}`)}
       </span>
 
       <div className="flex items-center gap-2">
@@ -195,7 +188,7 @@ function DayRow({
           className="h-4 w-4 cursor-pointer rounded-sm border border-primary accent-primary"
         />
         <Label htmlFor={`working-${index}`} className="cursor-pointer text-sm">
-          Рабочий
+          {t("schedules:working")}
         </Label>
       </div>
 
@@ -215,7 +208,7 @@ function DayRow({
               )}
             />
             {dayErr?.startTime && (
-              <p className="text-[11px] text-destructive">{dayErr.startTime.message}</p>
+              <p className="text-[11px] text-destructive">{t(dayErr.startTime.message ?? "")}</p>
             )}
           </div>
 
@@ -235,7 +228,7 @@ function DayRow({
               )}
             />
             {dayErr?.endTime && (
-              <p className="text-[11px] text-destructive">{dayErr.endTime.message}</p>
+              <p className="text-[11px] text-destructive">{t(dayErr.endTime.message ?? "")}</p>
             )}
           </div>
 
@@ -256,11 +249,11 @@ function DayRow({
                 />
               )}
             />
-            <span className="text-xs text-muted-foreground">мин</span>
+            <span className="text-xs text-muted-foreground">{t("schedules:minutesShort")}</span>
           </div>
         </div>
       ) : (
-        <span className="text-sm text-muted-foreground">Выходной</span>
+        <span className="text-sm text-muted-foreground">{t("schedules:dayOff")}</span>
       )}
     </div>
   );
@@ -279,6 +272,7 @@ function ScheduleEditor({
   dayValues: ScheduleFormValues["days"];
   errors: FieldErrors<ScheduleFormValues>;
 }) {
+  const { t } = useTranslation(["schedules", "enums"]);
   const { fields } = useFieldArray({ control, name: "days" });
 
   return (
@@ -300,6 +294,7 @@ function ScheduleEditor({
 // ─── Widget ───────────────────────────────────────────────────────────────────
 
 export function ScheduleEditorWidget() {
+  const { t } = useTranslation(["schedules", "enums", "common"]);
   const qc = useQueryClient();
 
   // ── State ────────────────────────────────────────────────────────────────
@@ -359,13 +354,13 @@ export function ScheduleEditorWidget() {
     mutationFn: ({ userId, days }: { userId: string; days: ScheduleDay[] }) =>
       scheduleApi.saveByUserId(userId, days),
     onSuccess: () => {
-      toast.success("Расписание сохранено");
+      toast.success(t("schedules:toast.saved"));
       setEditEmployee(null);
       qc.invalidateQueries({ queryKey: queryKeys.schedules() });
     },
     onError: (err) => {
       // Surface the backend 422 message (e.g. "Working day must be at least 6 hours")
-      const msg = isNormalizedError(err) ? err.message : "Ошибка при сохранении расписания";
+      const msg = isNormalizedError(err) ? err.message : t("schedules:toast.saveFailed");
       toast.error(msg);
     },
   });
@@ -375,13 +370,13 @@ export function ScheduleEditorWidget() {
       scheduleApi.applyToAll(dto),
     onSuccess: (_, vars) => {
       const count = vars.userIds?.length ?? employees.length;
-      toast.success(`Шаблон применён к ${count} сотруд.`);
+      toast.success(t("schedules:toast.applied", { count }));
       setTemplateOpen(false);
       setSelectedIds(new Set());
       qc.invalidateQueries({ queryKey: queryKeys.schedules() });
     },
     onError: (err) => {
-      const msg = isNormalizedError(err) ? err.message : "Ошибка при применении шаблона";
+      const msg = isNormalizedError(err) ? err.message : t("schedules:toast.applyFailed");
       toast.error(msg);
     },
   });
@@ -427,7 +422,7 @@ export function ScheduleEditorWidget() {
           type="checkbox"
           checked={employees.length > 0 && selectedIds.size === employees.length}
           onChange={toggleSelectAll}
-          aria-label="Выбрать всех"
+          aria-label={t("schedules:selectAll")}
           className="h-4 w-4 cursor-pointer rounded-sm accent-primary"
         />
       ),
@@ -436,14 +431,14 @@ export function ScheduleEditorWidget() {
           type="checkbox"
           checked={selectedIds.has(row.original.id)}
           onChange={() => toggleSelect(row.original.id)}
-          aria-label="Выбрать"
+          aria-label={t("schedules:selectOne")}
           className="h-4 w-4 cursor-pointer rounded-sm accent-primary"
         />
       ),
     },
     {
       id: "employee",
-      header: "Сотрудник",
+      header: t("common:employee"),
       cell: ({ row }) => (
         <div className="flex items-center gap-2.5">
           <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary-light text-[10px] font-semibold text-primary">
@@ -455,7 +450,7 @@ export function ScheduleEditorWidget() {
     },
     {
       id: "week",
-      header: "График",
+      header: t("schedules:columns.schedule"),
       cell: ({ row }) => {
         const days = scheduleMap.get(row.original.id) ?? [];
         return schedulesLoading ? (
@@ -478,7 +473,7 @@ export function ScheduleEditorWidget() {
                       : "bg-muted text-muted-foreground",
                   )}
                 >
-                  {WEEKDAY_LABEL[wd]}
+                  {t(`enums:weekdayShort.${wd}`)}
                 </div>
               );
             })}
@@ -488,7 +483,7 @@ export function ScheduleEditorWidget() {
     },
     {
       id: "summary",
-      header: "Часы",
+      header: t("schedules:columns.hours"),
       cell: ({ row }) => {
         const days = scheduleMap.get(row.original.id) ?? [];
         if (schedulesLoading) return <Skeleton className="h-3.5 w-36 rounded" />;
@@ -516,7 +511,7 @@ export function ScheduleEditorWidget() {
           }}
         >
           <PenLine className="h-3.5 w-3.5" strokeWidth={1.5} />
-          Редактировать
+          {t("common:edit")}
         </Button>
       ),
     },
@@ -532,11 +527,13 @@ export function ScheduleEditorWidget() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Расписания"
+        title={t("schedules:title")}
         actions={
           <div className="flex items-center gap-2">
             {selectedIds.size > 0 && (
-              <span className="text-sm text-muted-foreground">Выбрано: {selectedIds.size}</span>
+              <span className="text-sm text-muted-foreground">
+                {t("schedules:selected", { count: selectedIds.size })}
+              </span>
             )}
             <Button
               size="sm"
@@ -547,7 +544,7 @@ export function ScheduleEditorWidget() {
               }}
             >
               <Users className="mr-2 h-4 w-4" strokeWidth={1.5} />
-              Один для всех
+              {t("schedules:oneForAll")}
             </Button>
           </div>
         }
@@ -557,7 +554,7 @@ export function ScheduleEditorWidget() {
       <div className="overflow-hidden rounded-2xl bg-card shadow-sm">
         {empQuery.isError ? (
           <div className="px-6 py-12 text-center">
-            <p className="text-sm text-muted-foreground">Не удалось загрузить данные.</p>
+            <p className="text-sm text-muted-foreground">{t("common:loadFailedShort")}</p>
             <Button
               variant="outline"
               size="sm"
@@ -566,7 +563,7 @@ export function ScheduleEditorWidget() {
                 qc.invalidateQueries({ queryKey: queryKeys.employees({ page: 1, limit: 100 }) })
               }
             >
-              Повторить
+              {t("common:retry")}
             </Button>
           </div>
         ) : (
@@ -631,8 +628,8 @@ export function ScheduleEditorWidget() {
               <div className="px-6 py-16">
                 <EmptyState
                   icon={<CalendarDays className="h-10 w-10" />}
-                  title="Нет сотрудников"
-                  description="Добавьте сотрудников, чтобы управлять их расписаниями."
+                  title={t("schedules:emptyTitle")}
+                  description={t("schedules:emptyDescription")}
                 />
               </div>
             )}
@@ -644,7 +641,7 @@ export function ScheduleEditorWidget() {
       <Dialog open={!!editEmployee} onOpenChange={(open) => !open && setEditEmployee(null)}>
         <DialogContent className="flex max-h-[90vh] flex-col sm:max-w-xl">
           <DialogHeader>
-            <DialogTitle>Расписание сотрудника</DialogTitle>
+            <DialogTitle>{t("schedules:dialog.title")}</DialogTitle>
             <DialogDescription>{editEmployee?.fullName}</DialogDescription>
           </DialogHeader>
 
@@ -663,7 +660,7 @@ export function ScheduleEditorWidget() {
 
             <DialogFooter className="mt-6">
               <Button type="submit" className="w-full" disabled={saveMutation.isPending}>
-                {saveMutation.isPending ? "Сохраняем..." : "Сохранить"}
+                {saveMutation.isPending ? t("common:saving") : t("common:save")}
               </Button>
             </DialogFooter>
           </form>
@@ -674,11 +671,11 @@ export function ScheduleEditorWidget() {
       <Dialog open={templateOpen} onOpenChange={(open) => !open && setTemplateOpen(false)}>
         <DialogContent className="flex max-h-[90vh] flex-col sm:max-w-xl">
           <DialogHeader>
-            <DialogTitle>Создать шаблон расписания</DialogTitle>
+            <DialogTitle>{t("schedules:templateDialog.title")}</DialogTitle>
             <DialogDescription>
               {selectedIds.size > 0
-                ? `Будет применён к ${selectedIds.size} выбранным сотрудникам`
-                : "Будет применён ко всем сотрудникам"}
+                ? t("schedules:templateDialog.toSelected", { count: selectedIds.size })
+                : t("schedules:templateDialog.toAll")}
             </DialogDescription>
           </DialogHeader>
 
@@ -698,10 +695,10 @@ export function ScheduleEditorWidget() {
             <DialogFooter className="mt-6">
               <Button type="submit" className="w-full" disabled={applyMutation.isPending}>
                 {applyMutation.isPending
-                  ? "Применяем..."
+                  ? t("schedules:templateDialog.applying")
                   : selectedIds.size > 0
-                    ? `Применить к выбранным (${selectedIds.size})`
-                    : "Применить ко всем"}
+                    ? t("schedules:templateDialog.applyToSelected", { count: selectedIds.size })
+                    : t("schedules:templateDialog.applyToAll")}
               </Button>
             </DialogFooter>
           </form>

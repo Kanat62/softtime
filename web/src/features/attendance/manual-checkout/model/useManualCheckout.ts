@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { attendanceApi } from "@/entities/attendance/api";
+import i18n from "@/shared/i18n";
 
 export function useManualCheckout(onSuccess?: () => void) {
   const qc = useQueryClient();
@@ -8,11 +9,11 @@ export function useManualCheckout(onSuccess?: () => void) {
     mutationFn: (attendanceId: string) =>
       attendanceApi.manualCheckout(attendanceId, new Date().toISOString()),
     onSuccess: () => {
-      toast.success("Уход отмечен");
+      toast.success(i18n.t("attendance:toast.checkedOut"));
       qc.invalidateQueries({ queryKey: ["attendance"] });
       qc.invalidateQueries({ queryKey: ["inOffice"] });
       onSuccess?.();
     },
-    onError: () => toast.error("Не удалось отметить уход"),
+    onError: () => toast.error(i18n.t("attendance:toast.checkoutFailed")),
   });
 }

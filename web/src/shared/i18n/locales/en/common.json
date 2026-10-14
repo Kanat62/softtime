@@ -22,5 +22,20 @@
   "password": "Password",
   "noData": "No data",
   "showPassword": "Show password",
-  "hidePassword": "Hide password"
+  "hidePassword": "Hide password",
+  "employee": "Employee",
+  "date": "Date",
+  "status": "Status",
+  "type": "Type",
+  "period": "Period",
+  "comment": "Comment",
+  "reset": "Reset",
+  "details": "Details",
+  "save": "Save",
+  "saving": "Saving…",
+  "deleting": "Deleting…",
+  "from": "From",
+  "to": "To",
+  "loadFailedShort": "Could not load the data.",
+  "edit": "Edit"
 }

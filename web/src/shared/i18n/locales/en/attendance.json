@@ -1,0 +1,51 @@
+{
+  "title": "Attendance",
+  "allStatuses": "All statuses",
+  "allEmployees": "All employees",
+  "addAbsence": "Add absence",
+  "todayStats": {
+    "onTime": "ON TIME",
+    "late": "LATE",
+    "absent": "ABSENT",
+    "incomplete": "INCOMPLETE"
+  },
+  "columns": {
+    "checkIn": "Check in",
+    "checkOut": "Check out",
+    "worked": "Worked"
+  },
+  "manualShort": "man.",
+  "fixRecord": "Fix the record",
+  "deleteRecord": "Delete the record",
+  "emptyTitle": "No records",
+  "emptyDescription": "Nothing found for the selected filters.",
+  "editDialog": {
+    "title": "Edit record",
+    "notePlaceholder": "Reason for the change…",
+    "noticeHead": "The record will be marked as a",
+    "noticeStrong": "manual entry",
+    "noticeTail": "and written to the audit log."
+  },
+  "deleteDialog": {
+    "title": "Delete this record?",
+    "description": "This cannot be undone. The attendance record will be permanently removed."
+  },
+  "absenceDialog": {
+    "title": "Add an absence record",
+    "description": "The record will be marked as manual and shown in attendance.",
+    "pickEmployee": "Select an employee",
+    "typeLabel": "Type",
+    "absentNoReason": "Absent (no reason)",
+    "noteLabel": "Reason / comment",
+    "notePlaceholder": "For example: sick leave, unpaid leave…",
+    "submit": "Add record"
+  },
+  "toast": {
+    "fixed": "Record updated",
+    "fixFailed": "Could not save the record",
+    "added": "Record added",
+    "addFailed": "Could not add the record",
+    "checkedOut": "Check-out recorded",
+    "checkoutFailed": "Could not record the check-out"
+  }
+}

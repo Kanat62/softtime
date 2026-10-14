@@ -1,0 +1,33 @@
+{
+  "title": "QR code",
+  "regenerate": "Regenerate",
+  "create": "Create",
+  "createQr": "Create a QR code",
+  "loadFailed": "Could not load the QR code.",
+  "emptyTitle": "No QR code yet",
+  "emptyDescription": "Create a QR code for employee check-in at the office.",
+  "linkedNetwork": "Linked network",
+  "noLink": "Not linked",
+  "createdAt": "Created",
+  "token": "Token",
+  "download": "Download",
+  "print": "Print",
+  "dialog": {
+    "regenTitle": "Regenerate the QR code?",
+    "regenDescription": "The old QR code stops working. Replace the printed QR with the new one.",
+    "createDescription": "A QR code for employee check-in will be created.",
+    "networkLabel": "Office network (optional)",
+    "networkPlaceholder": "Not linked to a network",
+    "creating": "Creating…"
+  },
+  "poster": {
+    "scanHint": "Scan to check in",
+    "companyCode": "COMPANY CODE"
+  },
+  "toast": {
+    "regenerated": "QR code updated",
+    "regenFailed": "Could not update the QR code",
+    "prepareFailed": "Could not prepare the QR code",
+    "popupBlocked": "Allow pop-ups to print"
+  }
+}

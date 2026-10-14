@@ -1,0 +1,43 @@
+{
+  "title": "Расписания",
+  "columns": {
+    "schedule": "График",
+    "hours": "Часы"
+  },
+  "noWorkingDays": "Нет рабочих дней",
+  "working": "Рабочий",
+  "dayOff": "Выходной",
+  "minutesShort": "мин",
+  "selectAll": "Выбрать всех",
+  "selectOne": "Выбрать",
+  "selected": "Выбрано: {{count}}",
+  "oneForAll": "Один для всех",
+  "emptyTitle": "Нет сотрудников",
+  "emptyDescription": "Добавьте сотрудников, чтобы управлять их расписаниями.",
+  "dialog": {
+    "title": "Расписание сотрудника"
+  },
+  "templateDialog": {
+    "title": "Создать шаблон расписания",
+    "toSelected": "Будет применён к {{count}} выбранным сотрудникам",
+    "toAll": "Будет применён ко всем сотрудникам",
+    "applying": "Применяем...",
+    "applyToSelected": "Применить к выбранным ({{count}})",
+    "applyToAll": "Применить ко всем"
+  },
+  "validation": {
+    "startRequired": "Укажите начало",
+    "endRequired": "Укажите окончание",
+    "minHours": "Рабочий день не менее 6 часов"
+  },
+  "toast": {
+    "saved": "Расписание сохранено",
+    "saveFailed": "Ошибка при сохранении расписания",
+    "applied_one": "Шаблон применён к {{count}} сотруднику",
+    "applied_few": "Шаблон применён к {{count}} сотрудникам",
+    "applied_many": "Шаблон применён к {{count}} сотрудникам",
+    "applied_other": "Шаблон применён к {{count}} сотрудникам",
+    "applyFailed": "Ошибка при применении шаблона",
+    "appliedSimple": "Шаблон применён"
+  }
+}

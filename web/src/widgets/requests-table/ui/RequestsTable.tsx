@@ -1,10 +1,11 @@
 import { useState, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { useReactTable, getCoreRowModel, flexRender, type ColumnDef } from "@tanstack/react-table";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { RequestStatus, RequestType } from "@softtime/shared";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { ru } from "date-fns/locale";
+import { dateFnsLocale } from "@/shared/lib/date-locale";
 import { ClipboardList, RotateCcw } from "lucide-react";
 import { requestApi } from "@/entities/request/api";
 import type { AbsenceRequest } from "@/entities/request/model/types";
@@ -40,22 +41,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 const PAGE_SIZE = 20;
 
-const TYPE_LABEL: Record<RequestType, string> = {
-  [RequestType.SICK]: "Больничный",
-  [RequestType.FAMILY]: "Семейные обстоятельства",
-  [RequestType.VACATION]: "Отпуск",
-  [RequestType.BUSINESS_TRIP]: "Командировка",
-  [RequestType.REMOTE]: "Удалённая работа",
-  [RequestType.LATE_REASON]: "Опоздание (с причиной)",
-  [RequestType.EARLY_LEAVE]: "Ранний уход (с причиной)",
-  [RequestType.OTHER]: "Другое",
-};
-
-const STATUS_OPTIONS: { label: string; value: RequestStatus | "" }[] = [
-  { label: "Все заявки", value: "" },
-  { label: "На рассмотрении", value: RequestStatus.PENDING },
-  { label: "Одобрено", value: RequestStatus.APPROVED },
-  { label: "Отклонено", value: RequestStatus.REJECTED },
+// Подписи типов и статусов — из общего словаря enums, локальных карт нет.
+const STATUS_OPTIONS: RequestStatus[] = [
+  RequestStatus.PENDING,
+  RequestStatus.APPROVED,
+  RequestStatus.REJECTED,
 ];
 
 // Types that create absence days when approved
@@ -71,7 +61,7 @@ const ABSENCE_TYPES = new Set<RequestType>([
 
 function fmtDate(iso: string): string {
   try {
-    return format(new Date(iso), "d MMM yyyy", { locale: ru });
+    return format(new Date(iso), "d MMM yyyy", { locale: dateFnsLocale() });
   } catch {
     return iso;
   }
@@ -80,7 +70,7 @@ function fmtDate(iso: string): string {
 function fmtPeriod(start: string, end: string | null): string {
   try {
     if (!end || end === start) return fmtDate(start);
-    return `${format(new Date(start), "d MMM", { locale: ru })} – ${fmtDate(end)}`;
+    return `${format(new Date(start), "d MMM", { locale: dateFnsLocale() })} – ${fmtDate(end)}`;
   } catch {
     return start;
   }
@@ -109,17 +99,18 @@ function DetailRow({ label, value }: { label: string; value: string }) {
 // ─── Approve context hint ─────────────────────────────────────────────────────
 
 function ApproveHint({ type }: { type: RequestType }) {
+  const { t } = useTranslation("requests");
   if (type === RequestType.EARLY_LEAVE) {
     return (
       <p className="rounded-lg bg-blue-50 px-3 py-2 text-xs text-blue-700">
-        Одобрение означает, что ранний уход не будет засчитан как нарушение.
+        {t("requests:hints.earlyLeave")}
       </p>
     );
   }
   if (ABSENCE_TYPES.has(type)) {
     return (
       <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-700">
-        Дни в указанном периоде будут помечены как «Одобрённое отсутствие».
+        {t("requests:hints.absence")}
       </p>
     );
   }
@@ -129,6 +120,7 @@ function ApproveHint({ type }: { type: RequestType }) {
 // ─── Widget ───────────────────────────────────────────────────────────────────
 
 export function RequestsTable() {
+  const { t } = useTranslation(["requests", "enums", "common"]);
   const qc = useQueryClient();
 
   // ── Filter / pagination state ────────────────────────────────────────────
@@ -181,13 +173,13 @@ export function RequestsTable() {
   const approveMutation = useMutation({
     mutationFn: ({ id }: { id: string }) => requestApi.approve(id),
     onSuccess: () => {
-      toast.success("Заявка одобрена");
+      toast.success(t("requests:toast.approved"));
       setActiveReq(null);
       setDecisionNote("");
       invalidate();
     },
     onError: (err) => {
-      const msg = isNormalizedError(err) ? err.message : "Ошибка при одобрении заявки";
+      const msg = isNormalizedError(err) ? err.message : t("requests:toast.approveFailed");
       toast.error(msg);
     },
   });
@@ -195,14 +187,14 @@ export function RequestsTable() {
   const rejectMutation = useMutation({
     mutationFn: ({ id, note }: { id: string; note: string }) => requestApi.reject(id, note),
     onSuccess: () => {
-      toast.success("Заявка отклонена");
+      toast.success(t("requests:toast.rejected"));
       setActiveReq(null);
       setDecisionNote("");
       setConfirmReject(false);
       invalidate();
     },
     onError: (err) => {
-      const msg = isNormalizedError(err) ? err.message : "Ошибка при отклонении заявки";
+      const msg = isNormalizedError(err) ? err.message : t("requests:toast.rejectFailed");
       toast.error(msg);
     },
   });
@@ -232,7 +224,7 @@ export function RequestsTable() {
   const columns: ColumnDef<AbsenceRequest>[] = [
     {
       id: "employee",
-      header: "Сотрудник",
+      header: t("common:employee"),
       cell: ({ row }) => {
         const name = empMap.get(row.original.userId) ?? "—";
         return (
@@ -247,16 +239,16 @@ export function RequestsTable() {
     },
     {
       id: "type",
-      header: "Тип",
+      header: t("common:type"),
       cell: ({ row }) => (
         <span className="text-sm text-foreground">
-          {TYPE_LABEL[row.original.type] ?? row.original.type}
+          {t(`enums:requestType.${row.original.type}`)}
         </span>
       ),
     },
     {
       id: "period",
-      header: "Период",
+      header: t("common:period"),
       cell: ({ row }) => (
         <span className="text-sm text-muted-foreground">
           {fmtPeriod(row.original.startDate, row.original.endDate)}
@@ -265,12 +257,12 @@ export function RequestsTable() {
     },
     {
       id: "status",
-      header: "Статус",
+      header: t("common:status"),
       cell: ({ row }) => <StatusBadge status={row.original.status} />,
     },
     {
       id: "createdAt",
-      header: "Подано",
+      header: t("requests:columns.submitted"),
       cell: ({ row }) => (
         <span className="text-sm text-muted-foreground">{fmtDate(row.original.createdAt)}</span>
       ),
@@ -285,7 +277,7 @@ export function RequestsTable() {
           className="h-7 text-xs"
           onClick={() => openSheet(row.original)}
         >
-          Детали
+          {t("common:details")}
         </Button>
       ),
     },
@@ -308,7 +300,7 @@ export function RequestsTable() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Заявки"
+        title={t("requests:title")}
         actions={
           pendingCount > 0 ? (
             <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-destructive px-2 text-xs font-semibold text-white">
@@ -321,7 +313,7 @@ export function RequestsTable() {
       {/* ── Фильтр ───────────────────────────────────────────────────────── */}
       <div className="flex flex-wrap items-end gap-3">
         <div className="space-y-1">
-          <Label className="text-xs">Статус</Label>
+          <Label className="text-xs">{t("common:status")}</Label>
           <Select
             value={statusFilter}
             onValueChange={(v) => {
@@ -330,13 +322,14 @@ export function RequestsTable() {
             }}
           >
             <SelectTrigger className="h-8 w-52 text-sm">
-              <SelectValue placeholder="Все заявки" />
+              <SelectValue placeholder={t("requests:allRequests")} />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="_all">{t("requests:allRequests")}</SelectItem>
               {STATUS_OPTIONS.map((o) => (
-                <SelectItem key={o.value || "_all"} value={o.value || "_all"}>
-                  {o.label}
-                  {o.value === RequestStatus.PENDING && pendingCount > 0 && (
+                <SelectItem key={o} value={o}>
+                  {t(`enums:requestStatus.${o}`)}
+                  {o === RequestStatus.PENDING && pendingCount > 0 && (
                     <span className="ml-2 rounded-full bg-destructive px-1.5 py-0.5 text-[10px] text-white">
                       {pendingCount}
                     </span>
@@ -358,7 +351,7 @@ export function RequestsTable() {
             }}
           >
             <RotateCcw className="mr-1.5 h-3.5 w-3.5" strokeWidth={1.5} />
-            Сбросить
+            {t("common:reset")}
           </Button>
         )}
       </div>
@@ -367,9 +360,9 @@ export function RequestsTable() {
       <div className="overflow-hidden rounded-2xl bg-card shadow-sm">
         {reqQuery.isError ? (
           <div className="px-6 py-12 text-center">
-            <p className="text-sm text-muted-foreground">Не удалось загрузить данные.</p>
+            <p className="text-sm text-muted-foreground">{t("common:loadFailedShort")}</p>
             <Button variant="outline" size="sm" className="mt-3" onClick={invalidate}>
-              Повторить
+              {t("common:retry")}
             </Button>
           </div>
         ) : (
@@ -434,8 +427,8 @@ export function RequestsTable() {
               <div className="px-6 py-16">
                 <EmptyState
                   icon={<ClipboardList className="h-10 w-10" />}
-                  title="Заявок нет"
-                  description="По выбранным фильтрам заявок не найдено."
+                  title={t("requests:emptyTitle")}
+                  description={t("requests:emptyDescription")}
                 />
               </div>
             )}
@@ -443,7 +436,11 @@ export function RequestsTable() {
             {!reqQuery.isLoading && total > 0 && (
               <div className="flex items-center justify-between border-t border-border px-4 py-3 text-xs text-muted-foreground">
                 <span>
-                  {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, total)} из {total}
+                  {t("common:pagination.range", {
+                    from: page * PAGE_SIZE + 1,
+                    to: Math.min((page + 1) * PAGE_SIZE, total),
+                    total,
+                  })}
                 </span>
                 <div className="flex gap-1">
                   <Button
@@ -452,7 +449,7 @@ export function RequestsTable() {
                     disabled={page === 0}
                     onClick={() => setPage((p) => p - 1)}
                   >
-                    Назад
+                    {t("common:back")}
                   </Button>
                   <Button
                     variant="outline"
@@ -460,7 +457,7 @@ export function RequestsTable() {
                     disabled={page >= pageCount - 1}
                     onClick={() => setPage((p) => p + 1)}
                   >
-                    Вперёд
+                    {t("common:next")}
                   </Button>
                 </div>
               </div>
@@ -473,7 +470,7 @@ export function RequestsTable() {
       <Dialog open={!!activeReq} onOpenChange={(open) => !open && setActiveReq(null)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Заявка сотрудника</DialogTitle>
+            <DialogTitle>{t("requests:dialog.title")}</DialogTitle>
             <DialogDescription>
               {activeReq && (empMap.get(activeReq.userId) ?? "—")}
             </DialogDescription>
@@ -483,18 +480,18 @@ export function RequestsTable() {
             <div className="flex flex-col gap-5">
               {/* Details block */}
               <div className="space-y-3 rounded-xl bg-muted/40 px-4 py-3">
-                <DetailRow label="Тип" value={TYPE_LABEL[activeReq.type] ?? activeReq.type} />
+                <DetailRow label={t("common:type")} value={t(`enums:requestType.${activeReq.type}`)} />
                 <DetailRow
-                  label="Период"
+                  label={t("common:period")}
                   value={fmtPeriod(activeReq.startDate, activeReq.endDate)}
                 />
                 {activeReq.type === RequestType.EARLY_LEAVE && activeReq.desiredTime && (
-                  <DetailRow label="Желаемое время ухода" value={activeReq.desiredTime} />
+                  <DetailRow label={t("requests:dialog.desiredTime")} value={activeReq.desiredTime} />
                 )}
-                <DetailRow label="Комментарий" value={activeReq.comment ?? "—"} />
-                <DetailRow label="Подано" value={fmtDate(activeReq.createdAt)} />
+                <DetailRow label={t("common:comment")} value={activeReq.comment ?? "—"} />
+                <DetailRow label={t("requests:columns.submitted")} value={fmtDate(activeReq.createdAt)} />
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Статус</span>
+                  <span className="text-sm text-muted-foreground">{t("common:status")}</span>
                   <StatusBadge status={activeReq.status} />
                 </div>
               </div>
@@ -502,7 +499,7 @@ export function RequestsTable() {
               {/* Decision note (if already decided) */}
               {activeReq.status !== RequestStatus.PENDING && activeReq.decisionNote && (
                 <div className="rounded-xl border border-border px-4 py-3">
-                  <p className="text-xs text-muted-foreground">Комментарий администратора</p>
+                  <p className="text-xs text-muted-foreground">{t("requests:dialog.adminComment")}</p>
                   <p className="mt-1 text-sm text-foreground">{activeReq.decisionNote}</p>
                 </div>
               )}
@@ -514,10 +511,10 @@ export function RequestsTable() {
                   <ApproveHint type={activeReq.type} />
 
                   <div className="space-y-1.5">
-                    <Label htmlFor="decision-note">Комментарий к решению</Label>
+                    <Label htmlFor="decision-note">{t("requests:dialog.decisionNote")}</Label>
                     <Textarea
                       id="decision-note"
-                      placeholder="Необязательно..."
+                      placeholder={t("requests:dialog.decisionNotePlaceholder")}
                       rows={3}
                       value={decisionNote}
                       onChange={(e) => setDecisionNote(e.target.value)}
@@ -530,7 +527,7 @@ export function RequestsTable() {
                       disabled={approveMutation.isPending || rejectMutation.isPending}
                       onClick={handleApprove}
                     >
-                      {approveMutation.isPending ? "Сохраняем..." : "Одобрить"}
+                      {approveMutation.isPending ? t("common:saving") : t("requests:dialog.approve")}
                     </Button>
                     <Button
                       variant="destructive"
@@ -538,7 +535,7 @@ export function RequestsTable() {
                       disabled={approveMutation.isPending || rejectMutation.isPending}
                       onClick={() => setConfirmReject(true)}
                     >
-                      Отклонить
+                      {t("requests:dialog.reject")}
                     </Button>
                   </DialogFooter>
                 </>
@@ -552,24 +549,27 @@ export function RequestsTable() {
       <AlertDialog open={confirmReject} onOpenChange={setConfirmReject}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Отклонить заявку?</AlertDialogTitle>
+            <AlertDialogTitle>{t("requests:rejectDialog.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Заявка сотрудника{" "}
+              {t("requests:rejectDialog.head")}{" "}
               <span className="font-medium text-foreground">
                 {activeReq ? (empMap.get(activeReq.userId) ?? "—") : ""}
               </span>{" "}
-              будет отклонена
-              {decisionNote ? ` с комментарием: «${decisionNote}»` : ""}. Это действие необратимо.
+              {t("requests:rejectDialog.tail")}
+              {decisionNote ? t("requests:rejectDialog.withNote", { note: decisionNote }) : ""}
+              {t("requests:rejectDialog.irreversible")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={rejectMutation.isPending}>Отмена</AlertDialogCancel>
+            <AlertDialogCancel disabled={rejectMutation.isPending}>{t("common:cancel")}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-white hover:bg-destructive/90"
               disabled={rejectMutation.isPending}
               onClick={handleRejectConfirmed}
             >
-              {rejectMutation.isPending ? "Отклоняем..." : "Да, отклонить"}
+              {rejectMutation.isPending
+                ? t("requests:rejectDialog.pending")
+                : t("requests:rejectDialog.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

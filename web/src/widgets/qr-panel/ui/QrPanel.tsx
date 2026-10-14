@@ -1,8 +1,9 @@
 import { useState, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { QRCodeSVG, QRCodeCanvas } from "qrcode.react";
 import { format } from "date-fns";
-import { ru } from "date-fns/locale";
+import { dateFnsLocale } from "@/shared/lib/date-locale";
 import { toast } from "sonner";
 import { Printer, Download, QrCode as QrIcon, RefreshCw } from "lucide-react";
 import { qrApi } from "@/entities/qr/api";
@@ -28,7 +29,7 @@ import { Label } from "@/shared/ui/label";
 
 function fmtDate(iso: string) {
   try {
-    return format(new Date(iso), "d MMM yyyy, HH:mm", { locale: ru });
+    return format(new Date(iso), "d MMM yyyy, HH:mm", { locale: dateFnsLocale() });
   } catch {
     return iso;
   }
@@ -46,6 +47,7 @@ function loadImage(src: string): Promise<HTMLImageElement> {
 }
 
 export function QrPanel() {
+  const { t } = useTranslation(["qr", "common"]);
   const qc = useQueryClient();
   const { user } = useAuth();
   const [regenDialogOpen, setRegenDialogOpen] = useState(false);
@@ -67,11 +69,11 @@ export function QrPanel() {
   const regenMutation = useMutation({
     mutationFn: (officeNetworkId: string | null) => qrApi.regenerate(officeNetworkId),
     onSuccess: () => {
-      toast.success("QR-код обновлён");
+      toast.success(t("qr:toast.regenerated"));
       setRegenDialogOpen(false);
       invalidate();
     },
-    onError: () => toast.error("Ошибка при обновлении QR"),
+    onError: () => toast.error(t("qr:toast.regenFailed")),
   });
 
   function openRegenDialog() {
@@ -136,13 +138,13 @@ export function QrPanel() {
     // instruction
     ctx.fillStyle = "#6B7280";
     ctx.font = "500 15px Manrope, system-ui, sans-serif";
-    ctx.fillText("Отсканируйте для отметки прихода", cx, qrY + qrSize + 48);
+    ctx.fillText(t("qr:poster.scanHint"), cx, qrY + qrSize + 48);
 
     // company code
     if (user?.companyCode) {
       ctx.fillStyle = "#9CA3AF";
       ctx.font = "600 12px Manrope, system-ui, sans-serif";
-      ctx.fillText("КОД КОМПАНИИ", cx, qrY + qrSize + 92);
+      ctx.fillText(t("qr:poster.companyCode"), cx, qrY + qrSize + 92);
       ctx.fillStyle = "#1877F2";
       ctx.font = "700 34px ui-monospace, Menlo, monospace";
       ctx.fillText(user.companyCode, cx, qrY + qrSize + 132);
@@ -153,7 +155,7 @@ export function QrPanel() {
 
   async function handleDownload() {
     const url = await buildCardDataUrl();
-    if (!url) return toast.error("Не удалось подготовить QR");
+    if (!url) return toast.error(t("qr:toast.prepareFailed"));
     const a = document.createElement("a");
     a.href = url;
     a.download = `qr-${user?.companyCode ?? "softtime"}.png`;
@@ -162,14 +164,14 @@ export function QrPanel() {
 
   async function handlePrint() {
     const url = await buildCardDataUrl();
-    if (!url) return toast.error("Не удалось подготовить QR");
+    if (!url) return toast.error(t("qr:toast.prepareFailed"));
     const win = window.open("", "_blank");
     if (!win) {
-      toast.error("Разрешите всплывающие окна для печати");
+      toast.error(t("qr:toast.popupBlocked"));
       return;
     }
     win.document.write(`
-      <html><head><title>QR-код — ${user?.companyName ?? "SoftTime"}</title>
+      <html><head><title>${t("qr:title")} — ${user?.companyName ?? "SoftTime"}</title>
       <style>
         @page { margin: 8mm; }
         body { margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
@@ -188,12 +190,12 @@ export function QrPanel() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="QR-код"
+        title={t("qr:title")}
         actions={
           token ? (
             <Button size="sm" variant="outline" onClick={openRegenDialog}>
               <RefreshCw className="mr-2 h-4 w-4" />
-              Перегенерировать
+              {t("qr:regenerate")}
             </Button>
           ) : undefined
         }
@@ -201,9 +203,9 @@ export function QrPanel() {
 
       {qrQuery.isError ? (
         <div className="rounded-2xl bg-card p-12 text-center shadow-sm">
-          <p className="text-sm text-muted-foreground">Не удалось загрузить QR-код.</p>
+          <p className="text-sm text-muted-foreground">{t("qr:loadFailed")}</p>
           <Button variant="outline" size="sm" className="mt-3" onClick={invalidate}>
-            Повторить
+            {t("common:retry")}
           </Button>
         </div>
       ) : qrQuery.isLoading ? (
@@ -212,11 +214,11 @@ export function QrPanel() {
         <div className="rounded-2xl bg-card p-12 shadow-sm">
           <EmptyState
             icon={<QrIcon className="h-10 w-10" />}
-            title="QR-код не создан"
-            description="Создайте QR-код для check-in сотрудников в офисе."
+            title={t("qr:emptyTitle")}
+            description={t("qr:emptyDescription")}
             action={
               <Button size="sm" onClick={openRegenDialog}>
-                Создать QR-код
+                {t("qr:createQr")}
               </Button>
             }
           />
@@ -238,21 +240,21 @@ export function QrPanel() {
           <div className="flex flex-1 flex-col gap-3">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Привязанная сеть
+                {t("qr:linkedNetwork")}
               </p>
               <p className="mt-0.5 text-sm font-medium text-foreground">
-                {linkedNetwork ? `${linkedNetwork.label} — ${linkedNetwork.cidr}` : "Без привязки"}
+                {linkedNetwork ? `${linkedNetwork.label} — ${linkedNetwork.cidr}` : t("qr:noLink")}
               </p>
             </div>
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Создан
+                {t("qr:createdAt")}
               </p>
               <p className="mt-0.5 text-sm text-foreground">{fmtDate(token.createdAt)}</p>
             </div>
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Токен
+                {t("qr:token")}
               </p>
               <p className="mt-0.5 break-all font-mono text-xs text-muted-foreground">
                 {token.token}
@@ -261,15 +263,15 @@ export function QrPanel() {
             <div className="mt-2 flex flex-wrap gap-2">
               <Button size="sm" onClick={handleDownload}>
                 <Download className="mr-1.5 h-3.5 w-3.5" />
-                Скачать
+                {t("qr:download")}
               </Button>
               <Button variant="outline" size="sm" onClick={handlePrint}>
                 <Printer className="mr-1.5 h-3.5 w-3.5" />
-                Печать
+                {t("qr:print")}
               </Button>
               <Button variant="outline" size="sm" onClick={openRegenDialog}>
                 <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
-                Перегенерировать
+                {t("qr:regenerate")}
               </Button>
             </div>
           </div>
@@ -281,23 +283,23 @@ export function QrPanel() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {token ? "Перегенерировать QR-код?" : "Создать QR-код"}
+              {token ? t("qr:dialog.regenTitle") : t("qr:createQr")}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {token
-                ? "Старый QR-код станет недействительным. Замените распечатанный QR на новый."
-                : "Будет создан QR-код для check-in сотрудников."}
+                ? t("qr:dialog.regenDescription")
+                : t("qr:dialog.createDescription")}
             </AlertDialogDescription>
           </AlertDialogHeader>
 
           <div className="space-y-2 px-1">
-            <Label htmlFor="qr-network">Офисная сеть (необязательно)</Label>
+            <Label htmlFor="qr-network">{t("qr:dialog.networkLabel")}</Label>
             <Select value={selectedNetworkId} onValueChange={setSelectedNetworkId}>
               <SelectTrigger id="qr-network">
-                <SelectValue placeholder="Без привязки к сети" />
+                <SelectValue placeholder={t("qr:dialog.networkPlaceholder")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={NO_NETWORK}>Без привязки</SelectItem>
+                <SelectItem value={NO_NETWORK}>{t("qr:noLink")}</SelectItem>
                 {networks.map((n) => (
                   <SelectItem key={n.id} value={n.id}>
                     {n.label} — {n.cidr}
@@ -308,16 +310,16 @@ export function QrPanel() {
           </div>
 
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={regenMutation.isPending}>Отмена</AlertDialogCancel>
+            <AlertDialogCancel disabled={regenMutation.isPending}>{t("common:cancel")}</AlertDialogCancel>
             <AlertDialogAction
               disabled={regenMutation.isPending}
               onClick={handleConfirmRegen}
             >
               {regenMutation.isPending
-                ? "Создаём..."
+                ? t("qr:dialog.creating")
                 : token
-                  ? "Перегенерировать"
-                  : "Создать"}
+                  ? t("qr:regenerate")
+                  : t("qr:create")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
