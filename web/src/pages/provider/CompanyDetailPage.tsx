@@ -1,7 +1,8 @@
 import { useParams, useNavigate } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { ru } from "date-fns/locale";
+import { dateFnsLocale } from "@/shared/lib/date-locale";
 import { ChevronLeft, Building2, CreditCard, Users } from "lucide-react";
 import { PageHeader, StatusBadge } from "@/shared/ui";
 import { Button } from "@/shared/ui/button";
@@ -12,7 +13,7 @@ import { queryKeys } from "@/shared/api/query-keys";
 function fmtDate(iso: string | null | undefined) {
   if (!iso) return "—";
   try {
-    return format(new Date(iso), "d MMM yyyy", { locale: ru });
+    return format(new Date(iso), "d MMM yyyy", { locale: dateFnsLocale() });
   } catch {
     return iso;
   }
@@ -20,13 +21,14 @@ function fmtDate(iso: string | null | undefined) {
 
 function fmtPeriod(start: string, end: string) {
   try {
-    return `${format(new Date(start), "MMM yyyy", { locale: ru })} – ${format(new Date(end), "MMM yyyy", { locale: ru })}`;
+    return `${format(new Date(start), "MMM yyyy", { locale: dateFnsLocale() })} – ${format(new Date(end), "MMM yyyy", { locale: dateFnsLocale() })}`;
   } catch {
     return `${start} – ${end}`;
   }
 }
 
 export function CompanyDetailPage() {
+  const { t } = useTranslation(["provider", "common"]);
   const { id } = useParams({ from: "/provider/companies/$id" });
   const navigate = useNavigate();
 
@@ -47,12 +49,12 @@ export function CompanyDetailPage() {
         onClick={() => navigate({ to: "/provider/companies" })}
       >
         <ChevronLeft className="mr-1 h-4 w-4" />
-        Все компании
+        {t("provider:companyDetail.backToList")}
       </Button>
 
       {companyQ.isError ? (
         <div className="rounded-2xl bg-card p-10 text-center text-muted-foreground shadow-sm">
-          Компания не найдена или произошла ошибка.
+          {t("provider:companyDetail.notFound")}
         </div>
       ) : companyQ.isLoading ? (
         <div className="space-y-4">
@@ -82,17 +84,17 @@ export function CompanyDetailPage() {
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#EBF2FF]">
                   <Building2 className="h-4 w-4 text-[#1877F2]" />
                 </div>
-                <span className="font-semibold text-foreground">Информация</span>
+                <span className="font-semibold text-foreground">{t("provider:companyDetail.info")}</span>
               </div>
               <div className="space-y-3">
-                <InfoRow label="Название" value={company.name} />
+                <InfoRow label={t("provider:companyDetail.name")} value={company.name} />
                 <InfoRow
-                  label="Код компании"
+                  label={t("provider:companyDetail.companyCode")}
                   value={<code className="font-mono text-sm">{company.companyCode}</code>}
                 />
-                <InfoRow label="Статус" value={<StatusBadge status={company.status} />} />
-                <InfoRow label="Сотрудников" value={String(company.users.length)} />
-                <InfoRow label="Зарегистрирована" value={fmtDate(company.createdAt)} />
+                <InfoRow label={t("common:status")} value={<StatusBadge status={company.status} />} />
+                <InfoRow label={t("provider:companyDetail.employeesCount")} value={String(company.users.length)} />
+                <InfoRow label={t("provider:companyDetail.registered")} value={fmtDate(company.createdAt)} />
               </div>
             </div>
 
@@ -101,23 +103,29 @@ export function CompanyDetailPage() {
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#EBF2FF]">
                   <CreditCard className="h-4 w-4 text-[#1877F2]" />
                 </div>
-                <span className="font-semibold text-foreground">Подписка</span>
+                <span className="font-semibold text-foreground">{t("provider:companyDetail.subscription")}</span>
               </div>
               {company.subscription ? (
                 <div className="space-y-3">
-                  <InfoRow label="Тариф" value={`$${company.subscription.priceUsd}/мес`} />
                   <InfoRow
-                    label="Статус"
+                    label={t("provider:companyDetail.plan")}
+                    value={`$${company.subscription.priceUsd}${t("provider:subscriptionWidget.perMonth")}`}
+                  />
+                  <InfoRow
+                    label={t("common:status")}
                     value={<StatusBadge status={company.subscription.status} />}
                   />
-                  <InfoRow label="Период" value={fmtPeriod(company.subscription.periodStart, company.subscription.periodEnd)} />
                   <InfoRow
-                    label="Следующий платёж"
+                    label={t("provider:companyDetail.period")}
+                    value={fmtPeriod(company.subscription.periodStart, company.subscription.periodEnd)}
+                  />
+                  <InfoRow
+                    label={t("provider:companyDetail.nextPayment")}
                     value={fmtDate(company.subscription.nextBillingAt ?? company.subscription.periodEnd)}
                   />
                 </div>
               ) : (
-                <div className="text-sm text-muted-foreground">Подписка не найдена</div>
+                <div className="text-sm text-muted-foreground">{t("provider:companyDetail.noSubscription")}</div>
               )}
             </div>
           </div>
@@ -126,22 +134,24 @@ export function CompanyDetailPage() {
           <div className="rounded-2xl bg-card shadow-sm">
             <div className="flex items-center gap-2 border-b border-border px-5 py-4">
               <Users className="h-4 w-4 text-muted-foreground" />
-              <span className="font-semibold text-foreground">Сотрудники</span>
-              <span className="ml-auto text-sm text-muted-foreground">{company.users.length} чел.</span>
+              <span className="font-semibold text-foreground">{t("provider:companyDetail.employees")}</span>
+              <span className="ml-auto text-sm text-muted-foreground">
+                {t("common:peopleShort", { count: company.users.length })}
+              </span>
             </div>
             {company.users.length === 0 ? (
               <div className="px-5 py-8 text-center text-sm text-muted-foreground">
-                Нет данных о сотрудниках
+                {t("provider:companyDetail.noEmployees")}
               </div>
             ) : (
               <table className="w-full text-sm">
                 <thead className="border-b border-border bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
                   <tr>
-                    <th className="px-4 py-3 font-medium">ФИО</th>
+                    <th className="px-4 py-3 font-medium">{t("common:fullName")}</th>
                     <th className="px-4 py-3 font-medium">Email</th>
-                    <th className="px-4 py-3 font-medium">Роль</th>
-                    <th className="px-4 py-3 font-medium">Статус</th>
-                    <th className="px-4 py-3 font-medium">Добавлен</th>
+                    <th className="px-4 py-3 font-medium">{t("common:role")}</th>
+                    <th className="px-4 py-3 font-medium">{t("common:status")}</th>
+                    <th className="px-4 py-3 font-medium">{t("provider:companyDetail.addedAt")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
@@ -165,21 +175,21 @@ export function CompanyDetailPage() {
           <div className="rounded-2xl bg-card shadow-sm">
             <div className="flex items-center gap-2 border-b border-border px-5 py-4">
               <CreditCard className="h-4 w-4 text-muted-foreground" />
-              <span className="font-semibold text-foreground">История платежей</span>
+              <span className="font-semibold text-foreground">{t("provider:companyDetail.paymentHistory")}</span>
             </div>
             {!company.subscription || company.subscription.payments.length === 0 ? (
               <div className="px-5 py-8 text-center text-sm text-muted-foreground">
-                Платежей пока нет
+                {t("provider:companyDetail.noPayments")}
               </div>
             ) : (
               <table className="w-full text-sm">
                 <thead className="border-b border-border bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
                   <tr>
-                    <th className="px-4 py-3 font-medium">Дата</th>
-                    <th className="px-4 py-3 font-medium">Сумма</th>
-                    <th className="px-4 py-3 font-medium">Период</th>
-                    <th className="px-4 py-3 font-medium">Провайдер</th>
-                    <th className="px-4 py-3 font-medium">Статус</th>
+                    <th className="px-4 py-3 font-medium">{t("common:date")}</th>
+                    <th className="px-4 py-3 font-medium">{t("common:amount")}</th>
+                    <th className="px-4 py-3 font-medium">{t("common:period")}</th>
+                    <th className="px-4 py-3 font-medium">{t("common:provider")}</th>
+                    <th className="px-4 py-3 font-medium">{t("common:status")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">

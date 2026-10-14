@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { AlertTriangle, CreditCard, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 
@@ -8,6 +9,7 @@ import { queryKeys } from "@/shared/api/query-keys";
 import { subscriptionApi } from "@/entities/subscription/api";
 
 export function SubscriptionWidget() {
+  const { t } = useTranslation(["provider", "common"]);
   const qc = useQueryClient();
   const {
     data: sub,
@@ -24,9 +26,9 @@ export function SubscriptionWidget() {
     onSuccess: ({ checkoutUrl }) => {
       window.open(checkoutUrl, "_blank", "noopener,noreferrer");
       qc.invalidateQueries({ queryKey: queryKeys.subscription });
-      toast.success("Перенаправляем на страницу оплаты…");
+      toast.success(t("provider:subscriptionWidget.toast.redirecting"));
     },
-    onError: () => toast.error("Не удалось инициировать оплату"),
+    onError: () => toast.error(t("provider:subscriptionWidget.toast.payFailed")),
   });
 
   if (isLoading) {
@@ -39,7 +41,7 @@ export function SubscriptionWidget() {
   }
 
   if (isError || !sub) {
-    return <ErrorState message="Не удалось загрузить статус подписки" onRetry={() => refetch()} />;
+    return <ErrorState message={t("provider:subscriptionWidget.loadFailed")} onRetry={() => refetch()} />;
   }
 
   const isCancelled = sub.status === "CANCELLED";
@@ -50,8 +52,8 @@ export function SubscriptionWidget() {
       <div className="flex items-center gap-3 rounded-2xl border border-destructive/30 bg-destructive/5 p-5">
         <AlertTriangle className="h-5 w-5 shrink-0 text-destructive" />
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-destructive">Аккаунт приостановлен</p>
-          <p className="text-xs text-muted-foreground mt-0.5">Обратитесь в службу поддержки.</p>
+          <p className="text-sm font-semibold text-destructive">{t("provider:subscriptionWidget.suspendedTitle")}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">{t("provider:subscriptionWidget.suspendedText")}</p>
         </div>
       </div>
     );
@@ -63,22 +65,27 @@ export function SubscriptionWidget() {
       <div className="min-w-0 flex-1">
         <div className="mb-1 flex items-center gap-2">
           <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-            Подписка
+            {t("provider:subscriptionWidget.title")}
           </span>
           <StatusBadge status={sub.status} />
         </div>
         <p className="text-sm text-muted-foreground">
-          <span className="font-semibold text-foreground">${sub.priceUsd}/мес</span>
+          <span className="font-semibold text-foreground">
+            ${sub.priceUsd}
+            {t("provider:subscriptionWidget.perMonth")}
+          </span>
           {sub.daysLeft > 0 ? (
             <>
               <span className="mx-1.5 text-muted-foreground/40">·</span>
-              осталось{" "}
-              <span className="font-semibold text-foreground">{sub.daysLeft} дн.</span>
+              {t("provider:subscriptionWidget.leftPrefix")}{" "}
+              <span className="font-semibold text-foreground">
+                {t("provider:subscriptionWidget.daysLeft", { count: sub.daysLeft })}
+              </span>
             </>
           ) : sub.daysLeft === 0 ? (
             <>
               <span className="mx-1.5 text-muted-foreground/40">·</span>
-              <span className="font-semibold text-destructive">срок истёк</span>
+              <span className="font-semibold text-destructive">{t("provider:subscriptionWidget.expired")}</span>
             </>
           ) : null}
         </p>
@@ -90,7 +97,7 @@ export function SubscriptionWidget() {
           disabled={payMut.isPending}
           onClick={() => window.open("https://wa.me/996702928197", "_blank", "noopener,noreferrer")}
         >
-          Оплатить
+          {t("provider:subscriptionWidget.pay")}
           <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
         </Button>
       )}

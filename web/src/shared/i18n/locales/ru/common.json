@@ -46,5 +46,22 @@
   "required": "Обязательно",
   "allEmployees": "Все сотрудники",
   "noDataTitle": "Нет данных",
-  "noDataDescription": "По выбранным фильтрам данных не найдено."
+  "noDataDescription": "По выбранным фильтрам данных не найдено.",
+  "loadFailed2": "Не удалось загрузить данные.",
+  "allStatuses": "Все статусы",
+  "company": "Компания",
+  "amount": "Сумма",
+  "provider": "Провайдер",
+  "reference": "Референс",
+  "fullName": "ФИО",
+  "role": "Роль",
+  "processing": "Обработка...",
+  "manualShort": "ручн.",
+  "genericError": "Произошла ошибка",
+  "noServerConnection": "Нет соединения с сервером",
+  "loadFailedList": "Не удалось загрузить список",
+  "peopleShort_one": "{{count}} чел.",
+  "peopleShort_few": "{{count}} чел.",
+  "peopleShort_many": "{{count}} чел.",
+  "peopleShort_other": "{{count}} чел."
 }

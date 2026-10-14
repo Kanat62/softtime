@@ -46,5 +46,20 @@
   "required": "Required",
   "allEmployees": "All employees",
   "noDataTitle": "No data",
-  "noDataDescription": "Nothing found for the selected filters."
+  "noDataDescription": "Nothing found for the selected filters.",
+  "loadFailed2": "Could not load the data.",
+  "allStatuses": "All statuses",
+  "company": "Company",
+  "amount": "Amount",
+  "provider": "Provider",
+  "reference": "Reference",
+  "fullName": "Full name",
+  "role": "Role",
+  "processing": "Processing…",
+  "manualShort": "man.",
+  "genericError": "Something went wrong",
+  "noServerConnection": "No connection to the server",
+  "loadFailedList": "Could not load the list",
+  "peopleShort_one": "{{count}} person",
+  "peopleShort_other": "{{count}} people"
 }

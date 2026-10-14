@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { UserCheck, LogOut } from "lucide-react";
 import { toast } from "sonner";
@@ -22,6 +23,7 @@ function fmtTime(iso: string | null | undefined): string {
 // ─── WhoInOffice ─────────────────────────────────────────────────────────────
 
 export function WhoInOffice() {
+  const { t } = useTranslation(["provider", "common"]);
   const qc = useQueryClient();
 
   const { data, isLoading, isError, refetch } = useQuery({
@@ -48,19 +50,19 @@ export function WhoInOffice() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.inOffice });
       qc.invalidateQueries({ queryKey: ["attendance"] });
-      toast.success("Уход отмечен");
+      toast.success(t("provider:whoInOffice.toast.checkedOut"));
     },
-    onError: () => toast.error("Не удалось отметить уход"),
+    onError: () => toast.error(t("provider:whoInOffice.toast.checkoutFailed")),
   });
 
   return (
     <div className="rounded-2xl bg-card shadow-sm">
       <div className="flex items-center justify-between border-b border-border px-5 py-4">
         <div>
-          <h2 className="text-base font-semibold text-foreground">Сейчас в офисе</h2>
+          <h2 className="text-base font-semibold text-foreground">{t("provider:whoInOffice.title")}</h2>
           {!isLoading && !isError && (
             <p className="mt-0.5 text-xs text-muted-foreground">
-              {data?.length ?? 0} чел. на месте
+              {t("provider:whoInOffice.countOnSite", { count: data?.length ?? 0 })}
             </p>
           )}
         </div>
@@ -83,7 +85,7 @@ export function WhoInOffice() {
 
       {isError && (
         <div className="p-5">
-          <ErrorState message="Не удалось загрузить список" onRetry={() => refetch()} />
+          <ErrorState message={t("common:loadFailedList")} onRetry={() => refetch()} />
         </div>
       )}
 
@@ -92,8 +94,8 @@ export function WhoInOffice() {
           {(data?.length ?? 0) === 0 ? (
             <EmptyState
               icon={<UserCheck className="h-8 w-8" />}
-              title="Пока никто не в офисе"
-              description="Сотрудники появятся здесь после отметки прихода"
+              title={t("provider:whoInOffice.emptyTitle")}
+              description={t("provider:whoInOffice.emptyDescription")}
             />
           ) : (
             <ul className="divide-y divide-border">
@@ -104,7 +106,7 @@ export function WhoInOffice() {
                       {empMap.get(rec.userId) ?? "—"}
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      Пришёл в {fmtTime(rec.checkInAt)}
+                      {t("provider:whoInOffice.arrivedAt", { time: fmtTime(rec.checkInAt) })}
                     </div>
                   </div>
                   <Button
@@ -115,7 +117,7 @@ export function WhoInOffice() {
                     onClick={() => checkoutMut.mutate(rec.id)}
                   >
                     <LogOut className="h-3 w-3" />
-                    Отметить уход
+                    {t("provider:whoInOffice.markCheckout")}
                   </Button>
                 </li>
               ))}

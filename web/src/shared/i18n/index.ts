@@ -11,6 +11,7 @@ import {
 import ruCommon from "./locales/ru/common.json";
 import ruSettings from "./locales/ru/settings.json";
 import ruEmployees from "./locales/ru/employees.json";
+import ruProvider from "./locales/ru/provider.json";
 import ruNetworks from "./locales/ru/networks.json";
 import ruAudit from "./locales/ru/audit.json";
 import ruReports from "./locales/ru/reports.json";
@@ -26,6 +27,7 @@ import ruNav from "./locales/ru/nav.json";
 import enCommon from "./locales/en/common.json";
 import enSettings from "./locales/en/settings.json";
 import enEmployees from "./locales/en/employees.json";
+import enProvider from "./locales/en/provider.json";
 import enNetworks from "./locales/en/networks.json";
 import enAudit from "./locales/en/audit.json";
 import enReports from "./locales/en/reports.json";
@@ -57,6 +59,7 @@ const resources = {
     common: ruCommon,
     settings: ruSettings,
     employees: ruEmployees,
+    provider: ruProvider,
     networks: ruNetworks,
     audit: ruAudit,
     reports: ruReports,
@@ -76,6 +79,7 @@ const resources = {
     common: enCommon,
     settings: enSettings,
     employees: enEmployees,
+    provider: enProvider,
     networks: enNetworks,
     audit: enAudit,
     reports: enReports,
@@ -117,6 +121,7 @@ i18n
       "reports",
       "audit",
       "networks",
+      "provider",
       "subscription",
       "enums",
       "validation",

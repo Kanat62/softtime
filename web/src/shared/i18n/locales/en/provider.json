@@ -1,0 +1,134 @@
+{
+  "dashboard": {
+    "title": "Platform dashboard",
+    "metrics": {
+      "total": "Companies total",
+      "active": "Active",
+      "trial": "On trial",
+      "suspended": "Suspended",
+      "revenue": "Total revenue"
+    },
+    "paymentsChart": {
+      "title": "Payments by month",
+      "subtitle": "Recent incoming payments",
+      "tooltip": "Payments"
+    },
+    "revenueChart": {
+      "title": "Revenue by month",
+      "tooltip": "Revenue"
+    },
+    "recentCompanies": "Recent sign-ups",
+    "noCompanies": "No companies yet",
+    "recentPayments": "Recent payments",
+    "noPayments": "No payments yet"
+  },
+  "companies": {
+    "title": "Companies",
+    "searchPlaceholder": "Search by name or code…",
+    "subStatusPlaceholder": "Subscription status",
+    "allSubscriptions": "All subscriptions",
+    "columns": {
+      "company": "Company",
+      "employeesShort": "Empl.",
+      "status": "Status",
+      "subscription": "Subscription",
+      "nextPayment": "Next payment",
+      "nextPaymentShort": "Next pay.",
+      "registered": "Registered",
+      "registeredShort": "Sign-up"
+    },
+    "emptyTitle": "No companies found",
+    "emptyDescription": "Try changing the filters or the search query",
+    "activate": "Enable",
+    "suspend": "Stop",
+    "dialog": {
+      "activateTitle": "Activate this company?",
+      "suspendTitle": "Suspend this company?",
+      "deleteTitle": "Delete this company?",
+      "activateText": "Company “{{name}}” will get ACTIVE status and access to the platform.",
+      "suspendText": "Company “{{name}}” will be suspended. Its employees will not be able to use the app.",
+      "deleteText": "Company “{{name}}” and all related data (employees, attendance, news, payments) will be permanently deleted.",
+      "activateConfirm": "Activate",
+      "suspendConfirm": "Suspend"
+    },
+    "toast": {
+      "activated": "Company activated",
+      "activateFailed": "Could not activate the company",
+      "suspended": "Company suspended",
+      "suspendFailed": "Could not suspend the company",
+      "deleted": "Company deleted",
+      "deleteFailed": "Could not delete the company"
+    }
+  },
+  "companyDetail": {
+    "backToList": "All companies",
+    "notFound": "Company not found, or an error occurred.",
+    "info": "Information",
+    "name": "Name",
+    "companyCode": "Company code",
+    "employeesCount": "Employees",
+    "registered": "Registered",
+    "subscription": "Subscription",
+    "plan": "Plan",
+    "period": "Period",
+    "nextPayment": "Next payment",
+    "noSubscription": "No subscription found",
+    "employees": "Employees",
+    "noEmployees": "No employee data",
+    "addedAt": "Added",
+    "paymentHistory": "Payment history",
+    "noPayments": "No payments yet"
+  },
+  "payments": {
+    "title": "Payments and revenue",
+    "searchPlaceholder": "Search by company…",
+    "metrics": {
+      "revenue": "Revenue for the period",
+      "count": "Payments total",
+      "totalAll": "Total (all pages)",
+      "avg": "Average payment"
+    },
+    "periods": {
+      "30": "Last 30 days",
+      "90": "Last 90 days",
+      "180": "Last 6 months",
+      "all": "All time"
+    },
+    "emptyTitle": "No payments found",
+    "emptyDescription": "Try changing the filters or the period",
+    "shown": "Showing {{shown}} of {{total}}"
+  },
+  "subscriptionWidget": {
+    "suspendedTitle": "Account suspended",
+    "suspendedText": "Contact support.",
+    "title": "Subscription",
+    "perMonth": "/mo",
+    "leftPrefix": "left",
+    "expired": "expired",
+    "pay": "Pay",
+    "loadFailed": "Could not load the subscription status",
+    "toast": {
+      "redirecting": "Redirecting to the payment page…",
+      "payFailed": "Could not start the payment",
+      "activated": "Subscription activated",
+      "activateFailed": "Payment error",
+      "cancelled": "Subscription cancelled",
+      "cancelFailed": "Could not cancel the subscription"
+    },
+    "daysLeft_one": "{{count}} day",
+    "daysLeft_other": "{{count}} days"
+  },
+  "whoInOffice": {
+    "title": "In the office now",
+    "emptyTitle": "Nobody is in the office yet",
+    "emptyDescription": "Employees appear here after they check in",
+    "arrivedAt": "Arrived at {{time}}",
+    "markCheckout": "Record check-out",
+    "toast": {
+      "checkedOut": "Check-out recorded",
+      "checkoutFailed": "Could not record the check-out"
+    },
+    "countOnSite_one": "{{count}} on site",
+    "countOnSite_other": "{{count}} on site"
+  }
+}

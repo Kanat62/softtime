@@ -1,0 +1,138 @@
+{
+  "dashboard": {
+    "title": "Дашборд платформы",
+    "metrics": {
+      "total": "Всего компаний",
+      "active": "Активных",
+      "trial": "На триале",
+      "suspended": "Приостановлено",
+      "revenue": "Суммарная выручка"
+    },
+    "paymentsChart": {
+      "title": "Платежи по месяцам",
+      "subtitle": "Последние поступления",
+      "tooltip": "Платежей"
+    },
+    "revenueChart": {
+      "title": "Выручка по месяцам",
+      "tooltip": "Выручка"
+    },
+    "recentCompanies": "Последние регистрации",
+    "noCompanies": "Компаний пока нет",
+    "recentPayments": "Последние платежи",
+    "noPayments": "Платежей пока нет"
+  },
+  "companies": {
+    "title": "Компании",
+    "searchPlaceholder": "Поиск по названию или коду...",
+    "subStatusPlaceholder": "Статус подписки",
+    "allSubscriptions": "Все подписки",
+    "columns": {
+      "company": "Компания",
+      "employeesShort": "Сотр.",
+      "status": "Статус",
+      "subscription": "Подписка",
+      "nextPayment": "Следующий платёж",
+      "nextPaymentShort": "След. платёж",
+      "registered": "Зарегистрирована",
+      "registeredShort": "Регистрация"
+    },
+    "emptyTitle": "Компании не найдены",
+    "emptyDescription": "Попробуйте изменить фильтры или поисковый запрос",
+    "activate": "Включить",
+    "suspend": "Стоп",
+    "dialog": {
+      "activateTitle": "Активировать компанию?",
+      "suspendTitle": "Приостановить компанию?",
+      "deleteTitle": "Удалить компанию?",
+      "activateText": "Компания «{{name}}» получит статус ACTIVE и доступ к платформе.",
+      "suspendText": "Компания «{{name}}» будет приостановлена. Сотрудники не смогут использовать приложение.",
+      "deleteText": "Компания «{{name}}» и все связанные данные (сотрудники, посещаемость, новости, платежи) будут безвозвратно удалены.",
+      "activateConfirm": "Активировать",
+      "suspendConfirm": "Приостановить"
+    },
+    "toast": {
+      "activated": "Компания активирована",
+      "activateFailed": "Ошибка при активации",
+      "suspended": "Компания приостановлена",
+      "suspendFailed": "Ошибка при приостановке",
+      "deleted": "Компания удалена",
+      "deleteFailed": "Ошибка при удалении"
+    }
+  },
+  "companyDetail": {
+    "backToList": "Все компании",
+    "notFound": "Компания не найдена или произошла ошибка.",
+    "info": "Информация",
+    "name": "Название",
+    "companyCode": "Код компании",
+    "employeesCount": "Сотрудников",
+    "registered": "Зарегистрирована",
+    "subscription": "Подписка",
+    "plan": "Тариф",
+    "period": "Период",
+    "nextPayment": "Следующий платёж",
+    "noSubscription": "Подписка не найдена",
+    "employees": "Сотрудники",
+    "noEmployees": "Нет данных о сотрудниках",
+    "addedAt": "Добавлен",
+    "paymentHistory": "История платежей",
+    "noPayments": "Платежей пока нет"
+  },
+  "payments": {
+    "title": "Оплаты и выручка",
+    "searchPlaceholder": "Поиск по компании...",
+    "metrics": {
+      "revenue": "Выручка за период",
+      "count": "Всего платежей",
+      "totalAll": "Всего (все стр.)",
+      "avg": "Средний чек"
+    },
+    "periods": {
+      "30": "Последние 30 дней",
+      "90": "Последние 90 дней",
+      "180": "Последние 6 месяцев",
+      "all": "Весь период"
+    },
+    "emptyTitle": "Платежи не найдены",
+    "emptyDescription": "Попробуйте изменить фильтры или период",
+    "shown": "Показано {{shown}} из {{total}}"
+  },
+  "subscriptionWidget": {
+    "suspendedTitle": "Аккаунт приостановлен",
+    "suspendedText": "Обратитесь в службу поддержки.",
+    "title": "Подписка",
+    "perMonth": "/мес",
+    "leftPrefix": "осталось",
+    "expired": "срок истёк",
+    "pay": "Оплатить",
+    "loadFailed": "Не удалось загрузить статус подписки",
+    "toast": {
+      "redirecting": "Перенаправляем на страницу оплаты…",
+      "payFailed": "Не удалось инициировать оплату",
+      "activated": "Подписка активирована",
+      "activateFailed": "Ошибка при оплате",
+      "cancelled": "Подписка отменена",
+      "cancelFailed": "Ошибка при отмене"
+    },
+    "daysLeft_one": "{{count}} дн.",
+    "daysLeft_few": "{{count}} дн.",
+    "daysLeft_many": "{{count}} дн.",
+    "daysLeft_other": "{{count}} дн."
+  },
+  "whoInOffice": {
+    "title": "Сейчас в офисе",
+    "emptyTitle": "Пока никто не в офисе",
+    "emptyDescription": "Сотрудники появятся здесь после отметки прихода",
+    "arrivedAt": "Пришёл в {{time}}",
+    "markCheckout": "Отметить уход",
+    "toast": {
+      "checkedOut": "Уход отмечен",
+      "checkoutFailed": "Не удалось отметить уход"
+    },
+    "countOnSite_one": "{{count}} чел. на месте",
+    "countOnSite_few": "{{count}} чел. на месте",
+    "countOnSite_many": "{{count}} чел. на месте",
+    "countOnSite_other": "{{count}} чел. на месте"
+  }
+}

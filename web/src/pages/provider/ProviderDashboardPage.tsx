@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { format } from "date-fns";
-import { ru } from "date-fns/locale";
+import { dateFnsLocale } from "@/shared/lib/date-locale";
 import {
   AreaChart,
   Area,
@@ -23,7 +24,7 @@ import { CompanyStatus } from "@softtime/shared";
 
 function fmtDate(iso: string) {
   try {
-    return format(new Date(iso), "d MMM yyyy", { locale: ru });
+    return format(new Date(iso), "d MMM yyyy", { locale: dateFnsLocale() });
   } catch {
     return iso;
   }
@@ -36,6 +37,7 @@ function fmtAmount(n: number) {
 // ─── ProviderDashboardPage ────────────────────────────────────────────────────
 
 export function ProviderDashboardPage() {
+  const { t } = useTranslation(["provider", "common"]);
   const dashQ = useQuery({
     queryKey: queryKeys.providerDashboard,
     queryFn: providerApi.getDashboard,
@@ -53,7 +55,7 @@ export function ProviderDashboardPage() {
       const key = p.createdAt.slice(0, 7); // "2026-06"
       if (!byMonth[key]) {
         byMonth[key] = {
-          month: format(new Date(p.createdAt), "MMM'yy", { locale: ru }),
+          month: format(new Date(p.createdAt), "MMM'yy", { locale: dateFnsLocale() }),
           revenue: 0,
           count: 0,
         };
@@ -73,17 +75,17 @@ export function ProviderDashboardPage() {
   const totalRevenue = dash?.revenue.total ?? 0;
 
   const METRICS = [
-    { label: "Всего компаний", value: total, icon: Building2, color: "text-[#1877F2]", bg: "bg-[#EBF2FF]" },
-    { label: "Активных", value: active, icon: TrendingUp, color: "text-[#22C55E]", bg: "bg-[#DCFCE7]" },
-    { label: "На триале", value: trial, icon: Building2, color: "text-[#F59E0B]", bg: "bg-[#FEF3C7]" },
-    { label: "Приостановлено", value: suspended, icon: PauseCircle, color: "text-[#EF4444]", bg: "bg-[#FEE2E2]" },
+    { label: t("provider:dashboard.metrics.total"), value: total, icon: Building2, color: "text-[#1877F2]", bg: "bg-[#EBF2FF]" },
+    { label: t("provider:dashboard.metrics.active"), value: active, icon: TrendingUp, color: "text-[#22C55E]", bg: "bg-[#DCFCE7]" },
+    { label: t("provider:dashboard.metrics.trial"), value: trial, icon: Building2, color: "text-[#F59E0B]", bg: "bg-[#FEF3C7]" },
+    { label: t("provider:dashboard.metrics.suspended"), value: suspended, icon: PauseCircle, color: "text-[#EF4444]", bg: "bg-[#FEE2E2]" },
     { label: "MRR", value: `$${mrr}`, icon: DollarSign, color: "text-[#1877F2]", bg: "bg-[#EBF2FF]" },
-    { label: "Суммарная выручка", value: `$${totalRevenue}`, icon: DollarSign, color: "text-[#22C55E]", bg: "bg-[#DCFCE7]" },
+    { label: t("provider:dashboard.metrics.revenue"), value: `$${totalRevenue}`, icon: DollarSign, color: "text-[#22C55E]", bg: "bg-[#DCFCE7]" },
   ];
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Дашборд платформы" />
+      <PageHeader title={t("provider:dashboard.title")} />
 
       {/* ── Metric cards ─────────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-6">
@@ -109,8 +111,8 @@ export function ProviderDashboardPage() {
       {!loading && chartData.length > 0 && (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           <div className="rounded-2xl bg-card p-5 shadow-sm">
-            <div className="mb-1 font-semibold text-foreground">Платежи по месяцам</div>
-            <div className="mb-4 text-xs text-muted-foreground">Последние поступления</div>
+            <div className="mb-1 font-semibold text-foreground">{t("provider:dashboard.paymentsChart.title")}</div>
+            <div className="mb-4 text-xs text-muted-foreground">{t("provider:dashboard.paymentsChart.subtitle")}</div>
             <ResponsiveContainer width="100%" height={200}>
               <LineChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" />
@@ -118,15 +120,15 @@ export function ProviderDashboardPage() {
                 <YAxis tick={{ fontSize: 10, fill: "#6B7280" }} axisLine={false} tickLine={false} />
                 <Tooltip
                   contentStyle={{ borderRadius: 8, border: "1px solid #E5E7EB", fontSize: 12 }}
-                  formatter={(v: number) => [v, "Платежей"]}
+                  formatter={(v: number) => [v, t("provider:dashboard.paymentsChart.tooltip")]}
                 />
-                <Line type="monotone" dataKey="count" name="Платежей" stroke="#1877F2" strokeWidth={2} dot={false} activeDot={{ r: 4, strokeWidth: 0 }} />
+                <Line type="monotone" dataKey="count" name={t("provider:dashboard.paymentsChart.tooltip")} stroke="#1877F2" strokeWidth={2} dot={false} activeDot={{ r: 4, strokeWidth: 0 }} />
               </LineChart>
             </ResponsiveContainer>
           </div>
 
           <div className="rounded-2xl bg-card p-5 shadow-sm">
-            <div className="mb-1 font-semibold text-foreground">Выручка по месяцам</div>
+            <div className="mb-1 font-semibold text-foreground">{t("provider:dashboard.revenueChart.title")}</div>
             <div className="mb-4 text-xs text-muted-foreground">USD</div>
             <ResponsiveContainer width="100%" height={200}>
               <AreaChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
@@ -141,9 +143,9 @@ export function ProviderDashboardPage() {
                 <YAxis tick={{ fontSize: 10, fill: "#6B7280" }} axisLine={false} tickLine={false} tickFormatter={(v) => `$${v}`} />
                 <Tooltip
                   contentStyle={{ borderRadius: 8, border: "1px solid #E5E7EB", fontSize: 12 }}
-                  formatter={(v: number) => [`$${v}`, "Выручка"]}
+                  formatter={(v: number) => [`$${v}`, t("provider:dashboard.revenueChart.tooltip")]}
                 />
-                <Area type="monotone" dataKey="revenue" name="Выручка" stroke="#1877F2" strokeWidth={2} fill="url(#revenueGrad)" dot={false} activeDot={{ r: 4, strokeWidth: 0 }} />
+                <Area type="monotone" dataKey="revenue" name={t("provider:dashboard.revenueChart.tooltip")} stroke="#1877F2" strokeWidth={2} fill="url(#revenueGrad)" dot={false} activeDot={{ r: 4, strokeWidth: 0 }} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -155,7 +157,7 @@ export function ProviderDashboardPage() {
         {/* Recent registrations */}
         <div className="rounded-2xl bg-card shadow-sm">
           <div className="border-b border-border px-5 py-4">
-            <div className="font-semibold text-foreground">Последние регистрации</div>
+            <div className="font-semibold text-foreground">{t("provider:dashboard.recentCompanies")}</div>
           </div>
           {loading ? (
             <div className="divide-y divide-border">
@@ -184,7 +186,7 @@ export function ProviderDashboardPage() {
                 </div>
               ))}
               {(dash?.recentCompanies ?? []).length === 0 && (
-                <div className="px-5 py-8 text-center text-sm text-muted-foreground">Компаний пока нет</div>
+                <div className="px-5 py-8 text-center text-sm text-muted-foreground">{t("provider:dashboard.noCompanies")}</div>
               )}
             </div>
           )}
@@ -193,7 +195,7 @@ export function ProviderDashboardPage() {
         {/* Recent payments */}
         <div className="rounded-2xl bg-card shadow-sm">
           <div className="border-b border-border px-5 py-4">
-            <div className="font-semibold text-foreground">Последние платежи</div>
+            <div className="font-semibold text-foreground">{t("provider:dashboard.recentPayments")}</div>
           </div>
           {loading ? (
             <div className="divide-y divide-border">
@@ -224,7 +226,7 @@ export function ProviderDashboardPage() {
                 </div>
               ))}
               {(dash?.recentPayments ?? []).length === 0 && (
-                <div className="px-5 py-8 text-center text-sm text-muted-foreground">Платежей пока нет</div>
+                <div className="px-5 py-8 text-center text-sm text-muted-foreground">{t("provider:dashboard.noPayments")}</div>
               )}
             </div>
           )}

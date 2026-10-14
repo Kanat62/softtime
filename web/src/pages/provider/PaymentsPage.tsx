@@ -1,6 +1,8 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import i18n from "@/shared/i18n";
 import { format } from "date-fns";
-import { ru } from "date-fns/locale";
+import { dateFnsLocale } from "@/shared/lib/date-locale";
 import { useQuery } from "@tanstack/react-query";
 import { Download, FileSpreadsheet, Search } from "lucide-react";
 import { PaymentStatus } from "@softtime/shared";
@@ -18,7 +20,7 @@ const PAGE_SIZE = 30;
 
 function fmtDate(iso: string) {
   try {
-    return format(new Date(iso), "d MMM yyyy", { locale: ru });
+    return format(new Date(iso), "d MMM yyyy", { locale: dateFnsLocale() });
   } catch {
     return iso;
   }
@@ -41,7 +43,15 @@ function periodCutoff(value: string): string | undefined {
 }
 
 function exportCSV(rows: ProviderPaymentItem[]) {
-  const header = ["Дата", "Компания", "Сумма", "Период", "Провайдер", "Референс", "Статус"];
+  const header = [
+    i18n.t("common:date"),
+    i18n.t("common:company"),
+    i18n.t("common:amount"),
+    i18n.t("common:period"),
+    i18n.t("common:provider"),
+    i18n.t("common:reference"),
+    i18n.t("common:status"),
+  ];
   const lines = rows.map((r) =>
     [
       fmtDate(r.createdAt),
@@ -64,7 +74,15 @@ function exportCSV(rows: ProviderPaymentItem[]) {
 }
 
 function exportExcel(rows: ProviderPaymentItem[]) {
-  const header = "Дата\tКомпания\tСумма\tПериод\tПровайдер\tРеференс\tСтатус";
+  const header = [
+    i18n.t("common:date"),
+    i18n.t("common:company"),
+    i18n.t("common:amount"),
+    i18n.t("common:period"),
+    i18n.t("common:provider"),
+    i18n.t("common:reference"),
+    i18n.t("common:status"),
+  ].join("\t");
   const lines = rows.map((r) =>
     [
       fmtDate(r.createdAt),
@@ -87,6 +105,7 @@ function exportExcel(rows: ProviderPaymentItem[]) {
 }
 
 export function PaymentsPage() {
+  const { t } = useTranslation(["provider", "enums", "common"]);
   const [period, setPeriod] = useState("30");
   const [statusFilter, setStatusFilter] = useState("all");
   const [search, setSearch] = useState("");
@@ -129,7 +148,7 @@ export function PaymentsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Оплаты и выручка"
+        title={t("provider:payments.title")}
         actions={
           <div className="flex gap-2">
             <Button variant="outline" size="sm" disabled={filtered.length === 0} onClick={() => exportCSV(filtered)}>
@@ -147,10 +166,10 @@ export function PaymentsPage() {
       {/* Summary */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {[
-          { label: "Выручка за период", value: summary ? `$${summary.totalAmount.toFixed(2)}` : null },
-          { label: "Всего платежей", value: summary ? String(summary.count) : null },
-          { label: "Всего (все стр.)", value: total > 0 ? String(total) : null },
-          { label: "Средний чек", value: summary ? `$${summary.avgAmount.toFixed(2)}` : null },
+          { label: t("provider:payments.metrics.revenue"), value: summary ? `$${summary.totalAmount.toFixed(2)}` : null },
+          { label: t("provider:payments.metrics.count"), value: summary ? String(summary.count) : null },
+          { label: t("provider:payments.metrics.totalAll"), value: total > 0 ? String(total) : null },
+          { label: t("provider:payments.metrics.avg"), value: summary ? `$${summary.avgAmount.toFixed(2)}` : null },
         ].map((s) => (
           <div key={s.label} className="rounded-2xl bg-card p-4 shadow-sm">
             <div className="text-xs uppercase tracking-wide text-muted-foreground">{s.label}</div>
@@ -168,7 +187,7 @@ export function PaymentsPage() {
         <form onSubmit={handleSearchSubmit} className="relative">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Поиск по компании..."
+            placeholder={t("provider:payments.searchPlaceholder")}
             className="pl-9 w-52"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
@@ -180,22 +199,22 @@ export function PaymentsPage() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="30">Последние 30 дней</SelectItem>
-            <SelectItem value="90">Последние 90 дней</SelectItem>
-            <SelectItem value="180">Последние 6 месяцев</SelectItem>
-            <SelectItem value="all">Весь период</SelectItem>
+            <SelectItem value="30">{t("provider:payments.periods.30")}</SelectItem>
+            <SelectItem value="90">{t("provider:payments.periods.90")}</SelectItem>
+            <SelectItem value="180">{t("provider:payments.periods.180")}</SelectItem>
+            <SelectItem value="all">{t("provider:payments.periods.all")}</SelectItem>
           </SelectContent>
         </Select>
 
         <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(0); }}>
           <SelectTrigger className="w-44">
-            <SelectValue placeholder="Все статусы" />
+            <SelectValue placeholder={t("common:allStatuses")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Все статусы</SelectItem>
-            <SelectItem value={PaymentStatus.PAID}>Оплачено</SelectItem>
-            <SelectItem value={PaymentStatus.PENDING}>Ожидание</SelectItem>
-            <SelectItem value={PaymentStatus.FAILED}>Ошибка</SelectItem>
+            <SelectItem value="all">{t("common:allStatuses")}</SelectItem>
+            <SelectItem value={PaymentStatus.PAID}>{t("enums:paymentStatus.PAID")}</SelectItem>
+            <SelectItem value={PaymentStatus.PENDING}>{t("enums:paymentStatus.PENDING")}</SelectItem>
+            <SelectItem value={PaymentStatus.FAILED}>{t("enums:paymentStatus.FAILED")}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -203,9 +222,9 @@ export function PaymentsPage() {
       {/* Table */}
       {paymentsQ.isError ? (
         <div className="rounded-2xl bg-card p-10 text-center text-sm text-muted-foreground shadow-sm">
-          Не удалось загрузить данные.
+          {t("common:loadFailed2")}
           <Button variant="outline" size="sm" className="ml-3" onClick={() => paymentsQ.refetch()}>
-            Повторить
+            {t("common:retry")}
           </Button>
         </div>
       ) : paymentsQ.isLoading ? (
@@ -213,7 +232,14 @@ export function PaymentsPage() {
           <table className="w-full text-sm">
             <thead className="border-b border-border bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
               <tr>
-                {["Дата", "Компания", "Сумма", "Период", "Провайдер", "Статус"].map((h) => (
+                {[
+                  t("common:date"),
+                  t("common:company"),
+                  t("common:amount"),
+                  t("common:period"),
+                  t("common:provider"),
+                  t("common:status"),
+                ].map((h) => (
                   <th key={h} className="px-4 py-3 font-medium">{h}</th>
                 ))}
               </tr>
@@ -234,20 +260,20 @@ export function PaymentsPage() {
       ) : filtered.length === 0 ? (
         <EmptyState
           icon={<Search className="h-10 w-10" />}
-          title="Платежи не найдены"
-          description="Попробуйте изменить фильтры или период"
+          title={t("provider:payments.emptyTitle")}
+          description={t("provider:payments.emptyDescription")}
         />
       ) : (
         <div className="overflow-hidden rounded-2xl bg-card shadow-sm">
           <table className="w-full text-sm">
             <thead className="border-b border-border bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
               <tr>
-                <th className="px-4 py-3 font-medium">Дата</th>
-                <th className="px-4 py-3 font-medium">Компания</th>
-                <th className="px-4 py-3 font-medium">Сумма</th>
-                <th className="px-4 py-3 font-medium">Период</th>
-                <th className="px-4 py-3 font-medium">Провайдер</th>
-                <th className="px-4 py-3 font-medium">Статус</th>
+                <th className="px-4 py-3 font-medium">{t("common:date")}</th>
+                <th className="px-4 py-3 font-medium">{t("common:company")}</th>
+                <th className="px-4 py-3 font-medium">{t("common:amount")}</th>
+                <th className="px-4 py-3 font-medium">{t("common:period")}</th>
+                <th className="px-4 py-3 font-medium">{t("common:provider")}</th>
+                <th className="px-4 py-3 font-medium">{t("common:status")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -266,11 +292,11 @@ export function PaymentsPage() {
             </tbody>
           </table>
           <div className="flex items-center justify-between border-t border-border px-4 py-3 text-xs text-muted-foreground">
-            <span>Показано {filtered.length} из {total}</span>
+            <span>{t("provider:payments.shown", { shown: filtered.length, total })}</span>
             {total > PAGE_SIZE && (
               <div className="flex gap-1">
-                <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>Назад</Button>
-                <Button variant="outline" size="sm" disabled={page >= pageCount - 1} onClick={() => setPage((p) => p + 1)}>Вперёд</Button>
+                <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>{t("common:back")}</Button>
+                <Button variant="outline" size="sm" disabled={page >= pageCount - 1} onClick={() => setPage((p) => p + 1)}>{t("common:next")}</Button>
               </div>
             )}
           </div>

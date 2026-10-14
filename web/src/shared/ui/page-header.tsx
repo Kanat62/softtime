@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 
 export function PageHeader({
@@ -45,11 +46,12 @@ export function EmptyState({
 }
 
 export function ErrorState({ message, onRetry }: { message?: string; onRetry?: () => void }) {
+  const { t } = useTranslation("common");
   return (
     <div className="flex flex-col items-center justify-center rounded-2xl border border-destructive/20 bg-destructive/5 px-6 py-12 text-center">
       <AlertTriangle className="mb-3 h-8 w-8 text-destructive" />
       <p className="text-sm font-medium text-foreground">
-        {message ?? "Не удалось загрузить данные"}
+        {message ?? t("common:loadFailed")}
       </p>
       {onRetry ? (
         <button
@@ -57,7 +59,7 @@ export function ErrorState({ message, onRetry }: { message?: string; onRetry?: (
           className="mt-4 inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted"
         >
           <RefreshCw className="h-3.5 w-3.5" />
-          Повторить
+          {t("common:retry")}
         </button>
       ) : null}
     </div>

@@ -1,4 +1,5 @@
 import type { AxiosError } from "axios";
+import i18n from "@/shared/i18n";
 
 /**
  * Normalized error shape guaranteed by the transport layer.
@@ -42,7 +43,7 @@ export function normalizeError(error: unknown): NormalizedError {
     if (error.response) {
       const body = error.response.data;
       const statusCode = body?.statusCode ?? error.response.status;
-      const message = body?.message ?? error.message ?? "Произошла ошибка";
+      const message = body?.message ?? error.message ?? i18n.t("common:genericError");
 
       const fieldErrors: Record<string, string> = {};
       if (isZodIssueArray(body?.details)) {
@@ -61,12 +62,12 @@ export function normalizeError(error: unknown): NormalizedError {
     }
 
     // Network error — no response
-    return { statusCode: 0, message: "Нет соединения с сервером" };
+    return { statusCode: 0, message: i18n.t("common:noServerConnection") };
   }
 
   return {
     statusCode: 500,
-    message: error instanceof Error ? error.message : "Произошла ошибка",
+    message: error instanceof Error ? error.message : i18n.t("common:genericError"),
   };
 }
 

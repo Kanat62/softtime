@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { localeTag } from "@/shared/lib/date";
 import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { DayButton, DayPicker, getDefaultClassNames } from "react-day-picker";
 
@@ -32,7 +33,9 @@ function Calendar({
       )}
       captionLayout={captionLayout}
       formatters={{
-        formatMonthDropdown: (date) => date.toLocaleString("default", { month: "short" }),
+        // localeTag(), а не "default": выпадашка месяца должна следовать
+        // языку интерфейса, а не языку браузера.
+        formatMonthDropdown: (date) => date.toLocaleString(localeTag(), { month: "short" }),
         ...formatters,
       }}
       classNames={{

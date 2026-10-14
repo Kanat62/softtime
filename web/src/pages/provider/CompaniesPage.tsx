@@ -1,8 +1,9 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { ru } from "date-fns/locale";
+import { dateFnsLocale } from "@/shared/lib/date-locale";
 import { toast } from "sonner";
 import { Search, Play, PauseCircle, Trash2 } from "lucide-react";
 import { CompanyStatus, SubStatus } from "@softtime/shared";
@@ -30,7 +31,7 @@ const PAGE_SIZE = 20;
 function fmtDate(iso: string | null | undefined) {
   if (!iso) return "—";
   try {
-    return format(new Date(iso), "d MMM yyyy", { locale: ru });
+    return format(new Date(iso), "d MMM yyyy", { locale: dateFnsLocale() });
   } catch {
     return iso;
   }
@@ -39,6 +40,7 @@ function fmtDate(iso: string | null | undefined) {
 type DialogAction = "activate" | "suspend" | "delete";
 
 export function CompaniesPage() {
+  const { t } = useTranslation(["provider", "enums", "common"]);
   const navigate = useNavigate();
   const qc = useQueryClient();
 
@@ -74,34 +76,34 @@ export function CompaniesPage() {
   const activateMut = useMutation({
     mutationFn: (id: string) => providerApi.activateCompany(id),
     onSuccess: () => {
-      toast.success("Компания активирована");
+      toast.success(t("provider:companies.toast.activated"));
       setDialog({ open: false, company: null, action: "activate" });
       qc.invalidateQueries({ queryKey: ["provider-companies"] });
       qc.invalidateQueries({ queryKey: queryKeys.providerDashboard });
     },
-    onError: () => toast.error("Ошибка при активации"),
+    onError: () => toast.error(t("provider:companies.toast.activateFailed")),
   });
 
   const suspendMut = useMutation({
     mutationFn: (id: string) => providerApi.suspendCompany(id),
     onSuccess: () => {
-      toast.success("Компания приостановлена");
+      toast.success(t("provider:companies.toast.suspended"));
       setDialog({ open: false, company: null, action: "activate" });
       qc.invalidateQueries({ queryKey: ["provider-companies"] });
       qc.invalidateQueries({ queryKey: queryKeys.providerDashboard });
     },
-    onError: () => toast.error("Ошибка при приостановке"),
+    onError: () => toast.error(t("provider:companies.toast.suspendFailed")),
   });
 
   const deleteMut = useMutation({
     mutationFn: (id: string) => providerApi.deleteCompany(id),
     onSuccess: () => {
-      toast.success("Компания удалена");
+      toast.success(t("provider:companies.toast.deleted"));
       setDialog({ open: false, company: null, action: "activate" });
       qc.invalidateQueries({ queryKey: ["provider-companies"] });
       qc.invalidateQueries({ queryKey: queryKeys.providerDashboard });
     },
-    onError: () => toast.error("Ошибка при удалении"),
+    onError: () => toast.error(t("provider:companies.toast.deleteFailed")),
   });
 
   const mutPending = activateMut.isPending || suspendMut.isPending || deleteMut.isPending;
@@ -118,14 +120,14 @@ export function CompaniesPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Компании" />
+      <PageHeader title={t("provider:companies.title")} />
 
       {/* ── Filters ──────────────────────────────────────────────────────── */}
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
         <form onSubmit={handleSearchSubmit} className="relative flex-1 min-w-[200px] max-w-sm">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Поиск по названию или коду..."
+            placeholder={t("provider:companies.searchPlaceholder")}
             className="pl-9"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
@@ -133,27 +135,27 @@ export function CompaniesPage() {
         </form>
         <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(0); }}>
           <SelectTrigger className="w-48">
-            <SelectValue placeholder="Все статусы" />
+            <SelectValue placeholder={t("common:allStatuses")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Все статусы</SelectItem>
-            <SelectItem value={CompanyStatus.ACTIVE}>Активные</SelectItem>
-            <SelectItem value={CompanyStatus.TRIAL}>Триал</SelectItem>
-            <SelectItem value={CompanyStatus.GRACE}>Льготный период</SelectItem>
-            <SelectItem value={CompanyStatus.SUSPENDED}>Приостановлено</SelectItem>
+            <SelectItem value="all">{t("common:allStatuses")}</SelectItem>
+            <SelectItem value={CompanyStatus.ACTIVE}>{t("enums:companyStatus.ACTIVE")}</SelectItem>
+            <SelectItem value={CompanyStatus.TRIAL}>{t("enums:companyStatus.TRIAL")}</SelectItem>
+            <SelectItem value={CompanyStatus.GRACE}>{t("enums:companyStatus.GRACE")}</SelectItem>
+            <SelectItem value={CompanyStatus.SUSPENDED}>{t("enums:companyStatus.SUSPENDED")}</SelectItem>
           </SelectContent>
         </Select>
         <Select value={subStatusFilter} onValueChange={(v) => { setSubStatusFilter(v); setPage(0); }}>
           <SelectTrigger className="w-48">
-            <SelectValue placeholder="Статус подписки" />
+            <SelectValue placeholder={t("provider:companies.subStatusPlaceholder")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Все подписки</SelectItem>
-            <SelectItem value={SubStatus.TRIAL}>Триал</SelectItem>
-            <SelectItem value={SubStatus.ACTIVE}>Активная</SelectItem>
-            <SelectItem value={SubStatus.GRACE}>Льготный период</SelectItem>
-            <SelectItem value={SubStatus.EXPIRED}>Истекла</SelectItem>
-            <SelectItem value={SubStatus.CANCELLED}>Отменена</SelectItem>
+            <SelectItem value="all">{t("provider:companies.allSubscriptions")}</SelectItem>
+            <SelectItem value={SubStatus.TRIAL}>{t("enums:subStatus.TRIAL")}</SelectItem>
+            <SelectItem value={SubStatus.ACTIVE}>{t("enums:subStatus.ACTIVE")}</SelectItem>
+            <SelectItem value={SubStatus.GRACE}>{t("enums:subStatus.GRACE")}</SelectItem>
+            <SelectItem value={SubStatus.EXPIRED}>{t("enums:subStatus.EXPIRED")}</SelectItem>
+            <SelectItem value={SubStatus.CANCELLED}>{t("enums:subStatus.CANCELLED")}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -161,9 +163,9 @@ export function CompaniesPage() {
       {/* ── Table ────────────────────────────────────────────────────────── */}
       {companiesQ.isError ? (
         <div className="rounded-2xl bg-card p-10 text-center text-sm text-muted-foreground shadow-sm">
-          Не удалось загрузить данные.
+          {t("common:loadFailed2")}
           <Button variant="outline" size="sm" className="ml-3" onClick={() => companiesQ.refetch()}>
-            Повторить
+            {t("common:retry")}
           </Button>
         </div>
       ) : companiesQ.isLoading ? (
@@ -171,7 +173,15 @@ export function CompaniesPage() {
           <table className="w-full text-sm">
             <thead className="border-b border-border bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
               <tr>
-                {["Компания", "Сотр.", "Статус", "Подписка", "Следующий платёж", "Зарегистрирована", ""].map((h) => (
+                {[
+                  t("provider:companies.columns.company"),
+                  t("provider:companies.columns.employeesShort"),
+                  t("common:status"),
+                  t("provider:companies.columns.subscription"),
+                  t("provider:companies.columns.nextPayment"),
+                  t("provider:companies.columns.registered"),
+                  "",
+                ].map((h) => (
                   <th key={h} className="px-3 py-2.5 font-medium">{h}</th>
                 ))}
               </tr>
@@ -192,21 +202,21 @@ export function CompaniesPage() {
       ) : companies.length === 0 ? (
         <EmptyState
           icon={<Search className="h-10 w-10" />}
-          title="Компании не найдены"
-          description="Попробуйте изменить фильтры или поисковый запрос"
+          title={t("provider:companies.emptyTitle")}
+          description={t("provider:companies.emptyDescription")}
         />
       ) : (
         <div className="overflow-hidden rounded-2xl bg-card shadow-sm">
           <table className="w-full text-sm">
             <thead className="border-b border-border bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
               <tr>
-                <th className="px-3 py-2.5 font-medium">Компания</th>
-                <th className="px-3 py-2.5 font-medium text-center">Сотр.</th>
-                <th className="px-3 py-2.5 font-medium">Статус</th>
-                <th className="px-3 py-2.5 font-medium">Подписка</th>
-                <th className="px-3 py-2.5 font-medium">След. платёж</th>
-                <th className="px-3 py-2.5 font-medium">Регистрация</th>
-                <th className="px-3 py-2.5 font-medium w-40">Действия</th>
+                <th className="px-3 py-2.5 font-medium">{t("provider:companies.columns.company")}</th>
+                <th className="px-3 py-2.5 font-medium text-center">{t("provider:companies.columns.employeesShort")}</th>
+                <th className="px-3 py-2.5 font-medium">{t("common:status")}</th>
+                <th className="px-3 py-2.5 font-medium">{t("provider:companies.columns.subscription")}</th>
+                <th className="px-3 py-2.5 font-medium">{t("provider:companies.columns.nextPaymentShort")}</th>
+                <th className="px-3 py-2.5 font-medium">{t("provider:companies.columns.registeredShort")}</th>
+                <th className="px-3 py-2.5 font-medium w-40">{t("common:actions")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -243,7 +253,7 @@ export function CompaniesPage() {
                           onClick={() => openDialog(c, "activate")}
                         >
                           <Play className="h-3 w-3" />
-                          Включить
+                          {t("provider:companies.activate")}
                         </Button>
                       ) : (
                         <Button
@@ -253,7 +263,7 @@ export function CompaniesPage() {
                           onClick={() => openDialog(c, "suspend")}
                         >
                           <PauseCircle className="h-3 w-3" />
-                          Стоп
+                          {t("provider:companies.suspend")}
                         </Button>
                       )}
                       <Button
@@ -263,7 +273,7 @@ export function CompaniesPage() {
                         onClick={() => openDialog(c, "delete")}
                       >
                         <Trash2 className="h-3 w-3" />
-                        Удалить
+                        {t("common:delete")}
                       </Button>
                     </div>
                   </td>
@@ -274,10 +284,16 @@ export function CompaniesPage() {
 
           {total > PAGE_SIZE && (
             <div className="flex items-center justify-between border-t border-border px-4 py-3 text-xs text-muted-foreground">
-              <span>{page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, total)} из {total}</span>
+              <span>
+                {t("common:pagination.range", {
+                  from: page * PAGE_SIZE + 1,
+                  to: Math.min((page + 1) * PAGE_SIZE, total),
+                  total,
+                })}
+              </span>
               <div className="flex gap-1">
-                <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>Назад</Button>
-                <Button variant="outline" size="sm" disabled={page >= pageCount - 1} onClick={() => setPage((p) => p + 1)}>Вперёд</Button>
+                <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>{t("common:back")}</Button>
+                <Button variant="outline" size="sm" disabled={page >= pageCount - 1} onClick={() => setPage((p) => p + 1)}>{t("common:next")}</Button>
               </div>
             </div>
           )}
@@ -290,21 +306,21 @@ export function CompaniesPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>
               {dialog.action === "activate"
-                ? "Активировать компанию?"
+                ? t("provider:companies.dialog.activateTitle")
                 : dialog.action === "suspend"
-                  ? "Приостановить компанию?"
-                  : "Удалить компанию?"}
+                  ? t("provider:companies.dialog.suspendTitle")
+                  : t("provider:companies.dialog.deleteTitle")}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {dialog.action === "activate"
-                ? `Компания «${dialog.company?.name}» получит статус ACTIVE и доступ к платформе.`
+                ? t("provider:companies.dialog.activateText", { name: dialog.company?.name })
                 : dialog.action === "suspend"
-                  ? `Компания «${dialog.company?.name}» будет приостановлена. Сотрудники не смогут использовать приложение.`
-                  : `Компания «${dialog.company?.name}» и все связанные данные (сотрудники, посещаемость, новости, платежи) будут безвозвратно удалены.`}
+                  ? t("provider:companies.dialog.suspendText", { name: dialog.company?.name })
+                  : t("provider:companies.dialog.deleteText", { name: dialog.company?.name })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={mutPending}>Отмена</AlertDialogCancel>
+            <AlertDialogCancel disabled={mutPending}>{t("common:cancel")}</AlertDialogCancel>
             <AlertDialogAction
               className={dialog.action !== "activate" ? "bg-destructive text-white hover:bg-destructive/90" : ""}
               disabled={mutPending}
@@ -316,12 +332,12 @@ export function CompaniesPage() {
               }}
             >
               {mutPending
-                ? "Обработка..."
+                ? t("common:processing")
                 : dialog.action === "activate"
-                  ? "Активировать"
+                  ? t("provider:companies.dialog.activateConfirm")
                   : dialog.action === "suspend"
-                    ? "Приостановить"
-                    : "Удалить"}
+                    ? t("provider:companies.dialog.suspendConfirm")
+                    : t("common:delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

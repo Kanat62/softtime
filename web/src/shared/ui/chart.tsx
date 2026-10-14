@@ -1,4 +1,5 @@
 import * as React from "react";
+import { localeTag } from "@/shared/lib/date";
 import * as RechartsPrimitive from "recharts";
 
 import { cn } from "@/shared/lib/cn";
@@ -222,7 +223,7 @@ const ChartTooltipContent = React.forwardRef<
                         </div>
                         {item.value && (
                           <span className="font-mono font-medium tabular-nums text-foreground">
-                            {item.value.toLocaleString()}
+                            {item.value.toLocaleString(localeTag())}
                           </span>
                         )}
                       </div>
