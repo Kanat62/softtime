@@ -7,6 +7,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import { ROLES_KEY } from '../decorators';
 import { TenantPayload } from '../tenant/tenant.context';
+import { ErrorCode } from '@softtime/shared';
 
 // Guards execute BEFORE interceptors in NestJS, so TenantContext (AsyncLocalStorage)
 // is not yet populated here. Read role from req.user set by JwtAuthGuard / Passport.
@@ -26,7 +27,10 @@ export class RolesGuard implements CanActivate {
       .getRequest().user;
 
     if (!user || !required.includes(user.role)) {
-      throw new ForbiddenException('Insufficient role');
+      throw new ForbiddenException({
+        message: 'Insufficient role',
+        code: ErrorCode.FORBIDDEN_ROLE,
+      });
     }
     return true;
   }

@@ -5,6 +5,7 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import {
+  ErrorCode,
   DayStatus,
   RequestStatus,
   RequestType,
@@ -72,7 +73,10 @@ export class RequestsService {
     companyId: string,
   ) {
     if (dto.endDate && dto.endDate < dto.startDate) {
-      throw new BadRequestException('endDate не может быть раньше startDate');
+      throw new BadRequestException({
+        message: 'endDate не может быть раньше startDate',
+        code: ErrorCode.REQUEST_INVALID_DATE_RANGE,
+      });
     }
 
     const request = await this.prisma.absenceRequest.create({
@@ -157,9 +161,17 @@ export class RequestsService {
     const request = await this.prisma.absenceRequest.findFirst({
       where: { id } as any,
     });
-    if (!request) throw new NotFoundException('Заявка не найдена');
+    if (!request) {
+      throw new NotFoundException({
+        message: 'Заявка не найдена',
+        code: ErrorCode.REQUEST_NOT_FOUND,
+      });
+    }
     if (request.status !== RequestStatus.PENDING) {
-      throw new ConflictException('Заявка уже обработана');
+      throw new ConflictException({
+        message: 'Заявка уже обработана',
+        code: ErrorCode.REQUEST_ALREADY_HANDLED,
+      });
     }
 
     // Update request status
@@ -206,9 +218,17 @@ export class RequestsService {
     const request = await this.prisma.absenceRequest.findFirst({
       where: { id } as any,
     });
-    if (!request) throw new NotFoundException('Заявка не найдена');
+    if (!request) {
+      throw new NotFoundException({
+        message: 'Заявка не найдена',
+        code: ErrorCode.REQUEST_NOT_FOUND,
+      });
+    }
     if (request.status !== RequestStatus.PENDING) {
-      throw new ConflictException('Заявка уже обработана');
+      throw new ConflictException({
+        message: 'Заявка уже обработана',
+        code: ErrorCode.REQUEST_ALREADY_HANDLED,
+      });
     }
 
     const updated = await this.prisma.absenceRequest.update({

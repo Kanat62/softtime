@@ -4,7 +4,7 @@ import {
   ExecutionContext,
   ForbiddenException,
 } from '@nestjs/common';
-import { CompanyStatus } from '@softtime/shared';
+import { ErrorCode, CompanyStatus } from '@softtime/shared';
 import { PrismaService } from '../../prisma/prisma.service';
 import { TenantPayload } from '../tenant/tenant.context';
 
@@ -30,7 +30,10 @@ export class CompanyActiveGuard implements CanActivate {
     });
 
     if (company?.status === CompanyStatus.SUSPENDED) {
-      throw new ForbiddenException('Subscription is not active');
+      throw new ForbiddenException({
+        message: 'Subscription is not active',
+        code: ErrorCode.SUBSCRIPTION_NOT_ACTIVE,
+      });
     }
     return true;
   }

@@ -1,3 +1,4 @@
+import { ErrorCode } from '@softtime/shared';
 import { Injectable, NotFoundException } from '@nestjs/common'
 import { PDFDocument, PDFFont, PDFPage, rgb } from 'pdf-lib'
 import * as fs from 'fs'
@@ -61,13 +62,23 @@ export class PaymentReceiptService {
     const payment = await this.prisma.payment.findFirst({
       where: { id: paymentId, companyId } as any,
     })
-    if (!payment) throw new NotFoundException('Платёж не найден')
+    if (!payment) {
+      throw new NotFoundException({
+        message: 'Платёж не найден',
+        code: ErrorCode.PAYMENT_NOT_FOUND,
+      })
+    }
 
     const company = await this.prisma.company.findFirst({
       where: { id: companyId } as any,
       select: { name: true },
     })
-    if (!company) throw new NotFoundException('Компания не найдена')
+    if (!company) {
+      throw new NotFoundException({
+        message: 'Компания не найдена',
+        code: ErrorCode.COMPANY_NOT_FOUND,
+      })
+    }
 
     // Порядковый номер чека в рамках компании (вычисляемое поле, на лету)
     const ordinal = await this.prisma.payment.count({

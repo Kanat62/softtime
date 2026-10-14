@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
-import { DayScheduleDto } from '@softtime/shared';
+import { ErrorCode, DayScheduleDto } from '@softtime/shared';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 
@@ -50,7 +50,12 @@ export class SchedulesService {
       where: { id: userId, deletedAt: null } as any,
       select: { id: true },
     });
-    if (!user) throw new NotFoundException('Пользователь не найден');
+    if (!user) {
+      throw new NotFoundException({
+        message: 'Пользователь не найден',
+        code: ErrorCode.USER_NOT_FOUND,
+      });
+    }
 
     const rows = await this.prisma.employeeSchedule.findMany({
       where: { userId } as any,
@@ -65,7 +70,12 @@ export class SchedulesService {
       where: { id: userId, deletedAt: null } as any,
       select: { id: true },
     });
-    if (!user) throw new NotFoundException('Пользователь не найден');
+    if (!user) {
+      throw new NotFoundException({
+        message: 'Пользователь не найден',
+        code: ErrorCode.USER_NOT_FOUND,
+      });
+    }
 
     await this.validateMinHours(days);
 
@@ -175,9 +185,10 @@ export class SchedulesService {
       const duration = timeToMinutes(day.endTime) - timeToMinutes(day.startTime);
       if (duration < minMinutes) {
         const minHours = minMinutes / 60;
-        throw new UnprocessableEntityException(
-          `${day.weekday}: рабочий день должен быть не менее ${minHours} ч (${day.startTime}–${day.endTime})`,
-        );
+        throw new UnprocessableEntityException({
+          message: `${day.weekday}: рабочий день должен быть не менее ${minHours} ч (${day.startTime}–${day.endTime})`,
+          code: ErrorCode.SCHEDULE_MIN_HOURS,
+        });
       }
     }
   }

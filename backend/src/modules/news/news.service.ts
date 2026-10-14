@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { UserStatus } from '@softtime/shared';
+import { ErrorCode, UserStatus } from '@softtime/shared';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { AuditService } from '../audit/audit.service';
@@ -38,7 +38,12 @@ export class NewsService {
       where: { id } as any,
       include: { reads: { where: { userId }, take: 1 } },
     });
-    if (!news) throw new NotFoundException('Новость не найдена');
+    if (!news) {
+      throw new NotFoundException({
+        message: 'Новость не найдена',
+        code: ErrorCode.NEWS_NOT_FOUND,
+      });
+    }
 
     // Auto-create read record if not already present (upsert — no tenant ext on NewsRead)
     if (!(news as any).reads?.length) {
@@ -57,7 +62,12 @@ export class NewsService {
 
   async markRead(newsId: string, userId: string) {
     const news = await this.prisma.news.findFirst({ where: { id: newsId } as any });
-    if (!news) throw new NotFoundException('Новость не найдена');
+    if (!news) {
+      throw new NotFoundException({
+        message: 'Новость не найдена',
+        code: ErrorCode.NEWS_NOT_FOUND,
+      });
+    }
 
     await this.prisma.newsRead.upsert({
       where: { newsId_userId: { newsId, userId } },
@@ -111,7 +121,12 @@ export class NewsService {
 
   async deleteNews(newsId: string, adminId: string) {
     const news = await this.prisma.news.findFirst({ where: { id: newsId } as any });
-    if (!news) throw new NotFoundException('Новость не найдена');
+    if (!news) {
+      throw new NotFoundException({
+        message: 'Новость не найдена',
+        code: ErrorCode.NEWS_NOT_FOUND,
+      });
+    }
 
     await this.prisma.newsRead.deleteMany({ where: { newsId } });
     await this.prisma.news.delete({ where: { id: newsId } as any });
@@ -131,7 +146,12 @@ export class NewsService {
 
   async getReadStats(newsId: string) {
     const news = await this.prisma.news.findFirst({ where: { id: newsId } as any });
-    if (!news) throw new NotFoundException('Новость не найдена');
+    if (!news) {
+      throw new NotFoundException({
+        message: 'Новость не найдена',
+        code: ErrorCode.NEWS_NOT_FOUND,
+      });
+    }
 
     // All non-deleted company users + reads in parallel
     const [users, reads] = await Promise.all([

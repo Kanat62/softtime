@@ -4,7 +4,7 @@ import {
   NotFoundException,
   ConflictException,
 } from '@nestjs/common';
-import { CompanyStatus, PaymentStatus, SubStatus } from '@softtime/shared';
+import { ErrorCode, CompanyStatus, PaymentStatus, SubStatus } from '@softtime/shared';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -30,7 +30,12 @@ export class SubscriptionsService {
     const sub = await this.prisma.subscription.findUnique({
       where: { companyId },
     });
-    if (!sub) throw new NotFoundException('Подписка не найдена');
+    if (!sub) {
+      throw new NotFoundException({
+        message: 'Подписка не найдена',
+        code: ErrorCode.SUBSCRIPTION_NOT_FOUND,
+      });
+    }
 
     const now = Date.now();
     const daysLeft = Math.max(
@@ -45,9 +50,17 @@ export class SubscriptionsService {
 
   async initiatePayment(companyId: string) {
     const sub = await this.prisma.subscription.findUnique({ where: { companyId } });
-    if (!sub) throw new NotFoundException('Подписка не найдена');
+    if (!sub) {
+      throw new NotFoundException({
+        message: 'Подписка не найдена',
+        code: ErrorCode.SUBSCRIPTION_NOT_FOUND,
+      });
+    }
     if ((sub as any).status === SubStatus.CANCELLED) {
-      throw new ConflictException('Подписка отменена. Обратитесь в службу поддержки.');
+      throw new ConflictException({
+        message: 'Подписка отменена. Обратитесь в службу поддержки.',
+        code: ErrorCode.SUBSCRIPTION_CANCELLED,
+      });
     }
 
     const checkoutUrl = await this.paymentProvider.createCheckout(10, companyId);
@@ -58,9 +71,17 @@ export class SubscriptionsService {
 
   async cancelSubscription(companyId: string, actorId: string) {
     const sub = await this.prisma.subscription.findUnique({ where: { companyId } });
-    if (!sub) throw new NotFoundException('Подписка не найдена');
+    if (!sub) {
+      throw new NotFoundException({
+        message: 'Подписка не найдена',
+        code: ErrorCode.SUBSCRIPTION_NOT_FOUND,
+      });
+    }
     if ((sub as any).status === SubStatus.CANCELLED) {
-      throw new ConflictException('Подписка уже отменена');
+      throw new ConflictException({
+        message: 'Подписка уже отменена',
+        code: ErrorCode.SUBSCRIPTION_ALREADY_CANCELLED,
+      });
     }
 
     const [updatedSub] = await Promise.all([

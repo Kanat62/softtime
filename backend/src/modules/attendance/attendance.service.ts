@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import {
+  ErrorCode,
   CheckInStatus,
   CheckOutStatus,
   DayStatus,
@@ -112,14 +113,24 @@ export class AttendanceService {
     const qr = await this.prisma.qrToken.findFirst({
       where: { token: qrToken, isActive: true } as any,
     });
-    if (!qr) throw new BadRequestException('QR недействителен');
+    if (!qr) {
+      throw new BadRequestException({
+        message: 'QR недействителен',
+        code: ErrorCode.QR_INVALID,
+      });
+    }
 
     // 3. IP validation
     const networks = await this.prisma.officeNetwork.findMany({
       where: {} as any,
       select: { cidr: true },
     });
-    if (!checkIpInNetworks(ip, networks as any)) throw new BadRequestException('Вне офисной сети');
+    if (!checkIpInNetworks(ip, networks as any)) {
+      throw new BadRequestException({
+        message: 'Вне офисной сети',
+        code: ErrorCode.OUTSIDE_OFFICE_NETWORK,
+      });
+    }
   }
 
   // ─── Check-in ───────────────────────────────────────────────────────────────
@@ -135,7 +146,10 @@ export class AttendanceService {
       where: { userId, weekday } as any,
     });
     if (!schedule?.isWorkingDay || !schedule.startTime) {
-      throw new BadRequestException('Сегодня нерабочий день');
+      throw new BadRequestException({
+        message: 'Сегодня нерабочий день',
+        code: ErrorCode.NON_WORKING_DAY,
+      });
     }
 
     // 5. Status calculation — compare local minutes, not UTC
@@ -149,7 +163,10 @@ export class AttendanceService {
       where: { userId, date: today } as any,
     });
     if (existing?.checkInAt) {
-      throw new ConflictException('Приход уже отмечен');
+      throw new ConflictException({
+        message: 'Приход уже отмечен',
+        code: ErrorCode.ALREADY_CHECKED_IN,
+      });
     }
 
     let record: any;
@@ -196,7 +213,12 @@ export class AttendanceService {
         checkOutAt: null,
       } as any,
     });
-    if (!attendance) throw new ConflictException('Нет активного прихода для выхода');
+    if (!attendance) {
+      throw new ConflictException({
+        message: 'Нет активного прихода для выхода',
+        code: ErrorCode.NO_ACTIVE_CHECKIN,
+      });
+    }
 
     // Schedule for today — use company's local timezone for weekday
     const timezone = await this.getCompanyTimezone();
@@ -204,7 +226,12 @@ export class AttendanceService {
     const schedule = await this.prisma.employeeSchedule.findFirst({
       where: { userId, weekday } as any,
     });
-    if (!schedule?.endTime) throw new BadRequestException('Расписание на сегодня не настроено');
+    if (!schedule?.endTime) {
+      throw new BadRequestException({
+        message: 'Расписание на сегодня не настроено',
+        code: ErrorCode.SCHEDULE_NOT_CONFIGURED,
+      });
+    }
 
     // 3. Check for approved EARLY_LEAVE request today
     const approvedEarlyLeave = await this.prisma.absenceRequest.findFirst({
@@ -366,7 +393,12 @@ export class AttendanceService {
     const existing = await this.prisma.attendance.findFirst({
       where: { id } as any,
     });
-    if (!existing) throw new NotFoundException('Запись не найдена');
+    if (!existing) {
+      throw new NotFoundException({
+        message: 'Запись не найдена',
+        code: ErrorCode.ATTENDANCE_NOT_FOUND,
+      });
+    }
     await this.prisma.attendance.delete({ where: { id } as any });
   }
 
@@ -385,7 +417,12 @@ export class AttendanceService {
     const existing = await this.prisma.attendance.findFirst({
       where: { id } as any,
     });
-    if (!existing) throw new NotFoundException('Запись не найдена');
+    if (!existing) {
+      throw new NotFoundException({
+        message: 'Запись не найдена',
+        code: ErrorCode.ATTENDANCE_NOT_FOUND,
+      });
+    }
 
     const data: any = { isManual: true };
     if (dto.checkInAt !== undefined) data.checkInAt = dto.checkInAt ? new Date(dto.checkInAt) : null;
@@ -433,7 +470,12 @@ export class AttendanceService {
     const existing = await this.prisma.attendance.findFirst({
       where: { userId: dto.userId, date } as any,
     });
-    if (existing) throw new ConflictException('Запись за этот день уже существует');
+    if (existing) {
+      throw new ConflictException({
+        message: 'Запись за этот день уже существует',
+        code: ErrorCode.ATTENDANCE_ALREADY_EXISTS,
+      });
+    }
 
     const checkInAt = dto.checkInAt ? new Date(dto.checkInAt) : null;
     const checkOutAt = dto.checkOutAt ? new Date(dto.checkOutAt) : null;

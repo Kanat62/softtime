@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { CompanyStatus, PaymentStatus, SubStatus } from '@softtime/shared';
+import { ErrorCode, CompanyStatus, PaymentStatus, SubStatus } from '@softtime/shared';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -162,7 +162,12 @@ export class ProviderService {
         },
       },
     });
-    if (!company) throw new NotFoundException('Компания не найдена');
+    if (!company) {
+      throw new NotFoundException({
+        message: 'Компания не найдена',
+        code: ErrorCode.COMPANY_NOT_FOUND,
+      });
+    }
     return company;
   }
 
@@ -170,7 +175,12 @@ export class ProviderService {
 
   async activateCompany(id: string, actorId: string) {
     const company = await this.prisma.company.findUnique({ where: { id } });
-    if (!company) throw new NotFoundException('Компания не найдена');
+    if (!company) {
+      throw new NotFoundException({
+        message: 'Компания не найдена',
+        code: ErrorCode.COMPANY_NOT_FOUND,
+      });
+    }
 
     await Promise.all([
       this.prisma.company.update({
@@ -200,7 +210,12 @@ export class ProviderService {
 
   async suspendCompany(id: string, actorId: string) {
     const company = await this.prisma.company.findUnique({ where: { id } });
-    if (!company) throw new NotFoundException('Компания не найдена');
+    if (!company) {
+      throw new NotFoundException({
+        message: 'Компания не найдена',
+        code: ErrorCode.COMPANY_NOT_FOUND,
+      });
+    }
 
     await Promise.all([
       this.prisma.company.update({
@@ -237,7 +252,12 @@ export class ProviderService {
 
   async deleteCompany(id: string, actorId: string) {
     const company = await this.prisma.company.findUnique({ where: { id } });
-    if (!company) throw new NotFoundException('Компания не найдена');
+    if (!company) {
+      throw new NotFoundException({
+        message: 'Компания не найдена',
+        code: ErrorCode.COMPANY_NOT_FOUND,
+      });
+    }
 
     await this.prisma.$transaction(async (tx) => {
       const userIds = (

@@ -11,6 +11,7 @@ import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 import {
+  ErrorCode,
   UserRole,
   UserStatus,
   CompanyStatus,
@@ -65,7 +66,10 @@ export class AuthService {
           where: { email: dto.email },
         });
         if (existingUser) {
-          throw new ConflictException('Этот email уже зарегистрирован');
+          throw new ConflictException({
+            message: 'Этот email уже зарегистрирован',
+            code: ErrorCode.EMAIL_TAKEN,
+          });
         }
 
         const user = await tx.user.create({
@@ -126,14 +130,20 @@ export class AuthService {
       where: { companyCode: dto.companyCode },
     });
     if (!company) {
-      throw new NotFoundException('Компания не найдена');
+      throw new NotFoundException({
+        message: 'Компания не найдена',
+        code: ErrorCode.COMPANY_NOT_FOUND,
+      });
     }
 
     const existingUser = await this.prisma.user.findFirst({
       where: { email: dto.email, deletedAt: null },
     });
     if (existingUser) {
-      throw new ConflictException('Этот email уже зарегистрирован');
+      throw new ConflictException({
+        message: 'Этот email уже зарегистрирован',
+        code: ErrorCode.EMAIL_TAKEN,
+      });
     }
 
     const passwordHash = await bcrypt.hash(dto.password, BCRYPT_ROUNDS);
@@ -172,7 +182,10 @@ export class AuthService {
     const attempts = await this.redis.get(bruteKey);
     if (attempts && parseInt(attempts, 10) >= this.maxAttempts) {
       throw new HttpException(
-        'Слишком много попыток. Повторите через 15 минут.',
+        {
+          message: 'Слишком много попыток. Повторите через 15 минут.',
+          code: ErrorCode.TOO_MANY_ATTEMPTS,
+        },
         HttpStatus.TOO_MANY_REQUESTS,
       );
     }
@@ -190,7 +203,10 @@ export class AuthService {
       if (count === 1) {
         await this.redis.expire(bruteKey, this.blockSeconds);
       }
-      throw new UnauthorizedException('Неверный email или пароль');
+      throw new UnauthorizedException({
+        message: 'Неверный email или пароль',
+        code: ErrorCode.INVALID_CREDENTIALS,
+      });
     }
 
     await this.redis.del(bruteKey);
@@ -216,7 +232,10 @@ export class AuthService {
         secret: this.config.get<string>('JWT_REFRESH_SECRET'),
       });
     } catch {
-      throw new UnauthorizedException('Недействительный refresh-токен');
+      throw new UnauthorizedException({
+        message: 'Недействительный refresh-токен',
+        code: ErrorCode.REFRESH_TOKEN_INVALID,
+      });
     }
 
     const { sub: userId, tokenId } = payload;
@@ -224,7 +243,10 @@ export class AuthService {
 
     const stored = await this.redis.get(redisKey);
     if (!stored) {
-      throw new UnauthorizedException('Refresh-токен не найден или истёк');
+      throw new UnauthorizedException({
+        message: 'Refresh-токен не найден или истёк',
+        code: ErrorCode.REFRESH_TOKEN_EXPIRED,
+      });
     }
 
     await this.redis.del(redisKey);
@@ -233,7 +255,10 @@ export class AuthService {
       where: { id: userId, deletedAt: null },
     });
     if (!user) {
-      throw new UnauthorizedException('Пользователь не найден');
+      throw new UnauthorizedException({
+        message: 'Пользователь не найден',
+        code: ErrorCode.USER_NOT_FOUND,
+      });
     }
 
     const tokens = await this.generateTokens(user.id, user.role, user.companyId, user.status);

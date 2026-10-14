@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
+import { ErrorCode } from '@softtime/shared';
 
 @Injectable()
 export class CompaniesService {
@@ -14,7 +15,12 @@ export class CompaniesService {
       where: { id: companyId },
       include: { subscription: true },
     });
-    if (!company) throw new NotFoundException('Компания не найдена');
+    if (!company) {
+      throw new NotFoundException({
+        message: 'Компания не найдена',
+        code: ErrorCode.COMPANY_NOT_FOUND,
+      });
+    }
 
     return {
       id: company.id,

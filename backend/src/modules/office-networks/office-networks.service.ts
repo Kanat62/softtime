@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
+import { ErrorCode } from '@softtime/shared';
 
 @Injectable()
 export class OfficeNetworksService {
@@ -42,7 +43,12 @@ export class OfficeNetworksService {
     const existing = await this.prisma.officeNetwork.findFirst({
       where: { id } as any,
     });
-    if (!existing) throw new NotFoundException('Сеть не найдена');
+    if (!existing) {
+      throw new NotFoundException({
+        message: 'Сеть не найдена',
+        code: ErrorCode.OFFICE_NETWORK_NOT_FOUND,
+      });
+    }
 
     const updated = await this.prisma.officeNetwork.update({
       where: { id } as any,
@@ -66,7 +72,12 @@ export class OfficeNetworksService {
     const existing = await this.prisma.officeNetwork.findFirst({
       where: { id } as any,
     });
-    if (!existing) throw new NotFoundException('Сеть не найдена');
+    if (!existing) {
+      throw new NotFoundException({
+        message: 'Сеть не найдена',
+        code: ErrorCode.OFFICE_NETWORK_NOT_FOUND,
+      });
+    }
 
     // Physical delete (no soft-delete for OfficeNetwork per ТЗ)
     await this.prisma.officeNetwork.delete({ where: { id } as any });

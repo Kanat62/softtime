@@ -4,7 +4,7 @@ import {
   ExecutionContext,
   ForbiddenException,
 } from '@nestjs/common';
-import { UserStatus } from '@softtime/shared';
+import { ErrorCode, UserStatus } from '@softtime/shared';
 import { TenantPayload } from '../tenant/tenant.context';
 
 const INACTIVE_STATUSES = new Set<string>([
@@ -26,7 +26,10 @@ export class StatusGuard implements CanActivate {
     if (!user?.status) return true; // status not in payload yet — allow
 
     if (INACTIVE_STATUSES.has(user.status)) {
-      throw new ForbiddenException('Account is not active');
+      throw new ForbiddenException({
+        message: 'Account is not active',
+        code: ErrorCode.ACCOUNT_BLOCKED,
+      });
     }
     return true;
   }

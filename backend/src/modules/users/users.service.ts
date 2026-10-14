@@ -6,7 +6,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
-import { UserStatus, UserRole } from '@softtime/shared';
+import { ErrorCode, UserStatus, UserRole } from '@softtime/shared';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -81,7 +81,12 @@ export class UsersService {
       where: { id, deletedAt: null } as any,
       select: USER_SELECT,
     });
-    if (!user) throw new NotFoundException('Пользователь не найден');
+    if (!user) {
+      throw new NotFoundException({
+        message: 'Пользователь не найден',
+        code: ErrorCode.USER_NOT_FOUND,
+      });
+    }
 
     const [attendance, requests] = await Promise.all([
       this.prisma.attendance.findMany({
@@ -104,9 +109,17 @@ export class UsersService {
     const user = await this.prisma.user.findFirst({
       where: { id, deletedAt: null } as any,
     });
-    if (!user) throw new NotFoundException('Пользователь не найден');
+    if (!user) {
+      throw new NotFoundException({
+        message: 'Пользователь не найден',
+        code: ErrorCode.USER_NOT_FOUND,
+      });
+    }
     if (user.status !== UserStatus.PENDING) {
-      throw new BadRequestException('Пользователь не в статусе PENDING');
+      throw new BadRequestException({
+        message: 'Пользователь не в статусе PENDING',
+        code: ErrorCode.USER_NOT_PENDING,
+      });
     }
 
     const updated = await this.prisma.user.update({
@@ -142,9 +155,17 @@ export class UsersService {
     const user = await this.prisma.user.findFirst({
       where: { id, deletedAt: null } as any,
     });
-    if (!user) throw new NotFoundException('Пользователь не найден');
+    if (!user) {
+      throw new NotFoundException({
+        message: 'Пользователь не найден',
+        code: ErrorCode.USER_NOT_FOUND,
+      });
+    }
     if (user.status !== UserStatus.PENDING) {
-      throw new BadRequestException('Пользователь не в статусе PENDING');
+      throw new BadRequestException({
+        message: 'Пользователь не в статусе PENDING',
+        code: ErrorCode.USER_NOT_PENDING,
+      });
     }
 
     // Send notification before deletion so FCM token still exists
@@ -172,7 +193,10 @@ export class UsersService {
 
   async setUserStatus(id: string, status: UserStatus, actorId: string) {
     if (id === actorId) {
-      throw new BadRequestException('Нельзя изменить статус самому себе');
+      throw new BadRequestException({
+        message: 'Нельзя изменить статус самому себе',
+        code: ErrorCode.CANNOT_CHANGE_OWN_STATUS,
+      });
     }
 
     const allowed: UserStatus[] = [
@@ -181,13 +205,21 @@ export class UsersService {
       UserStatus.WARNING,
     ];
     if (!allowed.includes(status)) {
-      throw new BadRequestException('Допустимые статусы: ACTIVE, BLOCKED, WARNING');
+      throw new BadRequestException({
+        message: 'Допустимые статусы: ACTIVE, BLOCKED, WARNING',
+        code: ErrorCode.INVALID_USER_STATUS,
+      });
     }
 
     const user = await this.prisma.user.findFirst({
       where: { id, deletedAt: null } as any,
     });
-    if (!user) throw new NotFoundException('Пользователь не найден');
+    if (!user) {
+      throw new NotFoundException({
+        message: 'Пользователь не найден',
+        code: ErrorCode.USER_NOT_FOUND,
+      });
+    }
 
     const updated = await this.prisma.user.update({
       where: { id } as any,
@@ -212,7 +244,12 @@ export class UsersService {
     const user = await this.prisma.user.findFirst({
       where: { id, deletedAt: null } as any,
     });
-    if (!user) throw new NotFoundException('Пользователь не найден');
+    if (!user) {
+      throw new NotFoundException({
+        message: 'Пользователь не найден',
+        code: ErrorCode.USER_NOT_FOUND,
+      });
+    }
 
     const updated = await this.prisma.user.update({
       where: { id } as any,
@@ -234,13 +271,21 @@ export class UsersService {
 
   async deleteUser(id: string, actorId: string) {
     if (id === actorId) {
-      throw new ForbiddenException('Нельзя удалить собственный аккаунт');
+      throw new ForbiddenException({
+        message: 'Нельзя удалить собственный аккаунт',
+        code: ErrorCode.CANNOT_DELETE_OWN_ACCOUNT,
+      });
     }
 
     const user = await this.prisma.user.findFirst({
       where: { id, deletedAt: null } as any,
     });
-    if (!user) throw new NotFoundException('Пользователь не найден');
+    if (!user) {
+      throw new NotFoundException({
+        message: 'Пользователь не найден',
+        code: ErrorCode.USER_NOT_FOUND,
+      });
+    }
 
     // Audit log before deletion — user record won't exist after
     await this.audit.log({
@@ -271,7 +316,12 @@ export class UsersService {
         company: { select: { name: true, companyCode: true } },
       },
     });
-    if (!user) throw new NotFoundException('Пользователь не найден');
+    if (!user) {
+      throw new NotFoundException({
+        message: 'Пользователь не найден',
+        code: ErrorCode.USER_NOT_FOUND,
+      });
+    }
     const { company, ...rest } = user as any;
     return {
       ...rest,
@@ -293,7 +343,12 @@ export class UsersService {
     const user = await this.prisma.user.findFirst({
       where: { id: userId, deletedAt: null } as any,
     });
-    if (!user) throw new NotFoundException('Пользователь не найден');
+    if (!user) {
+      throw new NotFoundException({
+        message: 'Пользователь не найден',
+        code: ErrorCode.USER_NOT_FOUND,
+      });
+    }
 
     const data: Record<string, unknown> = {};
 
@@ -303,17 +358,26 @@ export class UsersService {
 
     if (dto.newPassword) {
       if (!dto.currentPassword) {
-        throw new BadRequestException('currentPassword обязателен для смены пароля');
+        throw new BadRequestException({
+          message: 'currentPassword обязателен для смены пароля',
+          code: ErrorCode.CURRENT_PASSWORD_REQUIRED,
+        });
       }
       const isMatch = await bcrypt.compare(dto.currentPassword, user.passwordHash);
       if (!isMatch) {
-        throw new UnauthorizedException('Текущий пароль неверен');
+        throw new UnauthorizedException({
+          message: 'Текущий пароль неверен',
+          code: ErrorCode.CURRENT_PASSWORD_INVALID,
+        });
       }
       data['passwordHash'] = await bcrypt.hash(dto.newPassword, BCRYPT_ROUNDS);
     }
 
     if (Object.keys(data).length === 0) {
-      throw new BadRequestException('Нет данных для обновления');
+      throw new BadRequestException({
+        message: 'Нет данных для обновления',
+        code: ErrorCode.NO_FIELDS_TO_UPDATE,
+      });
     }
 
     return this.prisma.user.update({

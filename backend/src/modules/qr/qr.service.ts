@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import * as crypto from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
+import { ErrorCode } from '@softtime/shared';
 
 @Injectable()
 export class QrService {
@@ -16,7 +17,12 @@ export class QrService {
     const qr = await this.prisma.qrToken.findFirst({
       where: { isActive: true } as any,
     });
-    if (!qr) throw new NotFoundException('Активный QR не найден. Используйте /qr/regenerate.');
+    if (!qr) {
+      throw new NotFoundException({
+        message: 'Активный QR не найден. Используйте /qr/regenerate.',
+        code: ErrorCode.QR_NOT_FOUND,
+      });
+    }
     return qr;
   }
 
