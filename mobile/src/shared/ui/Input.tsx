@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   StyleSheet,
   Text,
@@ -7,6 +8,21 @@ import {
   View,
 } from 'react-native';
 import { colors, fontFamily, radius, typography } from '../config/theme';
+
+/**
+ * Сообщения zod бывают двух видов: ключ словаря ('validation:format.email')
+ * или готовый текст (дефолт zod, либо уже переведённый бэкендом message).
+ * Переводим ТОЛЬКО то, что реально есть в словарях — иначе i18next примет
+ * ':' за разделитель namespace и обрежет строку
+ * ('Формат даты: YYYY-MM-DD' -> ' YYYY-MM-DD').
+ *
+ * Делается здесь, в одном месте: все формы выводят ошибку через этот prop.
+ */
+function useErrorText(error?: string): string | undefined {
+  const { t, i18n } = useTranslation();
+  if (!error) return undefined;
+  return i18n.exists(error) ? t(error) : error;
+}
 
 interface InputProps extends TextInputProps {
   label?: string;
@@ -17,6 +33,7 @@ interface InputProps extends TextInputProps {
 
 export function Input({ label, error, leftIcon, rightIcon, style, ...props }: InputProps) {
   const [focused, setFocused] = useState(false);
+  const errorText = useErrorText(error);
 
   const borderColor = error
     ? colors.danger
@@ -43,7 +60,7 @@ export function Input({ label, error, leftIcon, rightIcon, style, ...props }: In
         />
         {rightIcon && <View style={styles.rightIconWrap}>{rightIcon}</View>}
       </View>
-      {error && <Text style={styles.error}>{error}</Text>}
+      {errorText && <Text style={styles.error}>{errorText}</Text>}
     </View>
   );
 }

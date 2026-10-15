@@ -2,6 +2,7 @@ import type { AxiosError, InternalAxiosRequestConfig } from "axios";
 import { apiClient } from "./client";
 import { tokenStore } from "./tokenStore";
 import { refreshTokenStore } from "./refreshTokenStore";
+import i18n from "@/shared/i18n";
 
 let _initialized = false;
 let _refreshing = false;
@@ -27,10 +28,13 @@ export function setupInterceptors(): void {
   if (_initialized) return;
   _initialized = true;
 
-  // ── Request: attach Bearer token ────────────────────────────────────────────
+  // ── Request: attach Bearer token + UI language ──────────────────────────────
   apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
     const token = tokenStore.get();
     if (token) config.headers.Authorization = `Bearer ${token}`;
+    // По нему бэкенд переводит details[].message у ошибок валидации.
+    // Читаем язык на каждом запросе — он меняется без перезагрузки страницы.
+    config.headers["Accept-Language"] = i18n.resolvedLanguage ?? i18n.language;
     return config;
   });
 

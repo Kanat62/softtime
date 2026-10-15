@@ -1,6 +1,7 @@
 import { apiClient } from './client';
 import { normalizeError } from './errors';
 import { tokenStorage } from '../storage/secure';
+import i18n from '../i18n';
 
 let isRefreshing = false;
 let failedQueue: Array<{ resolve: (v: string) => void; reject: (e: unknown) => void }> = [];
@@ -11,10 +12,13 @@ function processQueue(error: unknown, token: string | null) {
 }
 
 export function setupInterceptors(onAuthFailure?: () => void) {
-  // ── Request: attach access token ──────────────────────────────────────────
+  // ── Request: attach access token + UI language ────────────────────────────
   apiClient.interceptors.request.use(async (config) => {
     const token = await tokenStorage.getAccessToken();
     if (token) config.headers.Authorization = `Bearer ${token}`;
+    // По нему бэкенд переводит details[].message у ошибок валидации.
+    // Читаем язык на каждом запросе — его меняют в Профиле на лету.
+    config.headers['Accept-Language'] = i18n.resolvedLanguage ?? i18n.language;
     return config;
   });
 
