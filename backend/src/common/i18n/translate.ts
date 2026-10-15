@@ -33,10 +33,18 @@ export function resolveLanguage(value: string | null | undefined): Language {
     : FALLBACK_LANGUAGE;
 }
 
-/** Достаёт строку по точечному пути, например 'push.newEmployee.title'. */
+/**
+ * Достаёт строку по пути в словаре.
+ *
+ * Понимает две формы:
+ *  - 'push.newEmployee.title' — точечный путь (серверные ключи);
+ *  - 'validation:format.email' — форма i18next `namespace:путь`, в которой
+ *    ключи лежат в zod-схемах: их читают и клиенты через i18n.exists/t().
+ *    Первое двоеточие — тот же разделитель, что точка.
+ */
 function lookup(lang: Language, path: string): string | undefined {
   let node: unknown = dictionaries[lang];
-  for (const part of path.split('.')) {
+  for (const part of path.replace(':', '.').split('.')) {
     if (typeof node !== 'object' || node === null) return undefined;
     node = (node as Record<string, unknown>)[part];
   }
@@ -61,6 +69,26 @@ function lookupPlural(
     lookup(lang, `${path}_other`) ??
     lookup(lang, path)
   );
+}
+
+/**
+ * Язык из заголовка Accept-Language: берём первый тег и отбрасываем регион
+ * ('en-US;q=0.9,ru' → 'en'). Всё, что не ru/en, и отсутствующий заголовок → ru.
+ *
+ * Отдельно от resolveLanguage: там на входе сохранённая настройка User.language,
+ * где 'en-US' — мусор, а здесь это нормальный браузерный тег.
+ */
+export function languageFromAcceptHeader(
+  header: string | string[] | undefined,
+): Language {
+  const raw = Array.isArray(header) ? header[0] : header;
+  if (!raw) return FALLBACK_LANGUAGE;
+
+  const firstTag = raw.split(',')[0].split(';')[0].trim().toLowerCase();
+  const base = firstTag.split('-')[0];
+  return (SUPPORTED_LANGUAGES as readonly string[]).includes(base)
+    ? (base as Language)
+    : FALLBACK_LANGUAGE;
 }
 
 /** Подставляет {{key}} из params. Неизвестные плейсхолдеры остаются как есть. */

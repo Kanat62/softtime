@@ -3,28 +3,28 @@ import { z } from 'zod';
 /** Смена статуса пользователя — тело PATCH /users/:id/status */
 export const updateUserStatusSchema = z.object({
   status: z.enum(['ACTIVE', 'BLOCKED', 'WARNING'], {
-    errorMap: () => ({ message: 'Допустимые статусы: ACTIVE, BLOCKED, WARNING' }),
+    errorMap: () => ({ message: 'validation:enumValue.userStatus' }),
   }),
 });
 
 /** Сохранение admin-комментария — тело PATCH /users/:id/note */
 export const updateUserNoteSchema = z.object({
-  note: z.string().max(1000, 'Комментарий не может превышать 1000 символов'),
+  note: z.string().max(1000, 'validation:length.commentMax1000'),
 });
 
 /** Обновление профиля — тело PATCH /profile */
 export const updateProfileSchema = z
   .object({
-    avatarUrl: z.string().url('Некорректный URL').nullable().optional(),
+    avatarUrl: z.string().url('validation:format.url').nullable().optional(),
     currentPassword: z.string().min(1).optional(),
     newPassword: z
       .string()
-      .min(8, 'Пароль должен содержать минимум 8 символов')
-      .max(72, 'Пароль не может превышать 72 символа')
+      .min(8, 'validation:password.min')
+      .max(72, 'validation:password.max')
       .optional(),
   })
   .refine((d) => !d.newPassword || !!d.currentPassword, {
-    message: 'currentPassword обязателен при смене пароля',
+    message: 'validation:password.currentRequired',
     path: ['currentPassword'],
   });
 

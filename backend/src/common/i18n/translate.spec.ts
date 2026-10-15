@@ -1,4 +1,4 @@
-import { tr, resolveLanguage } from './translate';
+import { tr, resolveLanguage, languageFromAcceptHeader } from './translate';
 
 describe('resolveLanguage', () => {
   it('passes through supported languages', () => {
@@ -90,5 +90,48 @@ describe('tr — pluralization', () => {
   it('ignores plural forms when count is absent', () => {
     // У непюрализованного ключа тот же вызов работает без count
     expect(tr('ru', 'push.unclosedShifts.title')).toBe('Незакрытые смены');
+  });
+});
+
+describe('languageFromAcceptHeader', () => {
+  it('берёт первый тег и отбрасывает регион', () => {
+    expect(languageFromAcceptHeader('en')).toBe('en');
+    expect(languageFromAcceptHeader('en-US')).toBe('en');
+    expect(languageFromAcceptHeader('en-US,en;q=0.9,ru;q=0.8')).toBe('en');
+    expect(languageFromAcceptHeader('ru-RU')).toBe('ru');
+    expect(languageFromAcceptHeader('  EN ')).toBe('en');
+  });
+
+  it('первый тег решает, даже если дальше другой поддерживаемый язык', () => {
+    expect(languageFromAcceptHeader('ru,en;q=0.9')).toBe('ru');
+    expect(languageFromAcceptHeader('en,ru;q=0.9')).toBe('en');
+  });
+
+  it('нет заголовка или язык не поддержан → ru', () => {
+    expect(languageFromAcceptHeader(undefined)).toBe('ru');
+    expect(languageFromAcceptHeader('')).toBe('ru');
+    expect(languageFromAcceptHeader('*')).toBe('ru');
+    expect(languageFromAcceptHeader('kk')).toBe('ru');
+    expect(languageFromAcceptHeader('de-DE,de;q=0.9')).toBe('ru');
+  });
+
+  it('принимает массив (node отдаёт его при дублях заголовка)', () => {
+    expect(languageFromAcceptHeader(['en', 'ru'])).toBe('en');
+  });
+});
+
+describe('tr — ключи zod-схем в форме namespace:path', () => {
+  it('понимает двоеточие как разделитель', () => {
+    expect(tr('ru', 'validation:format.email')).toBe('Некорректный email');
+    expect(tr('en', 'validation:format.email')).toBe('Invalid email address');
+    expect(tr('ru', 'validation:password.min')).toBe(
+      'Пароль должен содержать минимум 8 символов',
+    );
+  });
+
+  it('не-ключ возвращается без изменений — на этом держится фильтр', () => {
+    expect(tr('en', 'Invalid uuid')).toBe('Invalid uuid');
+    expect(tr('en', 'Некорректный email')).toBe('Некорректный email');
+    expect(tr('en', 'validation:format.nothingHere')).toBe('validation:format.nothingHere');
   });
 });

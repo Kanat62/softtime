@@ -5,19 +5,19 @@ export const patchSettingsSchema = z
   .object({
     minWorkdayHours: z
       .number()
-      .int('Должно быть целым числом')
-      .min(1, 'Минимум 1 час')
-      .max(24, 'Максимум 24 часа')
+      .int('validation:settings.integer')
+      .min(1, 'validation:settings.minHours')
+      .max(24, 'validation:settings.maxHours')
       .optional(),
     defaultCheckoutBuffer: z
       .number()
-      .int('Должно быть целым числом')
-      .min(0, 'Не может быть отрицательным')
-      .max(480, 'Максимум 480 минут')
+      .int('validation:settings.integer')
+      .min(0, 'validation:settings.notNegative')
+      .max(480, 'validation:settings.maxMinutes')
       .optional(),
   })
   .refine((d) => d.minWorkdayHours !== undefined || d.defaultCheckoutBuffer !== undefined, {
-    message: 'Укажите хотя бы одно поле',
+    message: 'validation:update.atLeastOneField',
   });
 
 export type PatchSettingsDto = z.infer<typeof patchSettingsSchema>;

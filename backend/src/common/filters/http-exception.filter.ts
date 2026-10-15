@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { ZodValidationException } from 'nestjs-zod';
 import { ErrorCode, type ErrorCodeValue } from '@softtime/shared';
+import { tr, languageFromAcceptHeader } from '../i18n';
 
 // ТЗ §9 — единый формат ошибки: { statusCode, message, error, details? }
 // Коды: 400 / 401 / 403 / 404 / 409 / 422 / 429 / 500
@@ -18,6 +19,11 @@ export class HttpExceptionFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<any>();
+    const request = ctx.getRequest<any>();
+
+    // Язык только для текстов валидации (details[].message). Остальные поля
+    // ответа — statusCode, message, error, code, params — не меняются.
+    const language = languageFromAcceptHeader(request?.headers?.['accept-language']);
 
     let statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
     let message = 'Internal server error';
@@ -33,7 +39,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       statusCode = HttpStatus.BAD_REQUEST;
       error = 'Bad Request';
       message = 'Validation failed';
-      details = exception.getZodError().errors;
+      details = translateZodIssues(exception.getZodError().errors, language);
       code = ErrorCode.VALIDATION_ERROR;
     } else if (exception instanceof HttpException) {
       statusCode = exception.getStatus();
@@ -74,6 +80,33 @@ export class HttpExceptionFilter implements ExceptionFilter {
       response.status(statusCode).json(payload);
     }
   }
+}
+
+/**
+ * Переводит `message` каждого zod-issue, если это ключ словаря.
+ *
+ * В схемах packages/shared вместо текста стоят ключи вида
+ * 'validation:format.email' — их и переводим. Всё прочее (английские
+ * дефолты zod, русские тексты локальных схем контроллеров) tr() возвращает
+ * без изменений, так что они доходят до клиента как есть.
+ *
+ * Без заголовка Accept-Language язык = ru, а ru-значения словаря дословно
+ * равны прежним текстам схем — ответ для старых клиентов не меняется.
+ */
+function translateZodIssues(issues: unknown, language: string): unknown {
+  if (!Array.isArray(issues)) return issues;
+
+  return issues.map((issue) => {
+    if (
+      typeof issue !== 'object' ||
+      issue === null ||
+      typeof (issue as { message?: unknown }).message !== 'string'
+    ) {
+      return issue;
+    }
+    const i = issue as { message: string };
+    return { ...i, message: tr(language, i.message) };
+  });
 }
 
 /** Запасной код, когда исключение его не передало. */

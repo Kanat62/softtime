@@ -13,31 +13,31 @@ export const languageSchema = z.enum(SUPPORTED_LANGUAGES);
 
 /** Регистрация ADMIN + компании */
 export const registerCompanySchema = z.object({
-  companyName: z.string().min(1, 'Название компании обязательно'),
-  fullName: z.string().min(1, 'ФИО обязательно'),
-  email: z.string().email('Некорректный email'),
-  password: z.string().min(8, 'Пароль должен содержать минимум 8 символов').max(72, 'Пароль не может превышать 72 символа'),
+  companyName: z.string().min(1, 'validation:required.companyName'),
+  fullName: z.string().min(1, 'validation:required.fullName'),
+  email: z.string().email('validation:format.email'),
+  password: z.string().min(8, 'validation:password.min').max(72, 'validation:password.max'),
   language: languageSchema.optional(),
 });
 
 /** Регистрация WORKER по коду компании */
 export const registerWorkerSchema = z.object({
-  fullName: z.string().min(1, 'ФИО обязательно'),
-  email: z.string().email('Некорректный email'),
-  password: z.string().min(8, 'Пароль должен содержать минимум 8 символов').max(72, 'Пароль не может превышать 72 символа'),
-  companyCode: z.string().regex(/^\d{6}$/, 'Код компании должен содержать ровно 6 цифр'),
+  fullName: z.string().min(1, 'validation:required.fullName'),
+  email: z.string().email('validation:format.email'),
+  password: z.string().min(8, 'validation:password.min').max(72, 'validation:password.max'),
+  companyCode: z.string().regex(/^\d{6}$/, 'validation:format.companyCode'),
   language: languageSchema.optional(),
 });
 
 /** Вход в систему */
 export const loginSchema = z.object({
-  email: z.string().email('Некорректный email'),
-  password: z.string().min(1, 'Пароль обязателен'),
+  email: z.string().email('validation:format.email'),
+  password: z.string().min(1, 'validation:required.password'),
 });
 
 /** Обновление токена — тело POST /auth/refresh */
 export const refreshTokenSchema = z.object({
-  refreshToken: z.string().min(1, 'refreshToken обязателен'),
+  refreshToken: z.string().min(1, 'validation:required.refreshToken'),
 });
 
 /** Выход — тело POST /auth/logout */

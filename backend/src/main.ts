@@ -28,7 +28,11 @@ async function bootstrap() {
     origin: allowedOrigins,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    // Accept-Language входит в CORS-safelist, поэтому в preflight его
+    // Access-Control-Request-Headers не перечисляет и браузеру разрешение
+    // не нужно. Но allowedHeaders здесь — явный список, так что указываем
+    // заголовок прямо: иначе его присутствие зависит от тонкости спеки.
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept-Language'],
   });
 
   app.setGlobalPrefix('api/v1');

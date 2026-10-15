@@ -1,1 +1,6 @@
-export { tr, resolveLanguage, type TrParams } from './translate';
+export {
+  tr,
+  resolveLanguage,
+  languageFromAcceptHeader,
+  type TrParams,
+} from './translate';

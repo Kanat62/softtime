@@ -7,16 +7,16 @@ import { z } from 'zod';
  */
 export const updateProfileSchema = z
   .object({
-    avatarUrl: z.string().url('Некорректный URL').nullable().optional(),
-    currentPassword: z.string().min(1, 'Введите текущий пароль').optional(),
+    avatarUrl: z.string().url('validation:format.url').nullable().optional(),
+    currentPassword: z.string().min(1, 'validation:required.currentPassword').optional(),
     newPassword: z
       .string()
-      .min(8, 'Пароль должен содержать минимум 8 символов')
-      .max(72, 'Пароль не может превышать 72 символа')
+      .min(8, 'validation:password.min')
+      .max(72, 'validation:password.max')
       .optional(),
   })
   .refine((d) => !d.newPassword || !!d.currentPassword, {
-    message: 'currentPassword обязателен при смене пароля',
+    message: 'validation:password.currentRequired',
     path: ['currentPassword'],
   });
 

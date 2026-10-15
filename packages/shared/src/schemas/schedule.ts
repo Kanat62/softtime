@@ -15,13 +15,13 @@ export const dayScheduleSchema = z
     /** Время начала смены, формат "HH:mm" */
     startTime: z
       .string()
-      .regex(/^\d{2}:\d{2}$/, 'Формат времени: HH:mm')
+      .regex(/^\d{2}:\d{2}$/, 'validation:format.time')
       .nullable()
       .optional(),
     /** Время конца смены, формат "HH:mm" */
     endTime: z
       .string()
-      .regex(/^\d{2}:\d{2}$/, 'Формат времени: HH:mm')
+      .regex(/^\d{2}:\d{2}$/, 'validation:format.time')
       .nullable()
       .optional(),
     /** Буфер автозакрытия в минутах, по умолчанию 60 */
@@ -33,7 +33,7 @@ export const dayScheduleSchema = z
     if (!data.startTime) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: 'Время начала смены обязательно для рабочего дня',
+        message: 'validation:schedule.startRequired',
         path: ['startTime'],
       });
       return;
@@ -42,7 +42,7 @@ export const dayScheduleSchema = z
     if (!data.endTime) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: 'Время конца смены обязательно для рабочего дня',
+        message: 'validation:schedule.endRequired',
         path: ['endTime'],
       });
       return;
@@ -56,14 +56,14 @@ export const dayScheduleSchema = z
     if (durationMinutes < 6 * 60) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: 'Рабочий день должен быть не менее 6 часов',
+        message: 'validation:schedule.minHours',
         path: ['endTime'],
       });
     }
   });
 
 /** Схема полного расписания на неделю (7 дней) */
-export const scheduleSchema = z.array(dayScheduleSchema).length(7, 'Расписание должно содержать ровно 7 дней');
+export const scheduleSchema = z.array(dayScheduleSchema).length(7, 'validation:schedule.sevenDays');
 
 /** Схема применения расписания ко всем/выбранным сотрудникам — тело POST /schedules/apply-all */
 export const applyAllScheduleSchema = z.object({
