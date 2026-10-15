@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { registerWorkerSchema, type RegisterWorkerDto, UserStatus, UserRole } from '@softtime/shared';
 import { registerWorkerApi } from '@/entities/user/api/auth';
+import { currentAppLanguage } from '@/entities/user/api/language';
 import { tokenStorage } from '@/shared/storage/secure';
 import { decodeJwtPayload } from '@/shared/lib/jwt';
 import { useAuth } from '@/app/providers/AuthProvider';
@@ -29,7 +30,12 @@ export function useRegisterWorker() {
     setIsLoading(true);
 
     try {
-      const tokens = await registerWorkerApi(data);
+      // Язык сразу в регистрацию: PENDING не сможет позвать
+      // PATCH /users/me/language, а push о решении админа уже уйдёт ему.
+      const tokens = await registerWorkerApi({
+        ...data,
+        language: currentAppLanguage(),
+      });
       await tokenStorage.setTokens(tokens.accessToken, tokens.refreshToken);
 
       const payload = decodeJwtPayload(tokens.accessToken);

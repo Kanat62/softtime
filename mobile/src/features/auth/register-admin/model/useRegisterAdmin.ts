@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { registerCompanySchema, type RegisterCompanyDto } from '@softtime/shared';
 import { registerCompanyApi, getMyCompanyApi } from '@/entities/user/api/auth';
+import { currentAppLanguage } from '@/entities/user/api/language';
 import type { AppError } from '@/shared/api/errors';
 import i18n from '@/shared/i18n';
 
@@ -26,7 +27,10 @@ export function useRegisterAdmin() {
     setIsLoading(true);
 
     try {
-      const authResponse = await registerCompanyApi(data);
+      const authResponse = await registerCompanyApi({
+        ...data,
+        language: currentAppLanguage(),
+      });
 
       // The registration response doesn't include companyCode — fetch it separately
       // using the registration tokens (one-off call, we don't store these tokens).

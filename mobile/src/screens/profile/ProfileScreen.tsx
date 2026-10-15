@@ -28,6 +28,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { SUPPORTED_LANGUAGES, UserRole, type Language } from '@softtime/shared';
 import { changeLanguage } from '@/shared/i18n';
+import { updateMyLanguageApi } from '@/entities/user';
 import { useAuth } from '@/app/providers/AuthProvider';
 import { useProfile } from '@/features/profile/model/useProfile';
 import {
@@ -158,7 +159,17 @@ function LanguageModal({ visible, onClose }: { visible: boolean; onClose: () => 
   const current = i18n.language as Language;
 
   async function handleSelect(language: Language) {
-    if (language !== current) await changeLanguage(language);
+    if (language !== current) {
+      await changeLanguage(language);
+      // Язык push-уведомлений держим на сервере: их текст собирает backend,
+      // когда приложение может быть закрыто. Ошибку глотаем — не критично,
+      // следующее переключение или вход попробуют снова, тоста быть не должно.
+      try {
+        await updateMyLanguageApi(language);
+      } catch {
+        // intentionally silent
+      }
+    }
     onClose();
   }
 

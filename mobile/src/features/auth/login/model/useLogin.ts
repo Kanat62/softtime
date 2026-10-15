@@ -10,6 +10,7 @@ import {
 } from '@softtime/shared';
 import { useAuth } from '@/app/providers/AuthProvider';
 import { loginApi, getMyCompanyApi } from '@/entities/user/api/auth';
+import { syncMyLanguage } from '@/entities/user/api/language';
 import type { AppError } from '@/shared/api/errors';
 import i18n from '@/shared/i18n';
 
@@ -77,6 +78,10 @@ export function useLogin() {
         status: authResponse.user.status as any,
         companyStatus: resolvedCompanyStatus,
       });
+
+      // Язык приложения мог измениться с прошлого входа (или вход с другого
+      // устройства) — подровнять серверный. Ошибку глотает сам syncMyLanguage.
+      void syncMyLanguage(authResponse.user.language, authResponse.user.status);
       // RootNavigator's conditional rendering handles the navigation automatically.
     } catch (err) {
       setServerError(mapLoginError(err as AppError));
