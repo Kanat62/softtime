@@ -6,7 +6,13 @@ import {
   useCallback,
   type ReactNode,
 } from "react";
-import { UserRole, type User, type CompanyMe, type AuthResponse } from "@softtime/shared";
+import {
+  UserRole,
+  type User,
+  type CompanyMe,
+  type AuthResponse,
+  type Language,
+} from "@softtime/shared";
 import { request } from "@/shared/api/request";
 import { tokenStore } from "@/shared/api/tokenStore";
 import { refreshTokenStore } from "@/shared/api/refreshTokenStore";
@@ -41,6 +47,8 @@ export interface RegisterData {
   fullName: string;
   email: string;
   password: string;
+  /** Язык push-уведомлений нового ADMIN. Опционально — без него на сервере 'ru'. */
+  language?: Language;
 }
 
 interface AuthContextValue {

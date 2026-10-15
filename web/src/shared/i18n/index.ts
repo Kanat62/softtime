@@ -144,6 +144,11 @@ i18n
     returnNull: false,
   });
 
+/** Текущий язык интерфейса — его отправляем в регистрацию компании. */
+export function currentLanguage(): Language {
+  return (i18n.resolvedLanguage ?? i18n.language ?? FALLBACK_LANGUAGE) as Language;
+}
+
 /** Смена языка пользователем: применить и запомнить. */
 export async function changeLanguage(language: Language): Promise<void> {
   await i18n.changeLanguage(language);

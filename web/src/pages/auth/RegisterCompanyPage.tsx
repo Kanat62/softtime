@@ -17,6 +17,7 @@ import {
   Smartphone,
 } from "lucide-react";
 import { registerCompanySchema, type RegisterCompanyDto } from "@softtime/shared";
+import { currentLanguage } from "@/shared/i18n";
 import { useAuth } from "@/entities/session";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
@@ -39,7 +40,9 @@ export function RegisterCompanyPage() {
   const onSubmit = async (values: RegisterCompanyDto) => {
     setSubmitting(true);
     try {
-      const user = await register(values);
+      // Язык интерфейса — в регистрацию: push этому ADMIN уйдут на нём.
+      // На вебе push нет, но тот же аккаунт открывают в мобильном приложении.
+      const user = await register({ ...values, language: currentLanguage() });
       setCreatedCode(user.companyCode ?? null);
     } catch {
       toast.error(t("auth:register.failed"));
