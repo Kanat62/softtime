@@ -18,20 +18,41 @@ import { Button } from '@/shared/ui';
 import { useWorkerNavigation } from '@/shared/navigation/hooks';
 import type { WorkerHomeStackParamList } from '@/shared/navigation/types';
 import { formatWorkedDuration } from '@/shared/lib/date';
+import i18n from '@/shared/i18n';
 
 type ScanResultRoute = RouteProp<WorkerHomeStackParamList, 'ScanResult'>;
 
-function fmtMessage(message: string, hoursShort: string, minutesMed: string): string {
-  // Регулярка ищет русское «мин», потому что сообщение приходит с backend,
-  // а он переводится на этапе A4. До тех пор на en текст останется русским.
-  return message.replace(/(\d+)\s*мин/, (_, n) => {
-    const total = parseInt(n, 10);
-    const h = Math.floor(total / 60);
-    const m = total % 60;
-    if (h > 0 && m > 0) return `${h}${hoursShort} ${m}${minutesMed}`;
-    if (h > 0) return `${h}${hoursShort}`;
-    return `${m}${minutesMed}`;
-  });
+/**
+ * Текст результата собирается из ДАННЫХ ответа (status + diffMinutes),
+ * а не разбором русского `message` регуляркой. Поле `message` бэкенд
+ * по-прежнему присылает, оно используется как запасной путь.
+ *
+ * У check-out бэкенд не возвращает diffMinutes, поэтому для LEFT_EARLY
+ * и OVERTIME остаётся текст сервера.
+ */
+function buildResultText(
+  type: 'checkIn' | 'checkOut',
+  status: string,
+  diffMinutes: number | undefined,
+  message: string,
+): string {
+  if (type === 'checkIn') {
+    if (status === CheckInStatus.ON_TIME) return i18n.t('attendance:result.onTime');
+    if (diffMinutes !== undefined) {
+      const minutes = Math.abs(diffMinutes);
+      if (status === CheckInStatus.EARLY_ARRIVAL) {
+        return i18n.t('attendance:result.earlyArrival', { count: minutes });
+      }
+      if (status === CheckInStatus.LATE) {
+        return i18n.t('attendance:result.late', { count: minutes });
+      }
+    }
+  } else if (status === CheckOutStatus.ON_TIME) {
+    return i18n.t('attendance:result.leftOnTime');
+  }
+
+  // Запасной путь: показываем сообщение бэкенда как раньше.
+  return message;
 }
 
 type ResultConfig = {
@@ -90,7 +111,7 @@ export function ScanResultScreen() {
   const { t } = useTranslation(['attendance', 'common']);
   const navigation = useWorkerNavigation();
   const route = useRoute<ScanResultRoute>();
-  const { type, status, time, message, workedMinutes } = route.params;
+  const { type, status, time, message, workedMinutes, diffMinutes } = route.params;
 
   const config =
     type === 'checkIn' ? getCheckInConfig(status) : getCheckOutConfig(status);
@@ -119,7 +140,7 @@ export function ScanResultScreen() {
           {config.icon}
         </Animated.View>
 
-        <Text style={[styles.title, { color: config.titleColor }]}>{fmtMessage(message, t('common:duration.hoursShort'), t('common:duration.minutesMed'))}</Text>
+        <Text style={[styles.title, { color: config.titleColor }]}>{buildResultText(type, status, diffMinutes, message)}</Text>
 
         <Text style={styles.time}>{time}</Text>
 

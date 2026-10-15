@@ -1,7 +1,13 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { loginSchema, type LoginDto, UserRole, type CompanyStatus } from '@softtime/shared';
+import {
+  ErrorCode,
+  loginSchema,
+  type LoginDto,
+  UserRole,
+  type CompanyStatus,
+} from '@softtime/shared';
 import { useAuth } from '@/app/providers/AuthProvider';
 import { loginApi, getMyCompanyApi } from '@/entities/user/api/auth';
 import type { AppError } from '@/shared/api/errors';
@@ -9,6 +15,23 @@ import i18n from '@/shared/i18n';
 
 function mapLoginError(err: AppError): string {
   if (err.isNetworkError) return i18n.t('errors:network');
+
+  // Сначала машинный код — он не зависит от языка ответа бэкенда.
+  switch (err.code) {
+    case ErrorCode.TOO_MANY_ATTEMPTS:
+      return i18n.t('errors:login.tooManyAttempts');
+    case ErrorCode.INVALID_CREDENTIALS:
+      return i18n.t('errors:login.badCredentials');
+    // Сам /auth/login статус не проверяет (роут @Public), поэтому этот код
+    // приходит только с защищённых запросов. Ветка оставлена защитно.
+    case ErrorCode.ACCOUNT_BLOCKED:
+      return i18n.t('errors:login.blocked');
+    default:
+      break;
+  }
+
+  // TODO: удалить после того, как бэкенд с кодами (A4.2) уедет в прод —
+  // запасной путь для старого API, который ещё не присылает `code`.
   if (err.statusCode === 429) return i18n.t('errors:login.tooManyAttempts');
   if (err.statusCode === 401) return i18n.t('errors:login.badCredentials');
   if (err.statusCode === 403) {

@@ -8,7 +8,17 @@
     "noCameraAccess": "Нет доступа к камере. Разрешите в настройках устройства."
   },
   "result": {
-    "worked": "Отработано"
+    "worked": "Отработано",
+    "onTime": "Вовремя",
+    "earlyArrival_one": "Пришёл на {{count}} минуту раньше",
+    "earlyArrival_few": "Пришёл на {{count}} минуты раньше",
+    "earlyArrival_many": "Пришёл на {{count}} минут раньше",
+    "earlyArrival_other": "Пришёл на {{count}} минуты раньше",
+    "late_one": "Опоздал на {{count}} минуту",
+    "late_few": "Опоздал на {{count}} минуты",
+    "late_many": "Опоздал на {{count}} минут",
+    "late_other": "Опоздал на {{count}} минуты",
+    "leftOnTime": "Вышел вовремя"
   },
   "history": {
     "title": "История посещаемости",

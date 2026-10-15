@@ -8,7 +8,13 @@
     "noCameraAccess": "No camera access. Allow it in your device settings."
   },
   "result": {
-    "worked": "Worked"
+    "worked": "Worked",
+    "onTime": "On time",
+    "earlyArrival_one": "Arrived {{count}} minute early",
+    "earlyArrival_other": "Arrived {{count}} minutes early",
+    "late_one": "{{count}} minute late",
+    "late_other": "{{count}} minutes late",
+    "leftOnTime": "Left on time"
   },
   "history": {
     "title": "Attendance history",
