@@ -25,14 +25,14 @@ const cidrPattern = /^(\d{1,3}\.){3}\d{1,3}(\/\d{1,2})?$/;
 
 const createNetworkSchema = z.object({
   label: z.string().min(1).max(100),
-  cidr: z.string().regex(cidrPattern, 'Некорректный CIDR или IP (пример: 192.168.1.0/24)'),
+  cidr: z.string().regex(cidrPattern, 'validation:format.cidr'),
 });
 
 const updateNetworkSchema = z.object({
   label: z.string().min(1).max(100).optional(),
-  cidr: z.string().regex(cidrPattern, 'Некорректный CIDR или IP (пример: 192.168.1.0/24)').optional(),
+  cidr: z.string().regex(cidrPattern, 'validation:format.cidr').optional(),
 }).refine((d) => d.label !== undefined || d.cidr !== undefined, {
-  message: 'Укажите хотя бы одно поле для обновления',
+  message: 'validation:update.atLeastOneFieldToUpdate',
 });
 
 class CreateNetworkDto extends createZodDto(createNetworkSchema) {}

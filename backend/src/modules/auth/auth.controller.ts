@@ -24,7 +24,7 @@ class RegisterWorkerDto extends createZodDto(registerWorkerSchema) {}
 class LoginDto extends createZodDto(loginSchema) {}
 
 const refreshSchema = z.object({
-  refreshToken: z.string().min(1, 'refreshToken обязателен'),
+  refreshToken: z.string().min(1, 'validation:required.refreshToken'),
 });
 class RefreshDto extends createZodDto(refreshSchema) {}
 

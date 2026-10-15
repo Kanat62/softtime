@@ -24,7 +24,7 @@ import { TenantPayload } from '../../common/tenant/tenant.context';
 // ─── DTOs ─────────────────────────────────────────────────────────────────────
 
 const checkInOutSchema = z.object({
-  qrToken: z.string().min(1, 'qrToken обязателен'),
+  qrToken: z.string().min(1, 'validation:required.qrToken'),
 });
 
 const attendanceMeQuerySchema = z.object({
@@ -51,7 +51,7 @@ const patchAttendanceSchema = z
     note: z.string().max(500).optional(),
   })
   .refine((d) => Object.keys(d).some((k) => d[k as keyof typeof d] !== undefined), {
-    message: 'Нет данных для обновления',
+    message: 'validation:update.noData',
   });
 
 const manualAttendanceSchema = z.object({

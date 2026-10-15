@@ -42,7 +42,7 @@ const updateProfileSchema = z
     newPassword: z.string().min(8).max(72).optional(),
   })
   .refine((d) => !d.newPassword || !!d.currentPassword, {
-    message: 'currentPassword обязателен при смене пароля',
+    message: 'validation:password.currentRequired',
     path: ['currentPassword'],
   });
 

@@ -14,7 +14,7 @@ const updateSettingsSchema = z
     defaultCheckoutBuffer: z.number().int().min(0).max(480).optional(),
   })
   .refine((d) => d.minWorkdayHours !== undefined || d.defaultCheckoutBuffer !== undefined, {
-    message: 'Укажите хотя бы одно поле',
+    message: 'validation:update.atLeastOneField',
   });
 
 class UpdateSettingsDto extends createZodDto(updateSettingsSchema) {}
