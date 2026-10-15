@@ -157,11 +157,10 @@ export class AttendanceCronService {
     // 7. Push notification to each company's ADMIN
     for (const [companyId, uids] of closedByCompany) {
       const names = uids.map((id) => nameMap.get(id) ?? id).join(', ');
-      await this.notifications.sendToCompanyAdmins(
-        companyId,
-        'Незакрытые смены',
-        `Сотрудники не закрыли смену: ${names}`,
-      );
+      await this.notifications.sendToCompanyAdmins(companyId, 'unclosedShifts', {
+        count: uids.length,
+        names,
+      });
     }
 
     this.logger.log(

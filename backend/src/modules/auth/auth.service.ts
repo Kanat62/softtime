@@ -19,6 +19,7 @@ import {
   RegisterCompanyDto,
   RegisterWorkerDto,
   LoginDto,
+  FALLBACK_LANGUAGE,
 } from '@softtime/shared';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../../common/redis/redis.service';
@@ -80,6 +81,8 @@ export class AuthService {
             fullName: dto.fullName,
             email: dto.email,
             passwordHash,
+            // Нет поля — колонка остаётся на DEFAULT 'ru'.
+            ...(dto.language ? { language: dto.language } : {}),
           },
         });
 
@@ -111,10 +114,9 @@ export class AuthService {
 
     // Push event 8b: Новая компания зарегистрирована → PROVIDER
     // Route is @Public — no tenant context → extension is no-op → $queryRaw in sendToProviders works.
-    void this.notifications.sendToProviders(
-      'Новая компания',
-      `Компания «${company.name}» зарегистрировалась на платформе`,
-    );
+    void this.notifications.sendToProviders('newCompany', {
+      companyName: company.name,
+    });
 
     const tokens = await this.generateTokens(user.id, UserRole.ADMIN, company.id, user.status);
     return {
@@ -156,16 +158,17 @@ export class AuthService {
         fullName: dto.fullName,
         email: dto.email,
         passwordHash,
+        // Язык нужен здесь: PENDING не может позвать PATCH /users/me/language
+        // (StatusGuard), а push «регистрация одобрена/отклонена» уже уйдёт ему.
+        ...(dto.language ? { language: dto.language } : {}),
       },
     });
 
     // Push event 1: Новый сотрудник ждёт подтверждения → ADMIN
     // Route is @Public — no tenant context → sendToCompanyAdmins with explicit companyId works.
-    void this.notifications.sendToCompanyAdmins(
-      company.id,
-      'Новый сотрудник',
-      `${dto.fullName} ожидает подтверждения регистрации`,
-    );
+    void this.notifications.sendToCompanyAdmins(company.id, 'newEmployee', {
+      fullName: dto.fullName,
+    });
 
     const tokens = await this.generateTokens(user.id, UserRole.WORKER, company.id, user.status);
     return {
@@ -327,6 +330,7 @@ export class AuthService {
     role: string;
     status: string;
     companyId: string | null;
+    language?: string;
   }) {
     return {
       id: user.id,
@@ -335,6 +339,9 @@ export class AuthService {
       role: user.role,
       status: user.status,
       companyId: user.companyId,
+      // Аддитивно: клиент сравнивает со своим языком и, если расходятся,
+      // зовёт PATCH /users/me/language.
+      language: user.language ?? FALLBACK_LANGUAGE,
     };
   }
 }

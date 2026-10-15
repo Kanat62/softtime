@@ -11,6 +11,7 @@ import {
   PaymentStatus,
   Weekday,
 } from '../enums';
+import type { Language } from '../locales';
 
 // ─── Pagination ────────────────────────────────────────────────────────────────
 
@@ -40,6 +41,9 @@ export interface AuthUser {
   role: UserRole;
   status: UserStatus;
   companyId: string | null;
+  /** Язык push-уведомлений, сохранённый на сервере. Клиент сравнивает
+   *  со своим и при расхождении зовёт PATCH /users/me/language. */
+  language: Language;
 }
 
 export interface AuthResponse extends AuthTokens {
@@ -129,6 +133,8 @@ export interface User {
   hiredAt: Date | null;
   /** Комментарий администратора */
   adminNote: string | null;
+  /** Язык push-уведомлений (GET /profile) */
+  language: Language;
   deletedAt: Date | null;
   createdAt: Date;
 }

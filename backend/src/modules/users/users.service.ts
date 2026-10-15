@@ -6,7 +6,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
-import { ErrorCode, UserStatus, UserRole } from '@softtime/shared';
+import { ErrorCode, UserStatus, UserRole, type Language } from '@softtime/shared';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -26,6 +26,7 @@ const USER_SELECT = {
   adminNote: true,
   createdAt: true,
   companyId: true,
+  language: true,
 } as const;
 
 @Injectable()
@@ -136,11 +137,7 @@ export class UsersService {
         entityId: id,
         meta: { previousStatus: UserStatus.PENDING },
       }),
-      this.notifications.sendToUser(
-        id,
-        'Регистрация одобрена',
-        'Ваша регистрация в компании одобрена',
-      ),
+      this.notifications.sendToUser(id, 'registrationApproved'),
       user.companyId
         ? this.schedules.applyDefaultToUser(id, user.companyId)
         : Promise.resolve(),
@@ -169,11 +166,7 @@ export class UsersService {
     }
 
     // Send notification before deletion so FCM token still exists
-    await this.notifications.sendToUser(
-      id,
-      'Регистрация отклонена',
-      'Ваша заявка на регистрацию была отклонена',
-    );
+    await this.notifications.sendToUser(id, 'registrationRejected');
 
     await this.audit.log({
       actorId,
@@ -328,6 +321,34 @@ export class UsersService {
       companyName: company?.name ?? null,
       companyCode: company?.companyCode ?? null,
     };
+  }
+
+  // ─── Язык интерфейса ──────────────────────────────────────────────────────────
+
+  /**
+   * PATCH /users/me/language — на каком языке присылать push этому
+   * пользователю. Отдельно от PATCH /profile: смена языка происходит
+   * при каждом переключении в приложении, она не должна проходить через
+   * ветку currentPassword/newPassword и правило «нет данных для обновления».
+   * Audit не пишем — это настройка интерфейса, а не действие над данными.
+   */
+  async updateMyLanguage(userId: string, language: Language) {
+    const user = await this.prisma.user.findFirst({
+      where: { id: userId, deletedAt: null } as any,
+      select: { id: true },
+    });
+    if (!user) {
+      throw new NotFoundException({
+        message: 'Пользователь не найден',
+        code: ErrorCode.USER_NOT_FOUND,
+      });
+    }
+
+    return this.prisma.user.update({
+      where: { id: userId } as any,
+      data: { language },
+      select: { id: true, language: true },
+    });
   }
 
   // ─── Update own profile ───────────────────────────────────────────────────────

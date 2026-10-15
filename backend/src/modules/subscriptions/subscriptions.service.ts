@@ -103,11 +103,7 @@ export class SubscriptionsService {
         entityId: (sub as any).id,
         meta: { companyId },
       }),
-      this.notifications.sendToCompanyAdmins(
-        companyId,
-        'Подписка отменена',
-        'Ваша подписка была отменена. Доступ к системе приостановлен.',
-      ),
+      this.notifications.sendToCompanyAdmins(companyId, 'subscriptionCancelled'),
     ]);
 
     return updatedSub;
@@ -198,10 +194,9 @@ export class SubscriptionsService {
       where: { id: companyId },
       select: { name: true },
     });
-    await this.notifications.sendToProviders(
-      'Поступила оплата',
-      `Поступила оплата от компании «${(company as any)?.name ?? companyId}»`,
-    );
+    await this.notifications.sendToProviders('paymentReceived', {
+      companyName: (company as any)?.name ?? companyId,
+    });
 
     return { ok: true };
   }

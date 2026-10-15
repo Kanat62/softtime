@@ -100,9 +100,12 @@ export class NewsService {
     });
 
     await Promise.all([
-      // Fan-out push to all ACTIVE employees
-      ...(activeUsers as any[]).map((u) =>
-        this.notifications.sendToUser(u.id, 'Новая новость', `${dto.title}`),
+      // Fan-out push to all ACTIVE employees — NotificationsService группирует
+      // их по User.language и шлёт по одному multicast на язык.
+      this.notifications.sendToUsers(
+        (activeUsers as any[]).map((u) => u.id as string),
+        'newsPublished',
+        { newsTitle: dto.title },
       ),
       // Audit log (ТЗ §10.11)
       this.audit.log({

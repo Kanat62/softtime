@@ -181,8 +181,8 @@ describe('AttendanceCronService.autoCloseShifts', () => {
     );
     expect(mockNotifications.sendToCompanyAdmins).toHaveBeenCalledWith(
       companyId,
-      'Незакрытые смены',
-      expect.stringContaining('Иван Иванов'),
+      'unclosedShifts',
+      expect.objectContaining({ names: expect.stringContaining('Иван Иванов') }),
     );
 
     jest.useRealTimers();

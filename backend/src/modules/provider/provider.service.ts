@@ -238,11 +238,7 @@ export class ProviderService {
         meta: { companyName: (company as any).name },
         companyId: id,
       }),
-      this.notifications.sendToCompanyAdmins(
-        id,
-        'Компания приостановлена',
-        'Ваша компания была приостановлена администратором платформы.',
-      ),
+      this.notifications.sendToCompanyAdmins(id, 'companySuspended'),
     ]);
 
     return { ok: true };

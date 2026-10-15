@@ -13,7 +13,7 @@ import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger'
 import { ApiStandardErrors } from '../../common/decorators/api-responses.decorator';
 import { createZodDto } from 'nestjs-zod';
 import { z } from 'zod';
-import { UserStatus } from '@softtime/shared';
+import { UserStatus, updateLanguageSchema } from '@softtime/shared';
 import { UsersService } from './users.service';
 import { Roles, CurrentUser } from '../../common/decorators';
 import { TenantPayload } from '../../common/tenant/tenant.context';
@@ -47,6 +47,7 @@ const updateProfileSchema = z
   });
 
 class ListUsersQueryDto extends createZodDto(listUsersQuerySchema) {}
+class UpdateLanguageDto extends createZodDto(updateLanguageSchema) {}
 class SetStatusDto extends createZodDto(setStatusSchema) {}
 class SetNoteDto extends createZodDto(setNoteSchema) {}
 class UpdateProfileDto extends createZodDto(updateProfileSchema) {}
@@ -124,6 +125,32 @@ export class UsersController {
     @CurrentUser() user: TenantPayload,
   ) {
     await this.usersService.deleteUser(id, user.userId);
+  }
+}
+
+// ─── /users/me ────────────────────────────────────────────────────────────────
+
+/**
+ * Свои настройки пользователя. Отдельный контроллер, а не метод в
+ * UsersController: там на классе висит @Roles('ADMIN'), а язык меняет себе
+ * любой авторизованный — WORKER, ADMIN и PROVIDER. PENDING и BLOCKED сюда
+ * не попадут (глобальный StatusGuard), поэтому язык для них приходит
+ * при регистрации — поле `language` в registerWorker/registerCompany.
+ */
+@ApiTags('Users')
+@ApiStandardErrors()
+@ApiBearerAuth()
+@Controller('users/me')
+export class UserMeController {
+  constructor(private readonly usersService: UsersService) {}
+
+  @Patch('language')
+  @ApiOperation({ summary: 'Язык push-уведомлений текущего пользователя' })
+  updateMyLanguage(
+    @Body() dto: UpdateLanguageDto,
+    @CurrentUser() user: TenantPayload,
+  ) {
+    return this.usersService.updateMyLanguage(user.userId, dto.language);
   }
 }
 

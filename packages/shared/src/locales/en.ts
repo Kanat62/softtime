@@ -8,7 +8,7 @@
  * Check in / Check out · Requests · Attendance · Employee · Schedule ·
  * Subscription · Free trial · Grace period · Suspended.
  */
-import type { Dictionary, ErrorMessages } from './ru';
+import type { Dictionary, ErrorMessages, PushMessages } from './ru';
 
 /**
  * См. ru.ts — тот же набор ключей, та же аннотация, тот же порядок.
@@ -87,8 +87,83 @@ const errors: ErrorMessages = {
   PAYMENT_NOT_FOUND: 'Payment not found',
 };
 
+/** См. ru.ts — тот же перечень событий, тот же порядок. */
+const push: PushMessages = {
+  newEmployee: {
+    title: 'New employee',
+    body: '{{fullName}} is waiting for registration approval',
+  },
+  newCompany: {
+    title: 'New company',
+    body: 'Company “{{companyName}}” has registered on the platform',
+  },
+  registrationApproved: {
+    title: 'Registration approved',
+    body: 'Your registration with the company has been approved',
+  },
+  registrationRejected: {
+    title: 'Registration rejected',
+    body: 'Your registration request has been rejected',
+  },
+
+  newRequest: {
+    title: 'New request',
+    body: 'Request submitted: {{requestType}} from {{fullName}}',
+  },
+  requestApproved: {
+    title: 'Request approved',
+    body: 'Your “{{requestType}}” request has been approved',
+  },
+  requestRejected: {
+    title: 'Request rejected',
+    body: 'Your “{{requestType}}” request has been rejected',
+  },
+  requestRejectedWithReason: {
+    title: 'Request rejected',
+    body: 'Your “{{requestType}}” request has been rejected: {{reason}}',
+  },
+
+  newsPublished: {
+    title: 'New post',
+    body: '{{newsTitle}}',
+  },
+
+  companySuspended: {
+    title: 'Company suspended',
+    body: 'Your company has been suspended by the platform administrator.',
+  },
+  subscriptionCancelled: {
+    title: 'Subscription cancelled',
+    body: 'Your subscription has been cancelled. Access to the system is suspended.',
+  },
+  paymentReceived: {
+    title: 'Payment received',
+    body: 'Payment received from company “{{companyName}}”',
+  },
+
+  companySuspendedUnpaid: {
+    title: 'Company suspended',
+    body: 'The subscription has not been paid. Access to the system is suspended.',
+  },
+  subscriptionExpiring: {
+    title: 'Subscription expiring',
+    body_one: 'Pay the subscription within {{count}} day, otherwise access will be suspended.',
+    body_few: 'Pay the subscription within {{count}} days, otherwise access will be suspended.',
+    body_many: 'Pay the subscription within {{count}} days, otherwise access will be suspended.',
+    body_other: 'Pay the subscription within {{count}} days, otherwise access will be suspended.',
+  },
+  unclosedShifts: {
+    title: 'Unclosed shifts',
+    body_one: 'An employee did not check out: {{names}}',
+    body_few: 'Employees did not check out: {{names}}',
+    body_many: 'Employees did not check out: {{names}}',
+    body_other: 'Employees did not check out: {{names}}',
+  },
+};
+
 export const en: Dictionary = {
   errors,
+  push,
 
   enums: {
     userRole: {

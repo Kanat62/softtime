@@ -1,10 +1,40 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { UserStatus } from '@softtime/shared';
+import { UserStatus, type Language, type PushMessages } from '@softtime/shared';
 import { PrismaService } from '../../prisma/prisma.service';
 import { initFirebase, getMessaging } from '../../config/firebase';
+import { tr, resolveLanguage, type TrParams } from '../../common/i18n';
 
 const FCM_BATCH_SIZE = 500; // FCM multicast limit
+
+/** Имя push-события — ключ namespace `push` в общем словаре. */
+export type PushEvent = keyof PushMessages;
+
+/**
+ * Параметр, который сам нужно перевести на язык получателя: например тип
+ * заявки, подпись которого лежит в namespace `enums`. Строки и числа
+ * подставляются как есть, `trRef` — через словарь каждой группы.
+ */
+export interface TranslatableParam {
+  readonly key: string;
+}
+
+/** Помечает значение как ключ словаря: trRef(`enums.requestType.${type}`). */
+export function trRef(key: string): TranslatableParam {
+  return { key };
+}
+
+export type PushParams = Record<string, string | number | TranslatableParam>;
+
+function isTrRef(v: unknown): v is TranslatableParam {
+  return typeof v === 'object' && v !== null && typeof (v as TranslatableParam).key === 'string';
+}
+
+/** Один получатель: кому и на каком языке. */
+interface Recipient {
+  id: string;
+  language: string | null;
+}
 
 @Injectable()
 export class NotificationsService implements OnModuleInit {
@@ -24,19 +54,37 @@ export class NotificationsService implements OnModuleInit {
   }
 
   // ─── Public API ───────────────────────────────────────────────────────────────
+  //
+  // Все методы принимают имя события и параметры, а не готовый текст: язык
+  // известен только здесь, после того как получатели прочитаны из БД.
 
+  /** Личный push — на языке самого пользователя (User.language). */
   async sendToUser(
     userId: string,
-    title: string,
-    body: string,
+    event: PushEvent,
+    params?: PushParams,
     data?: Record<string, string>,
   ): Promise<void> {
-    const tokens = await this.prisma.deviceToken.findMany({
-      where: { userId },
-      select: { id: true, fcmToken: true },
+    const users = await this.prisma.user.findMany({
+      where: { id: userId } as any,
+      select: { id: true, language: true },
     });
-    if (!tokens.length) return;
-    await this.multicast(tokens as any, title, body, data);
+    await this.dispatch(users as Recipient[], event, params, data);
+  }
+
+  /** Рассылка на список пользователей (новость всем сотрудникам). */
+  async sendToUsers(
+    userIds: string[],
+    event: PushEvent,
+    params?: PushParams,
+    data?: Record<string, string>,
+  ): Promise<void> {
+    if (!userIds.length) return;
+    const users = await this.prisma.user.findMany({
+      where: { id: { in: userIds } } as any,
+      select: { id: true, language: true },
+    });
+    await this.dispatch(users as Recipient[], event, params, data);
   }
 
   /**
@@ -48,8 +96,8 @@ export class NotificationsService implements OnModuleInit {
   async sendToCompany(
     companyId: string,
     role: string | null,
-    title: string,
-    body: string,
+    event: PushEvent,
+    params?: PushParams,
     data?: Record<string, string>,
   ): Promise<void> {
     const userWhere: any = {
@@ -61,25 +109,18 @@ export class NotificationsService implements OnModuleInit {
 
     const users = await this.prisma.user.findMany({
       where: userWhere as any,
-      select: { id: true },
+      select: { id: true, language: true },
     });
-    if (!users.length) return;
-
-    const userIds = (users as any[]).map((u) => u.id as string);
-    const tokens = await this.prisma.deviceToken.findMany({
-      where: { userId: { in: userIds } },
-      select: { id: true, fcmToken: true },
-    });
-    await this.multicast(tokens as any, title, body, data);
+    await this.dispatch(users as Recipient[], event, params, data);
   }
 
   async sendToCompanyAdmins(
     companyId: string,
-    title: string,
-    body: string,
+    event: PushEvent,
+    params?: PushParams,
     data?: Record<string, string>,
   ): Promise<void> {
-    return this.sendToCompany(companyId, 'ADMIN', title, body, data);
+    return this.sendToCompany(companyId, 'ADMIN', event, params, data);
   }
 
   /**
@@ -88,20 +129,63 @@ export class NotificationsService implements OnModuleInit {
    * companyId=null and would be invisible to any tenant-scoped User query.
    */
   async sendToProviders(
-    title: string,
-    body: string,
+    event: PushEvent,
+    params?: PushParams,
     data?: Record<string, string>,
   ): Promise<void> {
-    const providers = await this.prisma.$queryRaw<Array<{ id: string }>>`
-      SELECT id FROM "User" WHERE role = 'PROVIDER' AND "deletedAt" IS NULL
+    const providers = await this.prisma.$queryRaw<Recipient[]>`
+      SELECT id, language FROM "User" WHERE role = 'PROVIDER' AND "deletedAt" IS NULL
     `;
-    if (!providers.length) return;
+    await this.dispatch(providers, event, params, data);
+  }
 
-    const tokens = await this.prisma.deviceToken.findMany({
-      where: { userId: { in: providers.map((p) => p.id) } },
-      select: { id: true, fcmToken: true },
-    });
-    await this.multicast(tokens as any, title, body, data);
+  // ─── Private: группировка по языку ────────────────────────────────────────────
+
+  /**
+   * Делит получателей по User.language и отправляет по одному multicast
+   * на группу — со своим заголовком и телом. Язык вне ru/en → ru,
+   * так что группа всегда одна из поддерживаемых.
+   */
+  private async dispatch(
+    recipients: Recipient[],
+    event: PushEvent,
+    params?: PushParams,
+    data?: Record<string, string>,
+  ): Promise<void> {
+    if (!recipients.length) return;
+
+    const byLanguage = new Map<Language, string[]>();
+    for (const r of recipients) {
+      const lang = resolveLanguage(r.language);
+      const group = byLanguage.get(lang);
+      if (group) group.push(r.id);
+      else byLanguage.set(lang, [r.id]);
+    }
+
+    for (const [language, userIds] of byLanguage) {
+      const tokens = await this.prisma.deviceToken.findMany({
+        where: { userId: { in: userIds } },
+        select: { id: true, fcmToken: true },
+      });
+      if (!tokens.length) continue;
+
+      const resolved = this.resolveParams(language, params);
+      await this.multicast(
+        tokens as any,
+        tr(language, `push.${event}.title`, resolved),
+        tr(language, `push.${event}.body`, resolved),
+        data,
+      );
+    }
+  }
+
+  /** Переводит trRef-значения внутри params на язык группы. */
+  private resolveParams(language: Language, params?: PushParams): TrParams {
+    const out: TrParams = {};
+    for (const [k, v] of Object.entries(params ?? {})) {
+      out[k] = isTrRef(v) ? tr(language, v.key) : v;
+    }
+    return out;
   }
 
   // ─── Private: multicast via FCM ───────────────────────────────────────────────

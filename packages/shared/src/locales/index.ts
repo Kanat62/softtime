@@ -12,7 +12,13 @@ import type { Dictionary } from './ru';
 
 export { ru } from './ru';
 export { en } from './en';
-export type { Dictionary, ErrorMessages } from './ru';
+export type {
+  Dictionary,
+  ErrorMessages,
+  PushMessage,
+  PluralPushMessage,
+  PushMessages,
+} from './ru';
 
 /** Поддерживаемые языки. Запасной — ru. */
 export const SUPPORTED_LANGUAGES = ['ru', 'en'] as const;

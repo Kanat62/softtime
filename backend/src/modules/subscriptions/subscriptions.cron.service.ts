@@ -53,11 +53,7 @@ export class SubscriptionsCronService {
 
       await Promise.all(
         companyIds.map((cid) =>
-          this.notifications.sendToCompanyAdmins(
-            cid,
-            'Компания приостановлена',
-            'Подписка не оплачена. Доступ к системе приостановлен.',
-          ),
+          this.notifications.sendToCompanyAdmins(cid, 'companySuspendedUnpaid'),
         ),
       );
 
@@ -87,11 +83,9 @@ export class SubscriptionsCronService {
 
       await Promise.all(
         companyIds.map((cid) =>
-          this.notifications.sendToCompanyAdmins(
-            cid,
-            'Подписка истекает',
-            `Оплатите подписку в течение ${gracePeriodDays} дн., иначе доступ будет приостановлен.`,
-          ),
+          this.notifications.sendToCompanyAdmins(cid, 'subscriptionExpiring', {
+            count: gracePeriodDays,
+          }),
         ),
       );
 

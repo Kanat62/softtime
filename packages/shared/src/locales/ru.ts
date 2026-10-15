@@ -5,6 +5,8 @@
  *  - enums      — подписи значений енумов из ../enums
  *  - validation — сообщения zod-схем из ../schemas
  *  - errors     — тексты машинных кодов ошибок API из ../error-codes
+ *  - push       — заголовки и тела push-уведомлений (их формирует backend
+ *                 на языке получателя, см. backend/src/common/i18n)
  *
  * Строки извлечены из существующего кода. Там, где web и mobile
  * расходились, выбран один вариант (см. отчёт этапа A1).
@@ -100,8 +102,155 @@ const errors: Record<ErrorCodeValue, string> = {
   PAYMENT_NOT_FOUND: 'Платёж не найден',
 };
 
+/** Одно push-событие: заголовок и тело. */
+export interface PushMessage {
+  title: string;
+  body: string;
+}
+
+/**
+ * Push-событие, тело которого зависит от числа (`params.count`).
+ * Формы — категории Intl.PluralRules: для ru нужны все четыре,
+ * для en фактически работают `one` и `other`, но ключи обязательны
+ * в обоих языках, чтобы словари были симметричны.
+ */
+export interface PluralPushMessage {
+  title: string;
+  body_one: string;
+  body_few: string;
+  body_many: string;
+  body_other: string;
+}
+
+/**
+ * Полный перечень push-событий. Явный тип (как `ErrorMessages` для errors):
+ * новое событие или опечатка в ключе ломают компиляцию сразу в двух языках,
+ * а backend обращается к словарю только по этим именам.
+ */
+export interface PushMessages {
+  // ─── Регистрация ────────────────────────────────────────────────────────
+  /** WORKER зарегистрировался → ADMIN компании. */
+  newEmployee: PushMessage;
+  /** Компания зарегистрировалась → PROVIDER. */
+  newCompany: PushMessage;
+  /** ADMIN подтвердил регистрацию → сам пользователь. */
+  registrationApproved: PushMessage;
+  /** ADMIN отклонил регистрацию → сам пользователь (до удаления). */
+  registrationRejected: PushMessage;
+
+  // ─── Заявки ─────────────────────────────────────────────────────────────
+  /** Сотрудник подал заявку → ADMIN компании. */
+  newRequest: PushMessage;
+  /** Заявка одобрена → автор заявки. */
+  requestApproved: PushMessage;
+  /** Заявка отклонена без комментария → автор заявки. */
+  requestRejected: PushMessage;
+  /** Заявка отклонена с комментарием → автор заявки. */
+  requestRejectedWithReason: PushMessage;
+
+  // ─── Новости ────────────────────────────────────────────────────────────
+  /** Новость опубликована → все ACTIVE-сотрудники компании. */
+  newsPublished: PushMessage;
+
+  // ─── Компания и подписка ────────────────────────────────────────────────
+  /** PROVIDER приостановил компанию → ADMIN компании. */
+  companySuspended: PushMessage;
+  /** Подписка отменена вручную → ADMIN компании. */
+  subscriptionCancelled: PushMessage;
+  /** Поступила оплата → PROVIDER. */
+  paymentReceived: PushMessage;
+
+  // ─── Cron ───────────────────────────────────────────────────────────────
+  /** cron подписок: льготный период кончился → ADMIN компании. */
+  companySuspendedUnpaid: PushMessage;
+  /** cron подписок: период истёк, остались дни грейса → ADMIN компании. */
+  subscriptionExpiring: PluralPushMessage;
+  /** cron автозакрытия смен: список не закрывших → ADMIN компании. */
+  unclosedShifts: PluralPushMessage;
+}
+
+/**
+ * Русские тексты push — дословно те, что бэкенд отправлял до перевода.
+ * Исключение: у плюрализованных событий добавлена форма `one`
+ * («Сотрудник не закрыл смену») — раньше её не было, фраза всегда стояла
+ * во множественном числе. «дн.» — сокращение, одинаковое во всех формах.
+ */
+const push: PushMessages = {
+  newEmployee: {
+    title: 'Новый сотрудник',
+    body: '{{fullName}} ожидает подтверждения регистрации',
+  },
+  newCompany: {
+    title: 'Новая компания',
+    body: 'Компания «{{companyName}}» зарегистрировалась на платформе',
+  },
+  registrationApproved: {
+    title: 'Регистрация одобрена',
+    body: 'Ваша регистрация в компании одобрена',
+  },
+  registrationRejected: {
+    title: 'Регистрация отклонена',
+    body: 'Ваша заявка на регистрацию была отклонена',
+  },
+
+  newRequest: {
+    title: 'Новая заявка',
+    body: 'Заявка подана: {{requestType}} от {{fullName}}',
+  },
+  requestApproved: {
+    title: 'Заявка одобрена',
+    body: 'Ваша заявка «{{requestType}}» одобрена',
+  },
+  requestRejected: {
+    title: 'Заявка отклонена',
+    body: 'Ваша заявка «{{requestType}}» отклонена',
+  },
+  requestRejectedWithReason: {
+    title: 'Заявка отклонена',
+    body: 'Ваша заявка «{{requestType}}» отклонена: {{reason}}',
+  },
+
+  newsPublished: {
+    title: 'Новая новость',
+    body: '{{newsTitle}}',
+  },
+
+  companySuspended: {
+    title: 'Компания приостановлена',
+    body: 'Ваша компания была приостановлена администратором платформы.',
+  },
+  subscriptionCancelled: {
+    title: 'Подписка отменена',
+    body: 'Ваша подписка была отменена. Доступ к системе приостановлен.',
+  },
+  paymentReceived: {
+    title: 'Поступила оплата',
+    body: 'Поступила оплата от компании «{{companyName}}»',
+  },
+
+  companySuspendedUnpaid: {
+    title: 'Компания приостановлена',
+    body: 'Подписка не оплачена. Доступ к системе приостановлен.',
+  },
+  subscriptionExpiring: {
+    title: 'Подписка истекает',
+    body_one: 'Оплатите подписку в течение {{count}} дн., иначе доступ будет приостановлен.',
+    body_few: 'Оплатите подписку в течение {{count}} дн., иначе доступ будет приостановлен.',
+    body_many: 'Оплатите подписку в течение {{count}} дн., иначе доступ будет приостановлен.',
+    body_other: 'Оплатите подписку в течение {{count}} дн., иначе доступ будет приостановлен.',
+  },
+  unclosedShifts: {
+    title: 'Незакрытые смены',
+    body_one: 'Сотрудник не закрыл смену: {{names}}',
+    body_few: 'Сотрудники не закрыли смену: {{names}}',
+    body_many: 'Сотрудники не закрыли смену: {{names}}',
+    body_other: 'Сотрудники не закрыли смену: {{names}}',
+  },
+};
+
 export const ru = {
   errors,
+  push,
 
   enums: {
     /** Источник: web AppShell.tsx ("Администратор"), web/widgets/audit-table ("Сотрудник") */

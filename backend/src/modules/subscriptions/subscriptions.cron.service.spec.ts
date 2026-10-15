@@ -61,10 +61,12 @@ describe('SubscriptionsCronService.checkSubscriptions', () => {
         data: { status: SubStatus.GRACE },
       }),
     );
+    // Текст больше не собирается здесь — уходит имя события и число дней,
+    // NotificationsService переводит его на язык каждого админа.
     expect(mockNotifications.sendToCompanyAdmins).toHaveBeenCalledWith(
       companyId,
-      'Подписка истекает',
-      expect.stringContaining('7'),
+      'subscriptionExpiring',
+      { count: 7 },
     );
     // company should NOT be suspended in this step
     expect(mockPrisma.company.updateMany).not.toHaveBeenCalled();
@@ -99,8 +101,7 @@ describe('SubscriptionsCronService.checkSubscriptions', () => {
     );
     expect(mockNotifications.sendToCompanyAdmins).toHaveBeenCalledWith(
       companyId,
-      'Компания приостановлена',
-      expect.any(String),
+      'companySuspendedUnpaid',
     );
   });
 

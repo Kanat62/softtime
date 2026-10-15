@@ -12,7 +12,7 @@ import {
 } from '@softtime/shared';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
-import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationsService, trRef } from '../notifications/notifications.service';
 import { startOfDayUtc } from '../attendance/attendance.service';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -38,16 +38,9 @@ function eachDayInRange(start: Date, end: Date): Date[] {
   return days;
 }
 
-const REQUEST_TYPE_LABELS: Record<RequestType, string> = {
-  [RequestType.SICK]: 'Больничный',
-  [RequestType.FAMILY]: 'По семейным обстоятельствам',
-  [RequestType.VACATION]: 'Отпуск',
-  [RequestType.BUSINESS_TRIP]: 'Командировка',
-  [RequestType.REMOTE]: 'Удалённая работа',
-  [RequestType.LATE_REASON]: 'Причина опоздания',
-  [RequestType.EARLY_LEAVE]: 'Ранний уход',
-  [RequestType.OTHER]: 'Прочее',
-};
+// Подписи типов заявок больше не дублируются здесь: push формируется
+// в NotificationsService, который берёт их из общего словаря
+// (namespace `enums.requestType`) на языке получателя.
 
 // ─── Service ──────────────────────────────────────────────────────────────────
 
@@ -96,12 +89,10 @@ export class RequestsService {
       where: { id: userId } as any,
       select: { fullName: true },
     });
-    const label = REQUEST_TYPE_LABELS[dto.type] ?? dto.type;
-    await this.notifications.sendToCompanyAdmins(
-      companyId,
-      'Новая заявка',
-      `Заявка подана: ${label} от ${user?.fullName ?? userId}`,
-    );
+    await this.notifications.sendToCompanyAdmins(companyId, 'newRequest', {
+      requestType: trRef(`enums.requestType.${dto.type}`),
+      fullName: user?.fullName ?? userId,
+    });
 
     return request;
   }
@@ -202,11 +193,9 @@ export class RequestsService {
         entityId: id,
         meta: { type: request.type, userId: request.userId },
       }),
-      this.notifications.sendToUser(
-        request.userId,
-        'Заявка одобрена',
-        `Ваша заявка «${REQUEST_TYPE_LABELS[request.type as RequestType] ?? request.type}» одобрена`,
-      ),
+      this.notifications.sendToUser(request.userId, 'requestApproved', {
+        requestType: trRef(`enums.requestType.${request.type as RequestType}`),
+      }),
     ]);
 
     return updated;
@@ -240,7 +229,6 @@ export class RequestsService {
       },
     });
 
-    const reason = decisionNote ? `: ${decisionNote}` : '';
     await Promise.all([
       this.audit.log({
         actorId,
@@ -251,8 +239,13 @@ export class RequestsService {
       }),
       this.notifications.sendToUser(
         request.userId,
-        'Заявка отклонена',
-        `Ваша заявка «${REQUEST_TYPE_LABELS[request.type as RequestType] ?? request.type}» отклонена${reason}`,
+        // С комментарием администратора — отдельное событие: текст другой,
+        // а подставлять пустую строку в шаблон нельзя.
+        decisionNote ? 'requestRejectedWithReason' : 'requestRejected',
+        {
+          requestType: trRef(`enums.requestType.${request.type as RequestType}`),
+          ...(decisionNote ? { reason: decisionNote } : {}),
+        },
       ),
     ]);
 
