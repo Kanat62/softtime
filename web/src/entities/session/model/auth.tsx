@@ -16,15 +16,18 @@ import {
 import { request } from "@/shared/api/request";
 import { tokenStore } from "@/shared/api/tokenStore";
 import { refreshTokenStore } from "@/shared/api/refreshTokenStore";
+import { refreshTokensUnderLock } from "@/shared/api/refreshSession";
 import { setupInterceptors } from "@/shared/api/interceptors";
 
 // Register interceptors once at module load time
 setupInterceptors();
 
 // Prevents React Strict Mode from running the hydration effect twice.
-// Both invocations read the same refresh token from sessionStorage, but the
-// backend deletes the token after the first use, so the second call gets a 401
-// and calls setUser(null), kicking the user to /login.
+// Both invocations read the same refresh token from storage, but the backend
+// deletes the token after the first use, so the second call gets a 401 and
+// calls setUser(null), kicking the user to /login.
+// Межвкладочная блокировка этот случай не покрывает: в одной вкладке
+// обе итерации StrictMode шли бы последовательно и обе получили бы лок.
 let _hydrateStarted = false;
 
 // Re-export so existing imports `import { UserRole } from "@/entities/session"` keep working
@@ -68,8 +71,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [hydrated, setHydrated] = useState(false);
 
   // ── On mount: attempt silent refresh to restore session ──────────────────────
-  // Backend sends both tokens in the JSON body; we persist the refresh token in
-  // sessionStorage so it survives page reloads within the same tab.
+  // Backend sends both tokens in the JSON body; refresh-токен лежит в
+  // localStorage, поэтому сессия переживает и перезагрузку, и закрытие вкладки.
   useEffect(() => {
     if (_hydrateStarted) return;
     _hydrateStarted = true;
@@ -83,14 +86,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     (async () => {
       try {
-        // 1. Exchange refresh token for a new pair
-        const tokens = await request<{ accessToken: string; refreshToken: string }>({
-          method: "POST",
-          url: "/auth/refresh",
-          data: { refreshToken: storedRefresh },
-        });
-        tokenStore.set(tokens.accessToken);
-        refreshTokenStore.set(tokens.refreshToken);
+        // 1. Exchange refresh token for a new pair. Под межвкладочной
+        //    блокировкой, и токен читается заново уже внутри неё: соседняя
+        //    вкладка могла его ротировать, пока мы ждали очередь.
+        const tokens = await refreshTokensUnderLock();
+
+        // Токена не стало, пока ждали очередь — считаем, что сессии нет.
+        if (!tokens) {
+          tokenStore.set(null);
+          setUser(null);
+          return;
+        }
 
         // 2. Restore user profile (refresh response has no `user` field)
         const profile = await request<User>({ method: "GET", url: "/profile" });

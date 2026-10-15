@@ -1,7 +1,8 @@
 import type { AxiosError, InternalAxiosRequestConfig } from "axios";
 import { apiClient } from "./client";
 import { tokenStore } from "./tokenStore";
-import { refreshTokenStore } from "./refreshTokenStore";
+import { refreshTokenStore, REFRESH_TOKEN_KEY } from "./refreshTokenStore";
+import { refreshTokensUnderLock } from "./refreshSession";
 import i18n from "@/shared/i18n";
 
 let _initialized = false;
@@ -27,6 +28,20 @@ function redirectToLogin() {
 export function setupInterceptors(): void {
   if (_initialized) return;
   _initialized = true;
+
+  // ── Выход в другой вкладке ──────────────────────────────────────────────────
+  // Событие storage приходит только в ОСТАЛЬНЫЕ вкладки. Токен исчез
+  // (removeItem даёт newValue === null, clear() даёт key === null) — значит
+  // в одной из вкладок вышли из системы, здесь сессии тоже больше нет.
+  // На обновление токена не реагируем: там newValue не null.
+  if (typeof window !== "undefined") {
+    window.addEventListener("storage", (e) => {
+      const removed = e.key === null || (e.key === REFRESH_TOKEN_KEY && e.newValue === null);
+      if (!removed) return;
+      tokenStore.set(null);
+      redirectToLogin();
+    });
+  }
 
   // ── Request: attach Bearer token + UI language ──────────────────────────────
   apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
@@ -78,12 +93,17 @@ export function setupInterceptors(): void {
       _refreshing = true;
 
       try {
-        const { data } = await apiClient.post<{ accessToken: string; refreshToken: string }>(
-          "/auth/refresh",
-          { refreshToken: storedRefresh },
-        );
-        tokenStore.set(data.accessToken);
-        refreshTokenStore.set(data.refreshToken);
+        // Блокировка и повторное чтение токена — внутри помощника.
+        const data = await refreshTokensUnderLock();
+
+        // null — пока мы ждали очередь, соседняя вкладка вышла из системы.
+        if (!data) {
+          tokenStore.set(null);
+          flushQueue(null);
+          redirectToLogin();
+          return Promise.reject(error);
+        }
+
         flushQueue(data.accessToken);
         if (original.headers) original.headers.Authorization = `Bearer ${data.accessToken}`;
         return apiClient(original);

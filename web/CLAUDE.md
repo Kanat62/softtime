@@ -27,7 +27,19 @@ Feature-Sliced Design (FSD).
 - ADMIN видит только свою компанию (company_id изоляция на backend)
 - PROVIDER видит все компании
 - WORKER на вебе не регистрируется — формы нет
-- Access токен в памяти, Refresh в httpOnly cookie
+- Токены: access — в памяти модуля (`shared/api/tokenStore.ts`), живёт до
+  перезагрузки страницы; refresh — в `localStorage` под ключом `softtime_rt`
+  (`shared/api/refreshTokenStore.ts`), поэтому сессия переживает и F5, и
+  закрытие вкладки. httpOnly-cookie для refresh **не используется**: бэкенд
+  присылает оба токена в JSON-теле, cookie-слоя на нём нет. Перейти на
+  cookie мешают разные сайты у веба (*.vercel.app) и бэкенда
+  (*.railway.app) — cookie была бы сторонней и блокировалась Safari/инкогнито;
+  нужен общий домен либо same-origin прокси.
+- Обновление пары идёт через `shared/api/refreshSession.ts` под
+  `navigator.locks`: refresh-токен одноразовый (бэкенд гасит его в Redis),
+  а localStorage общий для вкладок, поэтому без блокировки две вкладки
+  гасили бы сессию друг другу. Выход в одной вкладке остальные замечают
+  по событию `storage`.
 - Таблицы с серверной пагинацией
 
 ## Чего НЕ делать
