@@ -110,6 +110,7 @@ export function QrScannerScreen() {
               message: r.message,
               workedMinutes: r.workedMinutes ?? undefined,
               dayStatus: r.dayStatus,
+              diffMinutes: r.diffMinutes,
             });
           }
         },

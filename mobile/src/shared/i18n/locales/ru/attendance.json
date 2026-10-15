@@ -18,7 +18,15 @@
     "late_few": "Опоздал на {{count}} минуты",
     "late_many": "Опоздал на {{count}} минут",
     "late_other": "Опоздал на {{count}} минуты",
-    "leftOnTime": "Вышел вовремя"
+    "leftOnTime": "Вышел вовремя",
+    "earlyLeave_one": "Ушёл на {{count}} минуту раньше",
+    "earlyLeave_few": "Ушёл на {{count}} минуты раньше",
+    "earlyLeave_many": "Ушёл на {{count}} минут раньше",
+    "earlyLeave_other": "Ушёл на {{count}} минуты раньше",
+    "overtime_one": "Переработка {{count}} минута",
+    "overtime_few": "Переработка {{count}} минуты",
+    "overtime_many": "Переработка {{count}} минут",
+    "overtime_other": "Переработка {{count}} минуты"
   },
   "history": {
     "title": "История посещаемости",

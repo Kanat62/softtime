@@ -14,7 +14,11 @@
     "earlyArrival_other": "Arrived {{count}} minutes early",
     "late_one": "{{count}} minute late",
     "late_other": "{{count}} minutes late",
-    "leftOnTime": "Left on time"
+    "leftOnTime": "Left on time",
+    "earlyLeave_one": "Left {{count}} minute early",
+    "earlyLeave_other": "Left {{count}} minutes early",
+    "overtime_one": "{{count}} minute overtime",
+    "overtime_other": "{{count}} minutes overtime"
   },
   "history": {
     "title": "Attendance history",

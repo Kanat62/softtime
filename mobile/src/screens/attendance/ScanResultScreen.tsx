@@ -49,6 +49,14 @@ function buildResultText(
     }
   } else if (status === CheckOutStatus.ON_TIME) {
     return i18n.t('attendance:result.leftOnTime');
+  } else if (diffMinutes !== undefined) {
+    const minutes = Math.abs(diffMinutes);
+    if (status === CheckOutStatus.LEFT_EARLY) {
+      return i18n.t('attendance:result.earlyLeave', { count: minutes });
+    }
+    if (status === CheckOutStatus.OVERTIME) {
+      return i18n.t('attendance:result.overtime', { count: minutes });
+    }
   }
 
   // Запасной путь: показываем сообщение бэкенда как раньше.
