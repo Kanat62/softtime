@@ -180,6 +180,10 @@ export interface Attendance {
 export interface CheckInResponse {
   record: Attendance;
   checkInStatus: CheckInStatus;
+  /**
+   * Отклонение от начала смены в минутах: отрицательное — пришёл раньше
+   * (EARLY_ARRIVAL), положительное — позже (LATE).
+   */
   diffMinutes: number;
   message: string;
 }
@@ -190,6 +194,12 @@ export interface CheckOutResponse {
   checkOutStatus: CheckOutStatus;
   dayStatus: DayStatus;
   workedMinutes: number;
+  /**
+   * Отклонение от конца смены в минутах, знак как у CheckInResponse.diffMinutes:
+   * отрицательное — ушёл раньше (LEFT_EARLY), положительное — позже (OVERTIME).
+   * Поле опционально: старые версии бэкенда его не присылают.
+   */
+  diffMinutes?: number;
   message: string;
 }
 

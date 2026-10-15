@@ -268,13 +268,22 @@ export class AttendanceService {
       data: { checkOutAt: now, checkOutStatus, workedMinutes, status: dayStatus },
     });
 
-    const diffMin = Math.abs(minutesInDay - endMin);
+    // Знак как у diffMinutes при check-in: минус — раньше срока, плюс — позже.
+    const diffMinutes = minutesInDay - endMin;
+    const diffMin = Math.abs(diffMinutes);
     let message: string;
     if (checkOutStatus === CheckOutStatus.ON_TIME) message = 'Вышел вовремя';
     else if (checkOutStatus === CheckOutStatus.LEFT_EARLY) message = `Ранний уход на ${diffMin} мин`;
     else message = `Переработка ${diffMin} мин`;
 
-    return { record: updated, checkOutStatus, dayStatus, workedMinutes, message };
+    return {
+      record: updated,
+      checkOutStatus,
+      dayStatus,
+      workedMinutes,
+      diffMinutes,
+      message,
+    };
   }
 
   // ─── Clear today (DEV) ──────────────────────────────────────────────────────

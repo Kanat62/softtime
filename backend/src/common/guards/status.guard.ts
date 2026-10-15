@@ -7,10 +7,12 @@ import {
 import { ErrorCode, UserStatus } from '@softtime/shared';
 import { TenantPayload } from '../tenant/tenant.context';
 
-const INACTIVE_STATUSES = new Set<string>([
-  UserStatus.BLOCKED,
-  UserStatus.PENDING,
-]);
+// Код ошибки для каждого неактивного статуса. Текст сообщения и HTTP-статус
+// общие — различать причину клиенты должны по `code`, а не по тексту.
+const INACTIVE_STATUS_CODES: Record<string, string> = {
+  [UserStatus.BLOCKED]: ErrorCode.ACCOUNT_BLOCKED,
+  [UserStatus.PENDING]: ErrorCode.ACCOUNT_PENDING,
+};
 
 // Applied after JwtAuthGuard. Blocks users whose account is not yet active
 // (PENDING) or has been blocked (BLOCKED).
@@ -25,10 +27,11 @@ export class StatusGuard implements CanActivate {
 
     if (!user?.status) return true; // status not in payload yet — allow
 
-    if (INACTIVE_STATUSES.has(user.status)) {
+    const code = INACTIVE_STATUS_CODES[user.status];
+    if (code) {
       throw new ForbiddenException({
         message: 'Account is not active',
-        code: ErrorCode.ACCOUNT_BLOCKED,
+        code,
       });
     }
     return true;

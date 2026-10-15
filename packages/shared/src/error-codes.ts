@@ -24,6 +24,7 @@ export const ErrorCode = {
   FORBIDDEN_ROLE: 'FORBIDDEN_ROLE',
   SUBSCRIPTION_NOT_ACTIVE: 'SUBSCRIPTION_NOT_ACTIVE',
   ACCOUNT_BLOCKED: 'ACCOUNT_BLOCKED',
+  ACCOUNT_PENDING: 'ACCOUNT_PENDING',
 
   // ─── Аутентификация ───────────────────────────────────────────────────────
   INVALID_CREDENTIALS: 'INVALID_CREDENTIALS',
