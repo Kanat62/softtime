@@ -8,9 +8,88 @@
  * Check in / Check out · Requests · Attendance · Employee · Schedule ·
  * Subscription · Free trial · Grace period · Suspended.
  */
-import type { Dictionary } from './ru';
+import type { Dictionary, ErrorMessages } from './ru';
+
+/**
+ * См. ru.ts — тот же набор ключей, та же аннотация, тот же порядок.
+ * Пропущенный код ловится компилятором.
+ */
+const errors: ErrorMessages = {
+  // ─── HTTP status fallbacks ──────────────────────────────────────────────
+  VALIDATION_ERROR: 'Please check the highlighted fields',
+  BAD_REQUEST: 'Invalid request',
+  UNAUTHORIZED: 'Authentication required',
+  FORBIDDEN: 'Access denied',
+  NOT_FOUND: 'Not found',
+  CONFLICT: 'Conflicts with existing data',
+  UNPROCESSABLE_ENTITY: 'The data could not be processed',
+  TOO_MANY_REQUESTS: 'Too many requests. Please try again later.',
+  INTERNAL_ERROR: 'Internal server error',
+
+  // ─── Access (guards) ────────────────────────────────────────────────────
+  FORBIDDEN_ROLE: 'Insufficient permissions',
+  SUBSCRIPTION_NOT_ACTIVE: 'The company subscription is not active',
+  ACCOUNT_BLOCKED: 'Account is blocked',
+  ACCOUNT_PENDING: 'Awaiting administrator approval',
+
+  // ─── Authentication ─────────────────────────────────────────────────────
+  INVALID_CREDENTIALS: 'Invalid email or password',
+  TOO_MANY_ATTEMPTS: 'Too many attempts. Please try again in 15 minutes.',
+  EMAIL_TAKEN: 'This email is already registered',
+  REFRESH_TOKEN_INVALID: 'Invalid refresh token',
+  REFRESH_TOKEN_EXPIRED: 'Refresh token not found or expired',
+
+  // ─── Attendance / QR ────────────────────────────────────────────────────
+  QR_INVALID: 'Invalid QR code',
+  QR_NOT_FOUND: 'No active QR code found. Use /qr/regenerate.',
+  OUTSIDE_OFFICE_NETWORK: 'Outside the office network',
+  NON_WORKING_DAY: 'Today is a non-working day',
+  ALREADY_CHECKED_IN: 'Check in is already recorded',
+  NO_ACTIVE_CHECKIN: 'No active check in to check out from',
+  SCHEDULE_NOT_CONFIGURED: 'No schedule is set for today',
+  ATTENDANCE_NOT_FOUND: 'Attendance record not found',
+  ATTENDANCE_ALREADY_EXISTS: 'An attendance record for this day already exists',
+
+  // ─── Users ──────────────────────────────────────────────────────────────
+  USER_NOT_FOUND: 'User not found',
+  USER_NOT_PENDING: 'User is not in PENDING status',
+  CANNOT_CHANGE_OWN_STATUS: 'You cannot change your own status',
+  CANNOT_DELETE_OWN_ACCOUNT: 'You cannot delete your own account',
+  INVALID_USER_STATUS: 'Allowed statuses: ACTIVE, BLOCKED, WARNING',
+  CURRENT_PASSWORD_REQUIRED: 'currentPassword is required to change the password',
+  CURRENT_PASSWORD_INVALID: 'Current password is incorrect',
+  NO_FIELDS_TO_UPDATE: 'No data to update',
+
+  // ─── Companies ──────────────────────────────────────────────────────────
+  COMPANY_NOT_FOUND: 'Company not found',
+
+  // ─── Requests ───────────────────────────────────────────────────────────
+  REQUEST_NOT_FOUND: 'Request not found',
+  REQUEST_ALREADY_HANDLED: 'This request has already been handled',
+  REQUEST_INVALID_DATE_RANGE: 'endDate cannot be earlier than startDate',
+
+  /** Параметры приходят в `params` — см. комментарий в ru.ts. */
+  SCHEDULE_MIN_HOURS:
+    '{{weekday}}: a working day must be at least {{hours}} h ({{startTime}}–{{endTime}})',
+
+  // ─── Subscriptions ──────────────────────────────────────────────────────
+  SUBSCRIPTION_NOT_FOUND: 'Subscription not found',
+  SUBSCRIPTION_CANCELLED: 'The subscription was cancelled. Please contact support.',
+  SUBSCRIPTION_ALREADY_CANCELLED: 'The subscription is already cancelled',
+
+  // ─── Office networks ────────────────────────────────────────────────────
+  OFFICE_NETWORK_NOT_FOUND: 'Network not found',
+
+  // ─── News ───────────────────────────────────────────────────────────────
+  NEWS_NOT_FOUND: 'News item not found',
+
+  // ─── Payments / reports ─────────────────────────────────────────────────
+  PAYMENT_NOT_FOUND: 'Payment not found',
+};
 
 export const en: Dictionary = {
+  errors,
+
   enums: {
     userRole: {
       PROVIDER: 'Provider',

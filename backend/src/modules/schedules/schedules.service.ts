@@ -188,6 +188,15 @@ export class SchedulesService {
         throw new UnprocessableEntityException({
           message: `${day.weekday}: рабочий день должен быть не менее ${minHours} ч (${day.startTime}–${day.endTime})`,
           code: ErrorCode.SCHEDULE_MIN_HOURS,
+          // Единственное исключение с данными внутри текста. Клиент строит
+          // свою фразу из этих параметров по шаблону errors:SCHEDULE_MIN_HOURS,
+          // `message` оставлен как есть — для старых клиентов.
+          params: {
+            weekday: day.weekday,
+            hours: minHours,
+            startTime: day.startTime,
+            endTime: day.endTime,
+          },
         });
       }
     }

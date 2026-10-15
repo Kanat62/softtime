@@ -24,6 +24,9 @@ export class HttpExceptionFilter implements ExceptionFilter {
     let error = 'Internal Server Error';
     let details: unknown;
     let code: ErrorCodeValue | undefined;
+    // Параметры для подстановки в клиентский шаблон текста (см. ErrorCode
+    // SCHEDULE_MIN_HOURS — единственный код с данными внутри сообщения).
+    let params: unknown;
 
     if (exception instanceof ZodValidationException) {
       // Zod validation errors from nestjs-zod pipe
@@ -45,6 +48,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
         if (typeof b.error === 'string') error = b.error;
         if (b.details !== undefined) details = b.details;
         if (typeof b.code === 'string') code = b.code as ErrorCodeValue;
+        if (b.params !== undefined) params = b.params;
       }
 
       error = error !== 'Internal Server Error' ? error : statusCodeText(statusCode);
@@ -61,6 +65,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       code: code ?? fallbackCode(statusCode),
     };
     if (details !== undefined) payload.details = details;
+    if (params !== undefined) payload.params = params;
 
     // Support both Fastify (reply.code().send()) and Express (res.status().json())
     if (typeof response.code === 'function') {

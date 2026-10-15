@@ -45,6 +45,9 @@ export { languageStorage } from './language-storage';
  * Namespace:
  *  - enums, validation — общий словарь из @softtime/shared (один источник
  *    с web и backend, чтобы тексты не разошлись);
+ *  - errors — мобильные строки из ./locales/{ru,en}/errors.json плюс общий
+ *    словарь текстов по машинному коду ошибки API (ключ = значение
+ *    ErrorCode). Ключи не пересекаются: у кодов они в UPPER_SNAKE_CASE;
  *  - остальные (common, nav, settings и по домену экрана) — мобильные
  *    строки, JSON в ./locales/{ru,en}/.
  */
@@ -65,7 +68,7 @@ const resources = {
     requests: ruRequests,
     schedule: ruSchedule,
     subscription: ruSubscription,
-    errors: ruErrors,
+    errors: { ...ruErrors, ...dictionaries.ru.errors },
   },
   en: {
     enums: dictionaries.en.enums,
@@ -83,7 +86,7 @@ const resources = {
     requests: enRequests,
     schedule: enSchedule,
     subscription: enSubscription,
-    errors: enErrors,
+    errors: { ...enErrors, ...dictionaries.en.errors },
   },
 } as const;
 

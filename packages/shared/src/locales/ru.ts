@@ -1,15 +1,108 @@
 /**
  * Русский общий словарь (источник истины для web, mobile и backend).
  *
- * Два namespace:
+ * Три namespace:
  *  - enums      — подписи значений енумов из ../enums
  *  - validation — сообщения zod-схем из ../schemas
+ *  - errors     — тексты машинных кодов ошибок API из ../error-codes
  *
  * Строки извлечены из существующего кода. Там, где web и mobile
  * расходились, выбран один вариант (см. отчёт этапа A1).
  * Енумы и схемы на этом этапе НЕ изменяются — словарь аддитивен.
  */
+import type { ErrorCodeValue } from '../error-codes';
+
+/**
+ * Текст на каждый машинный код ошибки API.
+ *
+ * Аннотация `Record<ErrorCodeValue, string>` обязательна: с ней добавление
+ * нового кода в ../error-codes ломает компиляцию, пока текст не написан.
+ * Клиенты берут текст по `code` из ответа бэкенда, серверный `message`
+ * остаётся только запасным вариантом.
+ *
+ * Для кодов, у которых на бэкенде русский текст, здесь ТОТ ЖЕ текст —
+ * чтобы переход на перевод по коду ничего не менял визуально.
+ */
+const errors: Record<ErrorCodeValue, string> = {
+  // ─── Запасные по HTTP-статусу ───────────────────────────────────────────
+  VALIDATION_ERROR: 'Проверьте правильность заполнения полей',
+  BAD_REQUEST: 'Некорректный запрос',
+  UNAUTHORIZED: 'Требуется вход в систему',
+  FORBIDDEN: 'Недостаточно прав',
+  NOT_FOUND: 'Не найдено',
+  CONFLICT: 'Конфликт данных',
+  UNPROCESSABLE_ENTITY: 'Данные не прошли проверку',
+  TOO_MANY_REQUESTS: 'Слишком много запросов. Попробуйте позже.',
+  INTERNAL_ERROR: 'Внутренняя ошибка сервера',
+
+  // ─── Доступ (guards) ────────────────────────────────────────────────────
+  FORBIDDEN_ROLE: 'Недостаточно прав',
+  SUBSCRIPTION_NOT_ACTIVE: 'Подписка компании неактивна',
+  ACCOUNT_BLOCKED: 'Аккаунт заблокирован',
+  ACCOUNT_PENDING: 'Ожидает подтверждения администратором',
+
+  // ─── Аутентификация ─────────────────────────────────────────────────────
+  INVALID_CREDENTIALS: 'Неверный email или пароль',
+  TOO_MANY_ATTEMPTS: 'Слишком много попыток. Повторите через 15 минут.',
+  EMAIL_TAKEN: 'Этот email уже зарегистрирован',
+  REFRESH_TOKEN_INVALID: 'Недействительный refresh-токен',
+  REFRESH_TOKEN_EXPIRED: 'Refresh-токен не найден или истёк',
+
+  // ─── Посещаемость / QR ──────────────────────────────────────────────────
+  QR_INVALID: 'QR недействителен',
+  QR_NOT_FOUND: 'Активный QR не найден. Используйте /qr/regenerate.',
+  OUTSIDE_OFFICE_NETWORK: 'Вне офисной сети',
+  NON_WORKING_DAY: 'Сегодня нерабочий день',
+  ALREADY_CHECKED_IN: 'Приход уже отмечен',
+  NO_ACTIVE_CHECKIN: 'Нет активного прихода для выхода',
+  SCHEDULE_NOT_CONFIGURED: 'Расписание на сегодня не настроено',
+  ATTENDANCE_NOT_FOUND: 'Запись не найдена',
+  ATTENDANCE_ALREADY_EXISTS: 'Запись за этот день уже существует',
+
+  // ─── Пользователи ───────────────────────────────────────────────────────
+  USER_NOT_FOUND: 'Пользователь не найден',
+  USER_NOT_PENDING: 'Пользователь не в статусе PENDING',
+  CANNOT_CHANGE_OWN_STATUS: 'Нельзя изменить статус самому себе',
+  CANNOT_DELETE_OWN_ACCOUNT: 'Нельзя удалить собственный аккаунт',
+  INVALID_USER_STATUS: 'Допустимые статусы: ACTIVE, BLOCKED, WARNING',
+  CURRENT_PASSWORD_REQUIRED: 'currentPassword обязателен для смены пароля',
+  CURRENT_PASSWORD_INVALID: 'Текущий пароль неверен',
+  NO_FIELDS_TO_UPDATE: 'Нет данных для обновления',
+
+  // ─── Компании ───────────────────────────────────────────────────────────
+  COMPANY_NOT_FOUND: 'Компания не найдена',
+
+  // ─── Заявки ─────────────────────────────────────────────────────────────
+  REQUEST_NOT_FOUND: 'Заявка не найдена',
+  REQUEST_ALREADY_HANDLED: 'Заявка уже обработана',
+  REQUEST_INVALID_DATE_RANGE: 'endDate не может быть раньше startDate',
+
+  /**
+   * Единственный код с параметрами: бэкенд присылает их в `params`
+   * ({ weekday, hours, startTime, endTime }). weekday — значение Weekday,
+   * клиент переводит его через namespace enums.weekdayShort/weekdayLong.
+   */
+  SCHEDULE_MIN_HOURS:
+    '{{weekday}}: рабочий день должен быть не менее {{hours}} ч ({{startTime}}–{{endTime}})',
+
+  // ─── Подписки ───────────────────────────────────────────────────────────
+  SUBSCRIPTION_NOT_FOUND: 'Подписка не найдена',
+  SUBSCRIPTION_CANCELLED: 'Подписка отменена. Обратитесь в службу поддержки.',
+  SUBSCRIPTION_ALREADY_CANCELLED: 'Подписка уже отменена',
+
+  // ─── Офисные сети ───────────────────────────────────────────────────────
+  OFFICE_NETWORK_NOT_FOUND: 'Сеть не найдена',
+
+  // ─── Новости ────────────────────────────────────────────────────────────
+  NEWS_NOT_FOUND: 'Новость не найдена',
+
+  // ─── Платежи / отчёты ───────────────────────────────────────────────────
+  PAYMENT_NOT_FOUND: 'Платёж не найден',
+};
+
 export const ru = {
+  errors,
+
   enums: {
     /** Источник: web AppShell.tsx ("Администратор"), web/widgets/audit-table ("Сотрудник") */
     userRole: {
@@ -208,3 +301,6 @@ export const ru = {
  * иначе `const en: Dictionary` требовал бы дословно русских строк.
  */
 export type Dictionary = typeof ru;
+
+/** Namespace `errors`: текст на каждое значение ErrorCode. */
+export type ErrorMessages = Record<ErrorCodeValue, string>;

@@ -1,4 +1,5 @@
 import type { AxiosError } from "axios";
+import { Weekday, type ErrorCodeValue } from "@softtime/shared";
 import i18n from "@/shared/i18n";
 
 /**
@@ -8,17 +9,21 @@ import i18n from "@/shared/i18n";
 export interface NormalizedError {
   message: string;
   statusCode: number;
+  /** Machine-readable code from the backend, e.g. "QR_INVALID". Language-independent. */
+  code?: ErrorCodeValue;
   /** Field-level validation errors keyed by dot-joined Zod path, e.g. { "email": "Invalid email" } */
   fieldErrors?: Record<string, string>;
 }
 
 // Backend error body shape per HttpExceptionFilter:
-// { statusCode, message, error, details?: ZodIssue[] }
+// { statusCode, message, error, code, details?: ZodIssue[], params? }
 interface BackendBody {
   statusCode?: number;
   message?: string;
   error?: string;
+  code?: string;
   details?: unknown;
+  params?: Record<string, unknown>;
 }
 
 interface ZodIssue {
@@ -38,12 +43,49 @@ function isAxiosError(e: unknown): e is AxiosError<BackendBody> {
   return typeof e === "object" && e !== null && (e as AxiosError).isAxiosError === true;
 }
 
+function isWeekday(v: unknown): v is Weekday {
+  return typeof v === "string" && Object.values(Weekday).includes(v as Weekday);
+}
+
+/**
+ * Translates the error into the UI language by its machine `code`.
+ *
+ * The backend answers in Russian only, so the text we show comes from the
+ * shared dictionary (namespace `errors`, key = the ErrorCode value). When the
+ * code is unknown to us — an older or newer backend — we fall back to the
+ * server's own `message`, which is the pre-i18n behaviour.
+ *
+ * `params` carries the values that used to be baked into the message
+ * (today only SCHEDULE_MIN_HOURS); `weekday` is itself an enum, so it is
+ * translated through the `enums` namespace before interpolation.
+ */
+function translateByCode(
+  code: string | undefined,
+  params: Record<string, unknown> | undefined,
+  serverMessage: string,
+): string {
+  if (!code) return serverMessage;
+
+  const key = `errors:${code}`;
+  if (!i18n.exists(key)) return serverMessage;
+
+  const values = { ...params };
+  if (isWeekday(values.weekday)) {
+    values.weekday = i18n.t(`enums:weekdayLong.${values.weekday}`);
+  }
+
+  return i18n.t(key, values);
+}
+
 export function normalizeError(error: unknown): NormalizedError {
   if (isAxiosError(error)) {
     if (error.response) {
       const body = error.response.data;
       const statusCode = body?.statusCode ?? error.response.status;
-      const message = body?.message ?? error.message ?? i18n.t("common:genericError");
+      const code = typeof body?.code === "string" ? body.code : undefined;
+      const serverMessage =
+        body?.message ?? error.message ?? i18n.t("common:genericError");
+      const message = translateByCode(code, body?.params, serverMessage);
 
       const fieldErrors: Record<string, string> = {};
       if (isZodIssueArray(body?.details)) {
@@ -57,6 +99,7 @@ export function normalizeError(error: unknown): NormalizedError {
       return {
         statusCode,
         message,
+        ...(code ? { code: code as ErrorCodeValue } : {}),
         ...(Object.keys(fieldErrors).length > 0 ? { fieldErrors } : {}),
       };
     }

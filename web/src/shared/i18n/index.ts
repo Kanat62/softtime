@@ -47,8 +47,9 @@ export { languageStorage } from "./language-storage";
 
 /**
  * Namespace:
- *  - enums, validation — общий словарь из @softtime/shared (один источник
- *    с mobile и backend, чтобы тексты не разошлись);
+ *  - enums, validation, errors — общий словарь из @softtime/shared (один
+ *    источник с mobile и backend, чтобы тексты не разошлись); errors —
+ *    текст на машинный код ошибки API, ключ = значение ErrorCode;
  *  - common, settings и по домену страницы — веб-строки,
  *    JSON в ./locales/{ru,en}/.
  */
@@ -56,6 +57,7 @@ const resources = {
   ru: {
     enums: dictionaries.ru.enums,
     validation: dictionaries.ru.validation,
+    errors: dictionaries.ru.errors,
     common: ruCommon,
     settings: ruSettings,
     employees: ruEmployees,
@@ -76,6 +78,7 @@ const resources = {
   en: {
     enums: dictionaries.en.enums,
     validation: dictionaries.en.validation,
+    errors: dictionaries.en.errors,
     common: enCommon,
     settings: enSettings,
     employees: enEmployees,
@@ -125,6 +128,7 @@ i18n
       "subscription",
       "enums",
       "validation",
+      "errors",
     ],
     defaultNS: "common",
     detection: {
