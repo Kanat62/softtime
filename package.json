@@ -12,6 +12,7 @@
     "mobile": "npm start --workspace=mobile",
     "web": "npm run dev --workspace=web",
     "android": "npm run android --workspace=mobile",
+    "check:i18n": "node scripts/check-i18n-keys.js",
     "ios": "npm run ios --workspace=mobile"
   },
   "version": "1.0.0"

@@ -42,6 +42,10 @@ android/build/
 **/ios/Pods/
 **/ios/build/
 
+# Redis dump (создаётся локальным redis-server в рабочей папке)
+dump.rdb
+**/dump.rdb
+
 # Logs
 *.log
 npm-debug.log*
