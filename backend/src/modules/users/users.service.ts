@@ -8,7 +8,14 @@ import {
 } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import { randomUUID } from 'crypto';
-import { ErrorCode, UserStatus, UserRole, type Language } from '@softtime/shared';
+import {
+  ErrorCode,
+  UserStatus,
+  UserRole,
+  CompanyStatus,
+  SubStatus,
+  type Language,
+} from '@softtime/shared';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -19,6 +26,7 @@ import {
   DELETED_MARKER_TTL_SECONDS,
   deletedEmail,
   deletedMarkerKey,
+  companyClosedMarkerKey,
 } from './account-deletion';
 
 const BCRYPT_ROUNDS = 12;
@@ -292,14 +300,14 @@ export class UsersService {
 
     // Было жёсткое удаление вместе с историей посещаемости. Теперь
     // анонимизация: посещаемость, заявки и расписание остаются для отчётов.
-    const done = await this.anonymize({
+    const result = await this.anonymize({
       id: user.id,
       role: user.role,
       companyId: user.companyId,
     });
 
-    // done === false — параллельный запрос успел раньше; второй раз не пишем.
-    if (done) {
+    // deleted === false — параллельный запрос успел раньше; второй раз не пишем.
+    if (result.deleted) {
       await this.audit.log({
         actorId,
         action: 'USER_DELETED',
@@ -318,10 +326,16 @@ export class UsersService {
    *
    * Идемпотентно: если пользователь уже удалён (повторный запрос по ещё
    * живому access-токену), молча завершаемся.
+   *
+   * Единственный админ компании: без closeCompany — 409
+   * LAST_ADMIN_CANNOT_DELETE и ничего не меняется (чтобы случайно ничего не
+   * закрылось); с closeCompany: true — компания закрывается вместе с
+   * аккаунтом. Флаг игнорируется для WORKER и для админа, у которого есть
+   * коллега-админ: закрыть компанию «по ошибке» таким запросом нельзя.
    * Неверный пароль — 403 с кодом CURRENT_PASSWORD_INVALID, а не 401: 401
    * заставил бы клиентский interceptor впустую ротировать refresh-токен.
    */
-  async deleteMyAccount(userId: string, password: string) {
+  async deleteMyAccount(userId: string, password: string, closeCompany = false) {
     const user = await this.prisma.user.findFirst({
       where: { id: userId, deletedAt: null } as any,
     });
@@ -335,19 +349,28 @@ export class UsersService {
       });
     }
 
-    const done = await this.anonymize({
-      id: user.id,
-      role: user.role,
-      companyId: user.companyId,
-    });
+    const result = await this.anonymize(
+      { id: user.id, role: user.role, companyId: user.companyId },
+      { closeCompany },
+    );
 
-    if (done) {
+    if (result.deleted) {
       await this.audit.log({
         actorId: userId,
         action: 'ACCOUNT_DELETED_SELF',
         entityType: 'User',
         entityId: userId,
         meta: { previousStatus: user.status, role: user.role },
+      });
+    }
+    if (result.companyClosed && user.companyId) {
+      await this.audit.log({
+        actorId: userId,
+        action: 'COMPANY_CLOSED',
+        entityType: 'Company',
+        entityId: user.companyId,
+        // Без имён: только идентификатор и число отключённых сотрудников.
+        meta: { closedBy: userId, affectedUsers: result.affectedUsers },
       });
     }
   }
@@ -367,11 +390,12 @@ export class UsersService {
    * запросом: условие `deletedAt: null` в updateMany делает операцию
    * безопасной при повторе.
    */
-  private async anonymize(user: {
-    id: string;
-    role: string;
-    companyId: string | null;
-  }): Promise<boolean> {
+  private async anonymize(
+    user: { id: string; role: string; companyId: string | null },
+    options: { closeCompany?: boolean } = {},
+  ): Promise<{ deleted: boolean; companyClosed: boolean; affectedUsers: number }> {
+    let closing = false;
+
     // Компания не должна остаться без администратора.
     if (user.role === UserRole.ADMIN && user.companyId) {
       const otherAdmins = await this.prisma.user.count({
@@ -384,28 +408,46 @@ export class UsersService {
         } as any,
       });
       if (otherAdmins === 0) {
-        throw new ConflictException({
-          message:
-            'Вы единственный администратор компании, поэтому не можете удалить аккаунт. Обратитесь в поддержку.',
-          code: ErrorCode.LAST_ADMIN_CANNOT_DELETE,
-        });
+        if (!options.closeCompany) {
+          throw new ConflictException({
+            message:
+              'Вы единственный администратор компании. Чтобы удалить аккаунт, нужно закрыть компанию.',
+            code: ErrorCode.LAST_ADMIN_CANNOT_DELETE,
+          });
+        }
+        closing = true;
       }
     }
 
-    const results = await this.prisma.$transaction([
-      this.prisma.user.updateMany({
-        where: { id: user.id, deletedAt: null } as any,
-        data: {
-          fullName: DELETED_USER_NAME,
-          email: deletedEmail(user.id),
-          // Не bcrypt-формат: bcrypt.compare на нём всегда даёт false.
-          passwordHash: `!${randomUUID()}`,
-          status: UserStatus.DELETED,
-          deletedAt: new Date(),
-          adminNote: null,
-          avatarUrl: null,
-        } as any,
-      }),
+    // Остальные сотрудники закрываемой компании. Их записи НЕ меняются и НЕ
+    // стираются: доступ отсекается статусом компании (CLOSED), а данные
+    // остаются у работодателя/оператора. Это обратимо на уровне БД и не
+    // уничтожает чужие данные из-за решения одного человека.
+    let otherUserIds: string[] = [];
+    if (closing && user.companyId) {
+      const others = await this.prisma.user.findMany({
+        where: { companyId: user.companyId, deletedAt: null, id: { not: user.id } } as any,
+        select: { id: true },
+      });
+      otherUserIds = (others as Array<{ id: string }>).map((u) => u.id);
+    }
+
+    const userUpdate = this.prisma.user.updateMany({
+      where: { id: user.id, deletedAt: null } as any,
+      data: {
+        fullName: DELETED_USER_NAME,
+        email: deletedEmail(user.id),
+        // Не bcrypt-формат: bcrypt.compare на нём всегда даёт false.
+        passwordHash: `!${randomUUID()}`,
+        status: UserStatus.DELETED,
+        deletedAt: new Date(),
+        adminNote: null,
+        avatarUrl: null,
+      } as any,
+    });
+
+    const ops: any[] = [
+      userUpdate,
       this.prisma.deviceToken.deleteMany({ where: { userId: user.id } }),
       this.prisma.newsRead.deleteMany({ where: { userId: user.id } }),
       this.prisma.$executeRaw`
@@ -413,17 +455,50 @@ export class UsersService {
         SET meta = meta - 'fullName'
         WHERE "entityType" = 'User' AND "entityId" = ${user.id} AND meta IS NOT NULL
       `,
-    ]);
+    ];
+
+    if (closing && user.companyId) {
+      ops.push(
+        // Закрыта навсегда: provider.activateCompany и платёжный webhook этот
+        // статус не снимают (см. проверки там).
+        this.prisma.company.update({
+          where: { id: user.companyId },
+          data: { status: CompanyStatus.CLOSED },
+        }),
+        // Отменяем подписку: иначе cron подписок через грейс-период перевёл бы
+        // компанию из CLOSED в SUSPENDED.
+        this.prisma.subscription.updateMany({
+          where: { companyId: user.companyId },
+          data: { status: SubStatus.CANCELLED },
+        }),
+        // Push закрытой компании больше не нужны.
+        this.prisma.deviceToken.deleteMany({ where: { userId: { in: otherUserIds } } }),
+      );
+    }
+
+    const results = await this.prisma.$transaction(ops);
 
     const changed = (results[0] as { count: number }).count;
-    if (changed === 0) return false;
+    if (changed === 0) return { deleted: false, companyClosed: false, affectedUsers: 0 };
 
-    // Старые токены: refresh гасим сразу, access блокирует маркер в StatusGuard.
-    const refreshKeys = await this.redis.keys(`refresh:${user.id}:*`);
-    if (refreshKeys.length) await this.redis.del(...refreshKeys);
+    // Токены: refresh гасим сразу, access блокируют маркеры в StatusGuard.
+    const revoke = async (id: string) => {
+      const keys = await this.redis.keys(`refresh:${id}:*`);
+      if (keys.length) await this.redis.del(...keys);
+    };
+    await revoke(user.id);
     await this.redis.set(deletedMarkerKey(user.id), '1', DELETED_MARKER_TTL_SECONDS);
 
-    return true;
+    if (closing && user.companyId) {
+      for (const id of otherUserIds) await revoke(id);
+      await this.redis.set(
+        companyClosedMarkerKey(user.companyId),
+        '1',
+        DELETED_MARKER_TTL_SECONDS,
+      );
+    }
+
+    return { deleted: true, companyClosed: closing, affectedUsers: otherUserIds.length };
   }
 
   // ─── Own profile ──────────────────────────────────────────────────────────────

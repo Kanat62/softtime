@@ -31,6 +31,12 @@ export const updateProfileSchema = z
 /** Удаление своего аккаунта — тело DELETE /users/me (подтверждение паролем) */
 export const deleteAccountSchema = z.object({
   password: z.string().min(1, 'validation:required.password'),
+  /**
+   * Только для единственного админа компании: подтверждение, что вместе с
+   * аккаунтом закрывается и компания. Без флага сервер отвечает 409
+   * LAST_ADMIN_CANNOT_DELETE и ничего не меняет.
+   */
+  closeCompany: z.boolean().optional(),
 });
 
 export type DeleteAccountDto = z.infer<typeof deleteAccountSchema>;

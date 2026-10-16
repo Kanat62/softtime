@@ -37,6 +37,7 @@ const STATUS_MAP: Record<string, BadgeConfig> = {
   ABSENT:           { bg: colors.dangerLight,  text: colors.dangerText,  dot: colors.danger,  labelKey: 'enums:dayStatus.ABSENT' },
   INCOMPLETE:       { bg: colors.dangerLight,  text: colors.dangerText,  dot: colors.danger,  labelKey: 'enums:dayStatus.INCOMPLETE' },
   SUSPENDED:        { bg: colors.dangerLight,  text: colors.dangerText,  dot: colors.danger,  labelKey: 'enums:companyStatus.SUSPENDED' },
+  CLOSED:           { bg: colors.dangerLight,  text: colors.dangerText,  dot: colors.danger,  labelKey: 'enums:companyStatus.CLOSED' },
   BLOCKED:          { bg: colors.dangerLight,  text: colors.dangerText,  dot: colors.danger,  labelKey: 'enums:userStatus.BLOCKED' },
   REJECTED:         { bg: colors.dangerLight,  text: colors.dangerText,  dot: colors.danger,  labelKey: 'enums:requestStatus.REJECTED' },
 

@@ -26,7 +26,7 @@
     "afterTitle": "After deletion",
     "after": "A deleted account cannot be signed in to or restored. Your email address is released and you can register again.",
     "adminTitle": "For company administrators",
-    "admin": "The only administrator of a company cannot delete their account from the app, so the company is not left without a manager. In that case, write to us at the address below.",
+    "admin": "If you are the only administrator of a company, deleting your account in the app will ask you to close the company. This cannot be undone: all employees of the company lose access to the app, and a closed company cannot be reopened. Attendance records are not erased automatically — if you also want them deleted, write to us at the address below. If the company has another administrator, only your account is deleted and the company keeps running.",
     "contactTitle": "Can't sign in, or need help?",
     "contact": "Write to us from the email address you registered with and we will delete the account manually:",
     "language": "Language"

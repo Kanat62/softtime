@@ -167,7 +167,7 @@ export class UserMeController {
     @Body() dto: DeleteAccountDto,
     @CurrentUser() user: TenantPayload,
   ) {
-    await this.usersService.deleteMyAccount(user.userId, dto.password);
+    await this.usersService.deleteMyAccount(user.userId, dto.password, dto.closeCompany === true);
   }
 }
 

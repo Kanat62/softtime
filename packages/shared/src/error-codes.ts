@@ -58,6 +58,7 @@ export const ErrorCode = {
 
   // ─── Компании ─────────────────────────────────────────────────────────────
   COMPANY_NOT_FOUND: 'COMPANY_NOT_FOUND',
+  COMPANY_CLOSED: 'COMPANY_CLOSED',
 
   // ─── Заявки ───────────────────────────────────────────────────────────────
   REQUEST_NOT_FOUND: 'REQUEST_NOT_FOUND',

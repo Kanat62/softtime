@@ -20,6 +20,8 @@ export enum CompanyStatus {
   ACTIVE = 'ACTIVE',
   GRACE = 'GRACE',
   SUSPENDED = 'SUSPENDED',
+  /** Компания закрыта единственным админом при удалении аккаунта. Необратимо. */
+  CLOSED = 'CLOSED',
 }
 
 /** Статусы подписки компании */

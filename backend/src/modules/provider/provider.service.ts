@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { ErrorCode, CompanyStatus, PaymentStatus, SubStatus } from '@softtime/shared';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
@@ -182,6 +182,15 @@ export class ProviderService {
       });
     }
 
+    // Компанию, закрытую её администратором, переоткрыть нельзя: её единственный
+    // админ обезличен, а сотрудники отключены. Только hard-delete (deleteCompany).
+    if ((company as any).status === CompanyStatus.CLOSED) {
+      throw new ConflictException({
+        message: 'Компания закрыта',
+        code: ErrorCode.COMPANY_CLOSED,
+      });
+    }
+
     await Promise.all([
       this.prisma.company.update({
         where: { id },
@@ -214,6 +223,15 @@ export class ProviderService {
       throw new NotFoundException({
         message: 'Компания не найдена',
         code: ErrorCode.COMPANY_NOT_FOUND,
+      });
+    }
+
+    // CLOSED не превращаем в SUSPENDED: из SUSPENDED компанию можно активировать,
+    // и это стало бы обходным путём для переоткрытия закрытой компании.
+    if ((company as any).status === CompanyStatus.CLOSED) {
+      throw new ConflictException({
+        message: 'Компания закрыта',
+        code: ErrorCode.COMPANY_CLOSED,
       });
     }
 

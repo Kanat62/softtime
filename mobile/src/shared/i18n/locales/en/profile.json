@@ -25,6 +25,11 @@
     "details": "Your name, email and password will be erased and you will no longer be able to sign in. Attendance records, requests and schedule stay in your company's reports without your name.",
     "passwordLabel": "Password",
     "passwordPlaceholder": "Enter your password to confirm",
-    "confirm": "Delete permanently"
+    "confirm": "Delete permanently",
+    "closeTitle": "Close the company?",
+    "closeWarning": "You are the only administrator. Deleting your account will close the company and disable all employees. This cannot be undone.",
+    "closeDetails": "Employees will no longer be able to sign in to the app. Attendance records are not erased, but access to them is closed together with the company.",
+    "closeConfirm": "Close company and delete account",
+    "back": "Back"
   }
 }

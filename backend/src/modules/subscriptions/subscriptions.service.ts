@@ -155,6 +155,15 @@ export class SubscriptionsService {
 
     const { companyId } = payload;
 
+    // Запоздавший платёж не должен «оживлять» закрытую компанию.
+    const target = await this.prisma.company.findUnique({
+      where: { id: companyId },
+      select: { status: true },
+    });
+    if ((target as any)?.status === CompanyStatus.CLOSED) {
+      return { ok: false, reason: 'company_closed' };
+    }
+
     const sub = await this.prisma.subscription.findUnique({ where: { companyId } });
     if (!sub) return { ok: false, reason: 'subscription_not_found' };
 

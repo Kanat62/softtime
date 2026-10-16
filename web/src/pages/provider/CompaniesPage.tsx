@@ -143,6 +143,7 @@ export function CompaniesPage() {
             <SelectItem value={CompanyStatus.TRIAL}>{t("enums:companyStatus.TRIAL")}</SelectItem>
             <SelectItem value={CompanyStatus.GRACE}>{t("enums:companyStatus.GRACE")}</SelectItem>
             <SelectItem value={CompanyStatus.SUSPENDED}>{t("enums:companyStatus.SUSPENDED")}</SelectItem>
+            <SelectItem value={CompanyStatus.CLOSED}>{t("enums:companyStatus.CLOSED")}</SelectItem>
           </SelectContent>
         </Select>
         <Select value={subStatusFilter} onValueChange={(v) => { setSubStatusFilter(v); setPage(0); }}>
@@ -255,7 +256,7 @@ export function CompaniesPage() {
                           <Play className="h-3 w-3" />
                           {t("provider:companies.activate")}
                         </Button>
-                      ) : (
+                      ) : c.status === CompanyStatus.CLOSED ? null : (
                         <Button
                           variant="ghost"
                           size="sm"

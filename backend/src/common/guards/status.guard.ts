@@ -9,7 +9,10 @@ import {
 import { ErrorCode, UserStatus } from '@softtime/shared';
 import { TenantPayload } from '../tenant/tenant.context';
 import { RedisService } from '../redis/redis.service';
-import { deletedMarkerKey } from '../../modules/users/account-deletion';
+import {
+  deletedMarkerKey,
+  companyClosedMarkerKey,
+} from '../../modules/users/account-deletion';
 
 // Код ошибки для каждого неактивного статуса. Текст сообщения и HTTP-статус
 // общие — различать причину клиенты должны по `code`, а не по тексту.
@@ -43,6 +46,13 @@ export class StatusGuard implements CanActivate {
           throw new UnauthorizedException({
             message: 'Аккаунт удалён',
             code: ErrorCode.ACCOUNT_DELETED,
+          });
+        }
+        // Компания закрыта: живые access-токены её сотрудников отсекаем сразу.
+        if (user.companyId && (await this.redis.get(companyClosedMarkerKey(user.companyId)))) {
+          throw new UnauthorizedException({
+            message: 'Компания закрыта',
+            code: ErrorCode.COMPANY_CLOSED,
           });
         }
       } catch (e) {

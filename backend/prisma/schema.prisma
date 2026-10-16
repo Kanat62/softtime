@@ -28,6 +28,7 @@ enum CompanyStatus {
   ACTIVE
   GRACE
   SUSPENDED
+  CLOSED
 }
 
 enum SubStatus {

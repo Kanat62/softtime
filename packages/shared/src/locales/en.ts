@@ -61,9 +61,10 @@ const errors: ErrorMessages = {
   CURRENT_PASSWORD_INVALID: 'Current password is incorrect',
   NO_FIELDS_TO_UPDATE: 'No data to update',
   LAST_ADMIN_CANNOT_DELETE:
-    'You are the only administrator of the company, so you cannot delete your account. Please contact support.',
+    'You are the only administrator of the company. To delete your account, the company must be closed.',
 
   // ─── Companies ──────────────────────────────────────────────────────────
+  COMPANY_CLOSED: 'This company has been closed and is no longer accessible.',
   COMPANY_NOT_FOUND: 'Company not found',
 
   // ─── Requests ───────────────────────────────────────────────────────────
@@ -188,6 +189,7 @@ export const en: Dictionary = {
       ACTIVE: 'Active',
       GRACE: 'Grace period',
       SUSPENDED: 'Suspended',
+      CLOSED: 'Closed',
     },
 
     subStatus: {

@@ -8,10 +8,11 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { Trash2 } from 'lucide-react-native';
+import { Trash2, TriangleAlert } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { deleteMyAccountApi } from '@/entities/user/api/profile';
 import { useAuth } from '@/app/providers/AuthProvider';
+import { ErrorCode } from '@softtime/shared';
 import type { AppError } from '@/shared/api/errors';
 import { Button, Input } from '@/shared/ui';
 import {
@@ -42,15 +43,20 @@ export function DeleteAccountModal({ visible, onClose }: Props) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  // 'password' — обычное удаление; 'closeCompany' — второй шаг для единственного
+  // админа: сервер ответил LAST_ADMIN_CANNOT_DELETE, нужно отдельное подтверждение.
+  const [step, setStep] = useState<'password' | 'closeCompany'>('password');
 
   function close() {
     if (loading) return;
     setPassword('');
     setError(null);
+    setStep('password');
     onClose();
   }
 
   async function confirm() {
+    const closing = step === 'closeCompany';
     if (!password) {
       // Ключ словаря validation: Input сам переведёт его через i18n.exists.
       setError('validation:required.password');
@@ -59,14 +65,26 @@ export function DeleteAccountModal({ visible, onClose }: Props) {
     setError(null);
     setLoading(true);
     try {
-      await deleteMyAccountApi(password);
+      await deleteMyAccountApi(password, closing);
       // Аккаунта больше нет: выходим. logout глотает ошибки сети/401.
       await logout();
     } catch (e) {
       const err = e as Partial<AppError>;
-      setError(err.message || t('common:error'));
       setLoading(false);
+      if (!closing && err.code === ErrorCode.LAST_ADMIN_CANNOT_DELETE) {
+        // Пароль уже проверен сервером (проверка идёт до этой ошибки).
+        // Просим отдельное подтверждение и только потом шлём closeCompany: true.
+        setStep('closeCompany');
+        return;
+      }
+      setError(err.message || t('common:error'));
     }
+  }
+
+  function backToPassword() {
+    if (loading) return;
+    setStep('password');
+    setError(null);
   }
 
   return (
@@ -77,36 +95,64 @@ export function DeleteAccountModal({ visible, onClose }: Props) {
       >
         <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={close}>
           <TouchableOpacity activeOpacity={1} style={styles.modal}>
-            <View style={styles.iconRow}>
-              <View style={styles.iconBg}>
-                <Trash2 size={24} color={colors.danger} strokeWidth={iconStrokeWidth} />
-              </View>
-            </View>
+            {step === 'password' ? (
+              <>
+                <View style={styles.iconRow}>
+                  <View style={styles.iconBg}>
+                    <Trash2 size={24} color={colors.danger} strokeWidth={iconStrokeWidth} />
+                  </View>
+                </View>
 
-            <Text style={styles.title}>{t('profile:deleteAccount.title')}</Text>
-            <Text style={styles.warning}>{t('profile:deleteAccount.warning')}</Text>
-            <Text style={styles.details}>{t('profile:deleteAccount.details')}</Text>
+                <Text style={styles.title}>{t('profile:deleteAccount.title')}</Text>
+                <Text style={styles.warning}>{t('profile:deleteAccount.warning')}</Text>
+                <Text style={styles.details}>{t('profile:deleteAccount.details')}</Text>
 
-            <Input
-              label={t('profile:deleteAccount.passwordLabel')}
-              placeholder={t('profile:deleteAccount.passwordPlaceholder')}
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              autoCapitalize="none"
-              autoCorrect={false}
-              editable={!loading}
-              error={error ?? undefined}
-            />
+                <Input
+                  label={t('profile:deleteAccount.passwordLabel')}
+                  placeholder={t('profile:deleteAccount.passwordPlaceholder')}
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  editable={!loading}
+                  error={error ?? undefined}
+                />
 
-            <View style={styles.buttons}>
-              <Button variant="outline" size="full" onPress={close} disabled={loading}>
-                {t('common:cancel')}
-              </Button>
-              <Button variant="danger" size="full" onPress={confirm} loading={loading}>
-                {t('profile:deleteAccount.confirm')}
-              </Button>
-            </View>
+                <View style={styles.buttons}>
+                  <Button variant="outline" size="full" onPress={close} disabled={loading}>
+                    {t('common:cancel')}
+                  </Button>
+                  <Button variant="danger" size="full" onPress={confirm} loading={loading}>
+                    {t('profile:deleteAccount.confirm')}
+                  </Button>
+                </View>
+              </>
+            ) : (
+              <>
+                <View style={styles.iconRow}>
+                  <View style={styles.iconBg}>
+                    <TriangleAlert size={24} color={colors.danger} strokeWidth={iconStrokeWidth} />
+                  </View>
+                </View>
+
+                <Text style={styles.title}>{t('profile:deleteAccount.closeTitle')}</Text>
+                {/* Жирное предупреждение: удаление закрывает всю компанию */}
+                <Text style={styles.closeWarning}>{t('profile:deleteAccount.closeWarning')}</Text>
+                <Text style={styles.details}>{t('profile:deleteAccount.closeDetails')}</Text>
+
+                {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+                <View style={styles.buttons}>
+                  <Button variant="outline" size="full" onPress={backToPassword} disabled={loading}>
+                    {t('profile:deleteAccount.back')}
+                  </Button>
+                  <Button variant="danger" size="full" onPress={confirm} loading={loading}>
+                    {t('profile:deleteAccount.closeConfirm')}
+                  </Button>
+                </View>
+              </>
+            )}
           </TouchableOpacity>
         </TouchableOpacity>
       </KeyboardAvoidingView>
@@ -147,6 +193,18 @@ const styles = StyleSheet.create({
     ...typography.sm,
     fontFamily: fontFamily.semiBold,
     color: colors.dangerText,
+    textAlign: 'center',
+  },
+  closeWarning: {
+    ...typography.base,
+    fontFamily: fontFamily.bold,
+    color: colors.dangerText,
+    textAlign: 'center',
+  },
+  errorText: {
+    ...typography.sm,
+    fontFamily: fontFamily.regular,
+    color: colors.danger,
     textAlign: 'center',
   },
   details: {

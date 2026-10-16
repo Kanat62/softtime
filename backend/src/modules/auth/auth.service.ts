@@ -5,6 +5,7 @@ import {
   UnauthorizedException,
   HttpException,
   HttpStatus,
+  ForbiddenException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -137,6 +138,12 @@ export class AuthService {
         code: ErrorCode.COMPANY_NOT_FOUND,
       });
     }
+    if (company.status === CompanyStatus.CLOSED) {
+      throw new ForbiddenException({
+        message: 'Компания закрыта',
+        code: ErrorCode.COMPANY_CLOSED,
+      });
+    }
 
     const existingUser = await this.prisma.user.findFirst({
       where: { email: dto.email, deletedAt: null },
@@ -213,6 +220,22 @@ export class AuthService {
     }
 
     await this.redis.del(bruteKey);
+
+    // Компания закрыта единственным админом: входить больше некуда.
+    // Проверяем после пароля — состояние компании видит только владелец
+    // аккаунта, а не любой, кто перебирает email.
+    if (user!.companyId) {
+      const company = await this.prisma.company.findUnique({
+        where: { id: user!.companyId },
+        select: { status: true },
+      });
+      if (company?.status === CompanyStatus.CLOSED) {
+        throw new ForbiddenException({
+          message: 'Компания закрыта',
+          code: ErrorCode.COMPANY_CLOSED,
+        });
+      }
+    }
 
     const tokens = await this.generateTokens(
       user!.id,

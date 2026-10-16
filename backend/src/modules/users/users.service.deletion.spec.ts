@@ -27,7 +27,9 @@ describe('UsersService — удаление аккаунта (анонимиза
   const admin = { ...worker, id: 'u-admin', role: 'ADMIN', fullName: 'Анна Админ', email: 'a@test.io' };
 
   const mockPrisma = {
-    user: { findFirst: jest.fn(), count: jest.fn(), updateMany: jest.fn() },
+    user: { findFirst: jest.fn(), findMany: jest.fn(), count: jest.fn(), updateMany: jest.fn() },
+    company: { update: jest.fn() },
+    subscription: { updateMany: jest.fn() },
     deviceToken: { deleteMany: jest.fn() },
     newsRead: { deleteMany: jest.fn() },
     // Эти модели удаление НЕ должно трогать — следим, что вызовов нет.
@@ -47,6 +49,9 @@ describe('UsersService — удаление аккаунта (анонимиза
     mockPrisma.deviceToken.deleteMany.mockResolvedValue({ count: 1 });
     mockPrisma.newsRead.deleteMany.mockResolvedValue({ count: 2 });
     mockPrisma.$executeRaw.mockResolvedValue(1);
+    mockPrisma.user.findMany.mockResolvedValue([]);
+    mockPrisma.company.update.mockResolvedValue({});
+    mockPrisma.subscription.updateMany.mockResolvedValue({ count: 1 });
     mockRedis.keys.mockResolvedValue(['refresh:u-worker:t1', 'refresh:u-worker:t2']);
 
     const module: TestingModule = await Test.createTestingModule({
@@ -174,6 +179,17 @@ describe('UsersService — удаление аккаунта (анонимиза
       });
       expect(mockPrisma.$transaction).not.toHaveBeenCalled();
       expect(mockRedis.set).not.toHaveBeenCalled();
+      expect(mockPrisma.company.update).not.toHaveBeenCalled();
+    });
+
+    it('closeCompany: false явно — то же самое, 409', async () => {
+      mockPrisma.user.findFirst.mockResolvedValue(admin);
+      mockPrisma.user.count.mockResolvedValue(0);
+
+      await expect(service.deleteMyAccount('u-admin', PASSWORD, false)).rejects.toMatchObject({
+        response: { code: ErrorCode.LAST_ADMIN_CANNOT_DELETE },
+      });
+      expect(mockPrisma.company.update).not.toHaveBeenCalled();
     });
 
     it('считает только других активных админов этой компании', async () => {
@@ -206,6 +222,127 @@ describe('UsersService — удаление аккаунта (анонимиза
       await service.deleteMyAccount('u-worker', PASSWORD);
 
       expect(mockPrisma.user.count).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('закрытие компании единственным админом (closeCompany: true)', () => {
+    const colleagues = [{ id: 'u-w1' }, { id: 'u-w2' }];
+
+    beforeEach(() => {
+      mockPrisma.user.findFirst.mockResolvedValue(admin);
+      mockPrisma.user.count.mockResolvedValue(0); // других админов нет
+      mockPrisma.user.findMany.mockResolvedValue(colleagues);
+      mockRedis.keys.mockImplementation(async (pattern: string) => [pattern.replace('*', 't1')]);
+    });
+
+    it('компания переводится в CLOSED, подписка отменяется — в той же транзакции', async () => {
+      await service.deleteMyAccount('u-admin', PASSWORD, true);
+
+      expect(mockPrisma.company.update).toHaveBeenCalledWith({
+        where: { id: 'co-1' },
+        data: { status: 'CLOSED' },
+      });
+      expect(mockPrisma.subscription.updateMany).toHaveBeenCalledWith({
+        where: { companyId: 'co-1' },
+        data: { status: 'CANCELLED' },
+      });
+      expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
+    });
+
+    it('сам админ обезличивается тем же способом, что в S2', async () => {
+      await service.deleteMyAccount('u-admin', PASSWORD, true);
+
+      const { data } = mockPrisma.user.updateMany.mock.calls[0][0];
+      expect(data.fullName).toBe(DELETED_USER_NAME);
+      expect(data.email).toBe('deleted+u-admin@deleted.invalid');
+      expect(data.status).toBe(UserStatus.DELETED);
+      expect(await bcrypt.compare(PASSWORD, data.passwordHash)).toBe(false);
+    });
+
+    it('сотрудников не удаляет и не переписывает: доступ отсекается статусом компании', async () => {
+      await service.deleteMyAccount('u-admin', PASSWORD, true);
+
+      // Единственный updateMany по User — на самого админа
+      expect(mockPrisma.user.updateMany).toHaveBeenCalledTimes(1);
+      expect(mockPrisma.user.updateMany.mock.calls[0][0].where.id).toBe('u-admin');
+    });
+
+    it('посещаемость, заявки и расписание не удаляются', async () => {
+      await service.deleteMyAccount('u-admin', PASSWORD, true);
+
+      expect(mockPrisma.attendance.deleteMany).not.toHaveBeenCalled();
+      expect(mockPrisma.absenceRequest.deleteMany).not.toHaveBeenCalled();
+      expect(mockPrisma.employeeSchedule.deleteMany).not.toHaveBeenCalled();
+    });
+
+    it('токены устройств сотрудников чистятся, refresh-токены всех гасятся', async () => {
+      await service.deleteMyAccount('u-admin', PASSWORD, true);
+
+      expect(mockPrisma.deviceToken.deleteMany).toHaveBeenCalledWith({
+        where: { userId: { in: ['u-w1', 'u-w2'] } },
+      });
+      const revoked = mockRedis.del.mock.calls.flat();
+      expect(revoked).toEqual(
+        expect.arrayContaining(['refresh:u-admin:t1', 'refresh:u-w1:t1', 'refresh:u-w2:t1']),
+      );
+    });
+
+    it('ставит маркер закрытой компании для живых access-токенов', async () => {
+      await service.deleteMyAccount('u-admin', PASSWORD, true);
+
+      expect(mockRedis.set).toHaveBeenCalledWith('company-closed:co-1', '1', expect.any(Number));
+      expect(mockRedis.set).toHaveBeenCalledWith('deleted:u-admin', '1', expect.any(Number));
+    });
+
+    it('журнал: ACCOUNT_DELETED_SELF и COMPANY_CLOSED без ФИО', async () => {
+      await service.deleteMyAccount('u-admin', PASSWORD, true);
+
+      const entries = mockAudit.log.mock.calls.map((c) => c[0]);
+      expect(entries.map((e) => e.action)).toEqual(['ACCOUNT_DELETED_SELF', 'COMPANY_CLOSED']);
+      expect(entries[1]).toMatchObject({
+        entityType: 'Company',
+        entityId: 'co-1',
+        meta: { closedBy: 'u-admin', affectedUsers: 2 },
+      });
+      expect(JSON.stringify(entries)).not.toContain('Анна');
+    });
+
+    it('неверный пароль — компания НЕ закрывается', async () => {
+      await expect(service.deleteMyAccount('u-admin', 'wrong', true)).rejects.toMatchObject({
+        response: { code: ErrorCode.CURRENT_PASSWORD_INVALID },
+      });
+      expect(mockPrisma.company.update).not.toHaveBeenCalled();
+      expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+    });
+
+    it('если есть второй админ, флаг игнорируется: компания остаётся открытой', async () => {
+      mockPrisma.user.count.mockResolvedValue(1);
+
+      await service.deleteMyAccount('u-admin', PASSWORD, true);
+
+      expect(mockPrisma.user.updateMany).toHaveBeenCalledTimes(1);
+      expect(mockPrisma.company.update).not.toHaveBeenCalled();
+      expect(mockPrisma.subscription.updateMany).not.toHaveBeenCalled();
+      expect(mockRedis.set).not.toHaveBeenCalledWith('company-closed:co-1', '1', expect.any(Number));
+      expect(mockAudit.log.mock.calls.map((c) => c[0].action)).toEqual(['ACCOUNT_DELETED_SELF']);
+    });
+
+    it('для WORKER флаг ничего не закрывает', async () => {
+      mockPrisma.user.findFirst.mockResolvedValue(worker);
+
+      await service.deleteMyAccount('u-worker', PASSWORD, true);
+
+      expect(mockPrisma.company.update).not.toHaveBeenCalled();
+      expect(mockPrisma.user.count).not.toHaveBeenCalled();
+    });
+
+    it('повтор (параллельный запрос успел раньше) — без маркеров и журнала', async () => {
+      mockPrisma.user.updateMany.mockResolvedValue({ count: 0 });
+
+      await service.deleteMyAccount('u-admin', PASSWORD, true);
+
+      expect(mockRedis.set).not.toHaveBeenCalled();
+      expect(mockAudit.log).not.toHaveBeenCalled();
     });
   });
 

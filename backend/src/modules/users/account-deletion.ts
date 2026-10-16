@@ -20,3 +20,12 @@ export const deletedEmail = (userId: string): string => `deleted+${userId}@delet
  */
 export const deletedMarkerKey = (userId: string): string => `deleted:${userId}`;
 export const DELETED_MARKER_TTL_SECONDS = 20 * 60;
+
+/**
+ * Маркер «компания закрыта» (закрыта единственным админом при удалении
+ * аккаунта). Как и deletedMarkerKey, нужен для живых access-токенов
+ * сотрудников: JWT не ходит в БД, а закрытие компании должно действовать сразу.
+ * После 20 минут все такие токены истекли, дальше работает статус компании в БД
+ * (логин и регистрация проверяют CompanyStatus.CLOSED).
+ */
+export const companyClosedMarkerKey = (companyId: string): string => `company-closed:${companyId}`;

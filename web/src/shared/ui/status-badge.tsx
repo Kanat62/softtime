@@ -28,6 +28,7 @@ const STATUS_MAP: Record<string, { tone: Tone; labelKey: string }> = {
   LATE: { tone: "warning", labelKey: "enums:dayStatus.LATE" },
   WARNING: { tone: "warning", labelKey: "enums:userStatus.WARNING" },
   SUSPENDED: { tone: "danger", labelKey: "enums:companyStatus.SUSPENDED" },
+  CLOSED: { tone: "danger", labelKey: "enums:companyStatus.CLOSED" },
   EXPIRED: { tone: "danger", labelKey: "enums:subStatus.EXPIRED" },
   CANCELLED: { tone: "danger", labelKey: "enums:subStatus.CANCELLED" },
   FAILED: { tone: "danger", labelKey: "enums:paymentStatus.FAILED" },

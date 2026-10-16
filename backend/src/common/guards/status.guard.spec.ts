@@ -30,6 +30,23 @@ describe('StatusGuard', () => {
     });
   });
 
+  it('живой access-токен сотрудника закрытой компании: 401 COMPANY_CLOSED', async () => {
+    redis.get.mockImplementation(async (key: string) => (key === 'company-closed:co-1' ? '1' : null));
+    await expect(
+      guard.canActivate(ctx({ userId: 'u1', companyId: 'co-1', status: 'ACTIVE' })),
+    ).rejects.toMatchObject({
+      constructor: UnauthorizedException,
+      response: { code: ErrorCode.COMPANY_CLOSED },
+    });
+  });
+
+  it('сотрудник другой компании не затронут', async () => {
+    redis.get.mockImplementation(async (key: string) => (key === 'company-closed:co-1' ? '1' : null));
+    await expect(
+      guard.canActivate(ctx({ userId: 'u2', companyId: 'co-2', status: 'ACTIVE' })),
+    ).resolves.toBe(true);
+  });
+
   it('статус DELETED в payload тоже блокируется', async () => {
     await expect(guard.canActivate(ctx({ userId: 'u1', status: 'DELETED' }))).rejects.toMatchObject({
       constructor: ForbiddenException,
