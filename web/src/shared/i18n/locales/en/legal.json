@@ -38,11 +38,104 @@
     "contactTitle": "Contact",
     "sections": [
       {
-        "heading": "Privacy Policy",
+        "heading": "About this policy",
         "body": [
-          "PRIVACY POLICY TEXT IS MISSING. Paste the policy sections into the privacy.sections array in this file (ru/legal.json and en/legal.json). Use {{email}} for the support address — it is substituted from VITE_SUPPORT_EMAIL. Do not publish the page with this text."
+          "SoftTime helps businesses record when their employees arrive at and leave work by scanning a QR code. This policy explains what personal information SoftTime collects, why, who sees it, and how you can control it."
+        ]
+      },
+      {
+        "heading": "1. Who we are",
+        "body": [
+          "SoftTime is operated by Emilbek Zholdoshkan, Toronto, Ontario, Canada (“SoftTime”, “we”). Privacy questions: {{email}}."
+        ]
+      },
+      {
+        "heading": "2. Two roles: your employer and us",
+        "body": [
+          "SoftTime is a business tool. The company that creates an account (the “Company”) decides which employees to add and what attendance rules apply. For employee data, the Company is responsible for having a lawful reason to collect it, and SoftTime processes it on the Company's behalf to run the service. For the Company's administrators and for data we need to run our own business (billing, security, support), SoftTime is responsible directly.",
+          "If you are an employee and have a question about your attendance records, start with your employer. You can also write to us and we will help route the request."
+        ]
+      },
+      {
+        "heading": "3. Information we collect",
+        "body": [
+          "We do not knowingly collect biometric data, and we do not sell personal information. We collect:"
         ],
-        "items": []
+        "items": [
+          "Account details: full name, email address, role (administrator, employee), preferred language, and a password stored only in hashed form.",
+          "Company details: company name, business address, and tax or registration details the Company chooses to enter.",
+          "Employee details entered by the Company: hire date, work schedule, absence requests (type such as vacation or sick leave, with optional comments) and administrator notes. A sick-leave request can reveal health-related information, so please share only what is necessary.",
+          "Attendance records: the time and result of each QR check-in and check-out, shift, lateness or early departure, and notes made by administrators.",
+          "Location: the app does not collect your GPS location. To confirm you are at the workplace, the server compares your network address (IP) at check-in with the office networks the Company has set up.",
+          "Device and technical data: IP address (used to protect sign-in and to check the office network; sign-in attempt records are kept for about 15 minutes), app build and device information sent to our update service when the app starts, audit logs of administrator actions, and, once notifications are enabled, a push-notification token and device platform.",
+          "Camera: the app uses the camera only to scan the QR code. Images are not saved or uploaded.",
+          "AI analytics (administrators): SoftTime does not currently send personal data to any AI service.",
+          "Billing: payment receipts and the contact details needed to invoice the Company. We do not collect or store payment card numbers in the app."
+        ]
+      },
+      {
+        "heading": "4. How we use information",
+        "body": [
+          "We do not use attendance data for advertising."
+        ],
+        "items": [
+          "To provide the service: sign-in, QR check-in, attendance history, schedules, reports and exports for the Company.",
+          "To send notifications (for example shift reminders, missed check-in alerts, approvals), in your chosen language.",
+          "To keep the service secure, prevent abuse, fix errors and meet legal obligations.",
+          "To manage billing and communicate with the Company about the account."
+        ]
+      },
+      {
+        "heading": "5. Who we share it with",
+        "items": [
+          "The Company you work for, including its administrators.",
+          "Service providers that help us run SoftTime, under written terms that limit their use of the data: hosting, database and cache (Railway), web hosting (Vercel), app update delivery (Expo/EAS) and, once notifications are enabled, push delivery (Google Firebase Cloud Messaging).",
+          "Authorities or other parties when the law requires it, or to protect rights, safety and security.",
+          "A successor if SoftTime is sold or merged, with notice to you."
+        ]
+      },
+      {
+        "heading": "6. Where information is stored",
+        "body": [
+          "Our providers may store and process data in Canada, the United States and other countries. Laws there may differ from Canadian law and, in some cases, allow courts or authorities to access the data. We take steps to keep it protected wherever it is processed."
+        ]
+      },
+      {
+        "heading": "7. How long we keep it",
+        "body": [
+          "We keep account and attendance data while the Company's account is active, because the Company needs the history. After an account is deleted we remove or anonymize personal data within 90 days, except for records we must keep for legal, tax or security reasons. Backups are overwritten within 90 days."
+        ]
+      },
+      {
+        "heading": "8. Your choices and rights",
+        "body": [
+          "You can ask to see the personal information we hold about you, to correct it, to withdraw consent where we rely on it, and to have it deleted, subject to legal limits and the Company's own record-keeping duties. Contact {{email}}; we aim to reply within 30 days. If you are unhappy with our answer, you can complain to the Office of the Privacy Commissioner of Canada.",
+          "Deleting your account. In the mobile app, open Profile and choose “Delete account”. You can also email us from your registered address. Deleting an employee account removes your sign-in and personal profile; attendance entries the Company needs for payroll or legal purposes may be kept in anonymized form. If you are the only administrator of a Company, deleting your account closes the Company and disconnects its employees."
+        ]
+      },
+      {
+        "heading": "9. Security",
+        "body": [
+          "Data is encrypted in transit (HTTPS). Passwords are hashed. Access is limited by role, and we log and review sensitive actions. No system is completely secure, so please use a strong password and tell us promptly if you suspect misuse."
+        ]
+      },
+      {
+        "heading": "10. Children",
+        "body": [
+          "SoftTime is for workplaces and is not directed to children. We do not knowingly collect information from anyone under 16."
+        ]
+      },
+      {
+        "heading": "11. Changes",
+        "body": [
+          "We will post updates here and change the date above. For material changes we will notify you in the app or by email."
+        ]
+      },
+      {
+        "heading": "12. Contact",
+        "body": [
+          "Emilbek Zholdoshkan, Toronto, Ontario, Canada · {{email}}"
+        ]
       }
     ]
   }
