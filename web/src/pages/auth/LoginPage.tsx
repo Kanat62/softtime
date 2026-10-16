@@ -9,6 +9,7 @@ import { loginSchema, type LoginDto } from "@softtime/shared";
 import { isNormalizedError } from "@/shared/api/error";
 import { useAuth } from "@/entities/session";
 import { Button } from "@/shared/ui/button";
+import { PublicFooter } from "@/shared/ui/public-footer";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 
@@ -198,6 +199,7 @@ export function LoginPage() {
           </p>
         </div>
       </main>
+      <PublicFooter />
     </div>
   );
 }

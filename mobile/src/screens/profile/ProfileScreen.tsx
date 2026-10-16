@@ -46,6 +46,7 @@ import { env } from '@/shared/config/env';
 import { useNavigation } from '@react-navigation/native';
 import { OfflineBanner } from '@/shared/ui';
 import { DeleteAccountModal } from '@/widgets/delete-account';
+import { openPrivacyPolicy, privacyPolicyUrl } from '@/shared/lib';
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
@@ -322,6 +323,17 @@ export function ProfileScreen() {
             onPress={() => setShowLanguageModal(true)}
             showChevron
           />
+          {privacyPolicyUrl() && (
+            <>
+              <View style={s.divider} />
+              <ActionRow
+                icon={<ShieldCheck size={iconSize.md} color={colors.textPrimary} strokeWidth={iconStrokeWidth} />}
+                label={t('common:privacyPolicy')}
+                onPress={() => void openPrivacyPolicy()}
+                showChevron
+              />
+            </>
+          )}
           <View style={s.divider} />
           <ActionRow
             icon={<Trash2 size={iconSize.md} color={colors.danger} strokeWidth={iconStrokeWidth} />}

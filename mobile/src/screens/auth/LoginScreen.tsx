@@ -20,7 +20,7 @@ import {
   space,
   typography,
 } from '@/shared/config/theme';
-import { Button, Input } from '@/shared/ui';
+import { Button, Input, PrivacyPolicyLink } from '@/shared/ui';
 import { useAuthNavigation } from '@/shared/navigation/hooks';
 import { useLogin } from '@/features/auth/login/model/useLogin';
 
@@ -142,6 +142,8 @@ export function LoginScreen() {
               <Text style={styles.footerLink}>{t('common:register')}</Text>
             </TouchableOpacity>
           </View>
+
+          <PrivacyPolicyLink />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

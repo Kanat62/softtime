@@ -10,7 +10,8 @@
       "supportsTablet": false,
       "bundleIdentifier": "com.softtime.mobile",
       "infoPlist": {
-        "NSCameraUsageDescription": "Allow $(PRODUCT_NAME) to access your camera"
+        "NSCameraUsageDescription": "SoftTime uses the camera only to scan your company's QR code to record your arrival and departure. Photos are not saved.",
+        "CFBundleAllowMixedLocalizations": true
       }
     },
     "android": {
@@ -50,6 +51,10 @@
         "projectId": "2eab1e92-daac-4edb-96a1-7a9c0966d375"
       }
     },
-    "owner": "emilbek"
+    "owner": "emilbek",
+    "locales": {
+      "en": "./locales/en.json",
+      "ru": "./locales/ru.json"
+    }
   }
 }

@@ -31,7 +31,7 @@ import {
   space,
   typography,
 } from '@/shared/config/theme';
-import { Button, Input } from '@/shared/ui';
+import { Button, Input, PrivacyPolicyLink } from '@/shared/ui';
 import { useAuthNavigation } from '@/shared/navigation/hooks';
 import { useRegisterAdmin } from '@/features/auth/register-admin/model/useRegisterAdmin';
 
@@ -208,6 +208,8 @@ export function RegisterAdminScreen() {
             <Button variant="primary" size="full" loading={isLoading} onPress={onSubmit}>
               {t('auth:registerAdmin.submit')}
             </Button>
+
+            <PrivacyPolicyLink variant="notice" />
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

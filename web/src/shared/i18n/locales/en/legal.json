@@ -30,5 +30,20 @@
     "contactTitle": "Can't sign in, or need help?",
     "contact": "Write to us from the email address you registered with and we will delete the account manually:",
     "language": "Language"
+  },
+  "privacy": {
+    "title": "Privacy Policy",
+    "lastUpdatedLabel": "Last updated",
+    "language": "Language",
+    "contactTitle": "Contact",
+    "sections": [
+      {
+        "heading": "Privacy Policy",
+        "body": [
+          "PRIVACY POLICY TEXT IS MISSING. Paste the policy sections into the privacy.sections array in this file (ru/legal.json and en/legal.json). Use {{email}} for the support address — it is substituted from VITE_SUPPORT_EMAIL. Do not publish the page with this text."
+        ],
+        "items": []
+      }
+    ]
   }
 }

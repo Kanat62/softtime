@@ -27,7 +27,7 @@ import {
   space,
   typography,
 } from '@/shared/config/theme';
-import { Button, Input } from '@/shared/ui';
+import { Button, Input, PrivacyPolicyLink } from '@/shared/ui';
 import { useAuthNavigation } from '@/shared/navigation/hooks';
 import { useRegisterWorker } from '@/features/auth/register-worker/model/useRegisterWorker';
 
@@ -195,6 +195,8 @@ export function RegisterWorkerScreen() {
             <Button variant="primary" size="full" loading={isLoading} onPress={onSubmit}>
               {t('common:register')}
             </Button>
+
+            <PrivacyPolicyLink variant="notice" />
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

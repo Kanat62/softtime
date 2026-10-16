@@ -63,5 +63,6 @@
   "peopleShort_one": "{{count}} чел.",
   "peopleShort_few": "{{count}} чел.",
   "peopleShort_many": "{{count}} чел.",
-  "peopleShort_other": "{{count}} чел."
+  "peopleShort_other": "{{count}} чел.",
+  "privacyPolicy": "Политика конфиденциальности"
 }

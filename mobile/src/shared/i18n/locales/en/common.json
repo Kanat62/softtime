@@ -47,5 +47,6 @@
   },
   "offlineStale": "This data may be out of date",
   "otpCell": "Character {{index}} of {{total}}",
-  "notificationChannel": "General notifications"
+  "notificationChannel": "General notifications",
+  "privacyPolicy": "Privacy Policy"
 }

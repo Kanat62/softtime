@@ -47,5 +47,6 @@
   },
   "offlineStale": "Данные могли устареть",
   "otpCell": "Символ {{index}} из {{total}}",
-  "notificationChannel": "Основные уведомления"
+  "notificationChannel": "Основные уведомления",
+  "privacyPolicy": "Политика конфиденциальности"
 }

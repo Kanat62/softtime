@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as DeleteAccountRouteImport } from './routes/delete-account'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ProviderRouteImport } from './routes/provider'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as AdminAttendanceRouteImport } from './routes/admin.attendance'
@@ -52,6 +53,11 @@ const DeleteAccountRoute = DeleteAccountRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProviderRoute = ProviderRouteImport.update({
@@ -160,6 +166,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteWithChildren
   '/delete-account': typeof DeleteAccountRoute
   '/login': typeof LoginRoute
+  '/privacy': typeof PrivacyRoute
   '/provider': typeof ProviderRouteWithChildren
   '/register': typeof RegisterRoute
   '/admin/attendance': typeof AdminAttendanceRoute
@@ -186,6 +193,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRouteWithChildren
   '/delete-account': typeof DeleteAccountRoute
   '/login': typeof LoginRoute
+  '/privacy': typeof PrivacyRoute
   '/provider': typeof ProviderRouteWithChildren
   '/register': typeof RegisterRoute
   '/admin/attendance': typeof AdminAttendanceRoute
@@ -212,6 +220,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteWithChildren
   '/delete-account': typeof DeleteAccountRoute
   '/login': typeof LoginRoute
+  '/privacy': typeof PrivacyRoute
   '/provider': typeof ProviderRouteWithChildren
   '/register': typeof RegisterRoute
   '/admin/attendance': typeof AdminAttendanceRoute
@@ -240,6 +249,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/delete-account'
     | '/login'
+    | '/privacy'
     | '/provider'
     | '/register'
     | '/admin/attendance'
@@ -266,6 +276,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/delete-account'
     | '/login'
+    | '/privacy'
     | '/provider'
     | '/register'
     | '/admin/attendance'
@@ -291,6 +302,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/delete-account'
     | '/login'
+    | '/privacy'
     | '/provider'
     | '/register'
     | '/admin/attendance'
@@ -318,6 +330,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRouteWithChildren
   DeleteAccountRoute: typeof DeleteAccountRoute
   LoginRoute: typeof LoginRoute
+  PrivacyRoute: typeof PrivacyRoute
   ProviderRoute: typeof ProviderRouteWithChildren
   RegisterRoute: typeof RegisterRoute
 }
@@ -350,6 +363,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/provider': {
@@ -573,6 +593,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRouteWithChildren,
   DeleteAccountRoute: DeleteAccountRoute,
   LoginRoute: LoginRoute,
+  PrivacyRoute: PrivacyRoute,
   ProviderRoute: ProviderRouteWithChildren,
   RegisterRoute: RegisterRoute,
 }

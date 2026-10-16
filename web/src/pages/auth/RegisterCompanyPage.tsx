@@ -20,6 +20,7 @@ import { registerCompanySchema, type RegisterCompanyDto } from "@softtime/shared
 import { currentLanguage } from "@/shared/i18n";
 import { useAuth } from "@/entities/session";
 import { Button } from "@/shared/ui/button";
+import { PublicFooter } from "@/shared/ui/public-footer";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 
@@ -123,6 +124,7 @@ export function RegisterCompanyPage() {
             />
           )}
         </div>
+        <PublicFooter className="w-full border-0 pb-0" />
       </main>
     </div>
   );
@@ -279,6 +281,17 @@ function RegisterForm({
             t("auth:register.submit")
           )}
         </Button>
+
+        {/* Уведомление о политике. Чекбокса нет: Terms of Service ещё не готовы. */}
+        <p className="mt-3 text-center text-xs leading-relaxed text-muted-foreground">
+          {t("auth:register.privacyNotice")}{" "}
+          <Link
+            to="/privacy"
+            className="font-semibold text-primary transition-colors hover:text-primary/80"
+          >
+            {t("auth:register.privacyNoticeLink")}
+          </Link>
+        </p>
       </form>
 
       <p className="mt-6 text-center text-base text-muted-foreground">
