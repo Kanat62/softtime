@@ -1,4 +1,5 @@
 {
+  "_comment": "Subscription and payment screens are disabled in the mobile app (App Store / Google Play: no prices or payments in the mobile app). Keys are kept on purpose and are currently unused. Do not delete without approval.",
   "title": "Subscription",
   "loadFailed": "Could not load the subscription",
   "planName": "SoftTime Pro plan",

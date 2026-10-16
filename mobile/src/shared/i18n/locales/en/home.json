@@ -20,7 +20,7 @@
     "checkIn": "Check in",
     "checkOut": "Check out",
     "noSchedule": "Your administrator has not set up a schedule yet",
-    "suspended": "Subscription unpaid"
+    "suspended": "Company access is suspended"
   },
   "schedule": {
     "title": "My schedule",

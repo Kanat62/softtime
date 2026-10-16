@@ -31,10 +31,8 @@ export { RequestsScreen } from './requests/RequestsScreen';
 // Management (Admin)
 export { ManagementScreen } from './management/ManagementScreen';
 
-// Subscription (Admin)
-export { SubscriptionScreen } from './subscription/SubscriptionScreen';
-export { PaymentScreen } from './subscription/PaymentScreen';
-export { PaymentSuccessScreen } from './subscription/PaymentSuccessScreen';
+// Subscription screens (screens/subscription/*) отключены: в мобильном
+// приложении нет цен и оплаты. Файлы не удалены, но нигде не импортируются.
 
 // Profile
 export { ProfileScreen } from './profile/ProfileScreen';

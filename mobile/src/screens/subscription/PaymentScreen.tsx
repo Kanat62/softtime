@@ -1,3 +1,4 @@
+// Экран отключён от навигации (S1): маршрута больше нет в AdminProfileStackParamList.
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -43,7 +44,7 @@ export function PaymentScreen() {
         { text: t('common:cancel'), style: 'cancel' },
         {
           text: t('subscription:payment.mockContinue'),
-          onPress: () => navigation.navigate('PaymentSuccess'),
+          onPress: () => (navigation as any).navigate('PaymentSuccess'),
         },
       ],
     );

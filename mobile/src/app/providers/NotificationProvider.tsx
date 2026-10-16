@@ -56,7 +56,7 @@ function navigateFromNotification(data: PushData, userRole: UserRole | null) {
 
     case 'subscription_expiring':
     case 'company_suspended':
-      // Admin → Subscription screen
+      // Admin → главный экран (экранов подписки в приложении нет)
       nav.navigate('AdminTabs' as never);
       break;
 

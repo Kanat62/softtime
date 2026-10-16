@@ -1,3 +1,4 @@
+// Экран отключён от навигации (S1): маршрута больше нет в AdminProfileStackParamList.
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -221,7 +222,7 @@ export function SubscriptionScreen() {
 
         {/* ── CTA (non-active) ── */}
         {needsPayment && (
-          <Button variant="primary" size="full" onPress={() => navigation.navigate('Payment')}>
+          <Button variant="primary" size="full" onPress={() => (navigation as any).navigate('Payment')}>
             {t('subscription:pay')}
           </Button>
         )}

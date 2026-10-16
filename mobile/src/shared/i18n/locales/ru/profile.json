@@ -1,4 +1,5 @@
 {
+  "_comment_subscriptionAction": "Ключ subscriptionAction не используется: пункт подписки убран из Профиля (в мобильном нет оплаты).",
   "title": "Профиль",
   "changePhoto": "Сменить фото",
   "email": "Email",

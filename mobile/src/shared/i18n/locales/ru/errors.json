@@ -12,7 +12,7 @@
     "emailTaken": "Email уже используется. Войдите или используйте другой email."
   },
   "checkIn": {
-    "subscriptionSuspended": "Подписка компании приостановлена",
+    "subscriptionSuspended": "Доступ компании приостановлен",
     "outsideOfficeNetwork": "Вы находитесь вне офисной сети",
     "nonWorkingDay": "Сегодня нерабочий день по вашему графику",
     "invalidQr": "QR-код недействителен или устарел",

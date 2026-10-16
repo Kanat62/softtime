@@ -47,7 +47,6 @@ export const linking: LinkingOptions<RootParamList> = {
           Profile: {
             screens: {
               Management: 'management',
-              Subscription: 'subscription',
             },
           },
         },

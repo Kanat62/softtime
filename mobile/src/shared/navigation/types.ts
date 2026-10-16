@@ -95,9 +95,6 @@ export type AdminHomeStackParamList = {
 export type AdminProfileStackParamList = {
   Profile: undefined;
   Management: undefined;
-  Subscription: undefined;
-  Payment: undefined;
-  PaymentSuccess: undefined;
 };
 
 // ─── Admin Tabs ──────────────────────────────────────────────────────────────

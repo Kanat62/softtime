@@ -1,4 +1,5 @@
 {
+  "_comment_subscriptionAction": "The subscriptionAction key is unused: the subscription item was removed from Profile (no payments in the mobile app).",
   "title": "Profile",
   "changePhoto": "Change photo",
   "email": "Email",

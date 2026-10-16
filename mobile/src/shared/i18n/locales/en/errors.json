@@ -12,7 +12,7 @@
     "emailTaken": "This email is already in use. Log in or use another email."
   },
   "checkIn": {
-    "subscriptionSuspended": "The company subscription is suspended",
+    "subscriptionSuspended": "Company access is suspended",
     "outsideOfficeNetwork": "You are outside the office network",
     "nonWorkingDay": "Today is a non-working day on your schedule",
     "invalidQr": "The QR code is invalid or expired",

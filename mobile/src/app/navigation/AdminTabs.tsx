@@ -25,9 +25,6 @@ import { NewsDetailScreen } from '@/screens/news/NewsDetailScreen';
 import { RequestsScreen } from '@/screens/requests/RequestsScreen';
 import { ProfileScreen } from '@/screens/profile/ProfileScreen';
 import { ManagementScreen } from '@/screens/management/ManagementScreen';
-import { SubscriptionScreen } from '@/screens/subscription/SubscriptionScreen';
-import { PaymentScreen } from '@/screens/subscription/PaymentScreen';
-import { PaymentSuccessScreen } from '@/screens/subscription/PaymentSuccessScreen';
 
 // ─── Nested Stacks ────────────────────────────────────────────────────────────
 
@@ -68,7 +65,10 @@ function AdminRequestsStack() {
   );
 }
 
-// Profile tab — Management, Subscription, Payment accessible from here
+// Profile tab — Management accessible from here.
+// Экраны подписки/оплаты (screens/subscription/*) отключены от навигации:
+// в мобильном приложении не должно быть цен и оплаты (требование App Store /
+// Google Play). Файлы оставлены, подписка управляется в веб-панели.
 const ProfileStack = createNativeStackNavigator<AdminProfileStackParamList>();
 
 function AdminProfileStack() {
@@ -76,9 +76,6 @@ function AdminProfileStack() {
     <ProfileStack.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
       <ProfileStack.Screen name="Profile" component={ProfileScreen} />
       <ProfileStack.Screen name="Management" component={ManagementScreen} />
-      <ProfileStack.Screen name="Subscription" component={SubscriptionScreen} />
-      <ProfileStack.Screen name="Payment" component={PaymentScreen} />
-      <ProfileStack.Screen name="PaymentSuccess" component={PaymentSuccessScreen} />
     </ProfileStack.Navigator>
   );
 }

@@ -16,7 +16,6 @@ import {
   Camera,
   Check,
   ChevronRight,
-  CreditCard,
   ExternalLink,
   Globe,
   KeyRound,
@@ -42,6 +41,7 @@ import {
   space,
   typography,
 } from '@/shared/config/theme';
+import { env } from '@/shared/config/env';
 import { useNavigation } from '@react-navigation/native';
 import { OfflineBanner } from '@/shared/ui';
 
@@ -245,7 +245,8 @@ export function ProfileScreen() {
   }
 
   function handleOpenWebPanel() {
-    Linking.openURL('https://softtime-web.vercel.app/').catch(() => {
+    if (!env.webPanelUrl) return;
+    Linking.openURL(env.webPanelUrl).catch(() => {
       Alert.alert(t('common:error'), t('profile:browserError'));
     });
   }
@@ -291,19 +292,14 @@ export function ProfileScreen() {
         {/* ── Admin-only actions ── */}
         {isAdmin && (
           <View style={s.card}>
-            <ActionRow
-              icon={<CreditCard size={iconSize.md} color={colors.primary} strokeWidth={iconStrokeWidth} />}
-              label={t('profile:subscriptionAction')}
-              onPress={() => navigation.navigate('Subscription')}
-              showChevron
-            />
-            <View style={s.divider} />
-            <ActionRow
-              icon={<ExternalLink size={iconSize.md} color={colors.primary} strokeWidth={iconStrokeWidth} />}
-              label={t('profile:openWebPanel')}
-              onPress={handleOpenWebPanel}
-              showChevron
-            />
+            {env.webPanelUrl && (
+              <ActionRow
+                icon={<ExternalLink size={iconSize.md} color={colors.primary} strokeWidth={iconStrokeWidth} />}
+                label={t('profile:openWebPanel')}
+                onPress={handleOpenWebPanel}
+                showChevron
+              />
+            )}
           </View>
         )}
 
