@@ -13,7 +13,7 @@ import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger'
 import { ApiStandardErrors } from '../../common/decorators/api-responses.decorator';
 import { createZodDto } from 'nestjs-zod';
 import { z } from 'zod';
-import { UserStatus, updateLanguageSchema } from '@softtime/shared';
+import { UserStatus, updateLanguageSchema, deleteAccountSchema } from '@softtime/shared';
 import { UsersService } from './users.service';
 import { Roles, CurrentUser } from '../../common/decorators';
 import { TenantPayload } from '../../common/tenant/tenant.context';
@@ -48,6 +48,7 @@ const updateProfileSchema = z
 
 class ListUsersQueryDto extends createZodDto(listUsersQuerySchema) {}
 class UpdateLanguageDto extends createZodDto(updateLanguageSchema) {}
+class DeleteAccountDto extends createZodDto(deleteAccountSchema) {}
 class SetStatusDto extends createZodDto(setStatusSchema) {}
 class SetNoteDto extends createZodDto(setNoteSchema) {}
 class UpdateProfileDto extends createZodDto(updateProfileSchema) {}
@@ -119,7 +120,7 @@ export class UsersController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Soft delete пользователя (deletedAt)' })
+  @ApiOperation({ summary: 'Удалить сотрудника: обезличивание (история посещаемости сохраняется)' })
   async deleteUser(
     @Param('id') id: string,
     @CurrentUser() user: TenantPayload,
@@ -151,6 +152,22 @@ export class UserMeController {
     @CurrentUser() user: TenantPayload,
   ) {
     return this.usersService.updateMyLanguage(user.userId, dto.language);
+  }
+
+  /**
+   * Самоудаление аккаунта (требование App Store 5.1.1(v) и Google Play).
+   * Подтверждение паролем в теле. Данные обезличиваются, посещаемость
+   * сохраняется для отчётов работодателя. Повторный вызов безопасен.
+   */
+  @Delete()
+  @Roles('WORKER', 'ADMIN')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Удалить свой аккаунт (обезличивание, подтверждение паролем)' })
+  async deleteMyAccount(
+    @Body() dto: DeleteAccountDto,
+    @CurrentUser() user: TenantPayload,
+  ) {
+    await this.usersService.deleteMyAccount(user.userId, dto.password);
   }
 }
 

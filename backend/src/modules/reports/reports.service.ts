@@ -47,14 +47,23 @@ export class ReportsService {
           checkOutAt: true,
         },
       }),
+      // Удалённых (обезличенных) пользователей НЕ отсекаем: их посещаемость
+      // остаётся в отчётах работодателя и должна показываться под именем
+      // «Удалённый пользователь», а не под UUID.
       this.prisma.user.findMany({
-        where: { deletedAt: null } as any,
-        select: { id: true, fullName: true, email: true },
+        select: { id: true, fullName: true, email: true, deletedAt: true },
       }),
     ]);
 
     const userMap = new Map(
-      (users as any[]).map((u) => [u.id as string, { fullName: u.fullName as string, email: u.email as string }]),
+      (users as any[]).map((u) => [
+        u.id as string,
+        {
+          fullName: u.fullName as string,
+          // У обезличенного пользователя email — служебный deleted+…@deleted.invalid.
+          email: u.deletedAt ? '' : (u.email as string),
+        },
+      ]),
     );
 
     // ── Aggregate per userId ─────────────────────────────────────────────────

@@ -22,6 +22,7 @@ import {
   Lock,
   LogOut,
   Mail,
+  Trash2,
   ShieldCheck,
 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
@@ -44,6 +45,7 @@ import {
 import { env } from '@/shared/config/env';
 import { useNavigation } from '@react-navigation/native';
 import { OfflineBanner } from '@/shared/ui';
+import { DeleteAccountModal } from '@/widgets/delete-account';
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
@@ -223,6 +225,7 @@ export function ProfileScreen() {
   const navigation = useNavigation<any>();
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showLanguageModal, setShowLanguageModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const { t, i18n } = useTranslation(['profile', 'settings', 'enums', 'common']);
 
   const { user, isLoading } = useProfile();
@@ -319,6 +322,13 @@ export function ProfileScreen() {
             onPress={() => setShowLanguageModal(true)}
             showChevron
           />
+          <View style={s.divider} />
+          <ActionRow
+            icon={<Trash2 size={iconSize.md} color={colors.danger} strokeWidth={iconStrokeWidth} />}
+            label={t('profile:deleteAccount.action')}
+            onPress={() => setShowDeleteModal(true)}
+            showChevron
+          />
         </View>
 
         <TouchableOpacity
@@ -336,6 +346,7 @@ export function ProfileScreen() {
 
       <ChangePasswordModal visible={showPasswordModal} onClose={() => setShowPasswordModal(false)} />
       <LanguageModal visible={showLanguageModal} onClose={() => setShowLanguageModal(false)} />
+      <DeleteAccountModal visible={showDeleteModal} onClose={() => setShowDeleteModal(false)} />
     </SafeAreaView>
   );
 }

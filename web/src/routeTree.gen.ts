@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
+import { Route as DeleteAccountRouteImport } from './routes/delete-account'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ProviderRouteImport } from './routes/provider'
 import { Route as RegisterRouteImport } from './routes/register'
@@ -41,6 +42,11 @@ const IndexRoute = IndexRouteImport.update({
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DeleteAccountRoute = DeleteAccountRouteImport.update({
+  id: '/delete-account',
+  path: '/delete-account',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -152,6 +158,7 @@ const ProviderCompaniesIdRoute = ProviderCompaniesIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
+  '/delete-account': typeof DeleteAccountRoute
   '/login': typeof LoginRoute
   '/provider': typeof ProviderRouteWithChildren
   '/register': typeof RegisterRoute
@@ -177,6 +184,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
+  '/delete-account': typeof DeleteAccountRoute
   '/login': typeof LoginRoute
   '/provider': typeof ProviderRouteWithChildren
   '/register': typeof RegisterRoute
@@ -202,6 +210,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
+  '/delete-account': typeof DeleteAccountRoute
   '/login': typeof LoginRoute
   '/provider': typeof ProviderRouteWithChildren
   '/register': typeof RegisterRoute
@@ -229,6 +238,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
+    | '/delete-account'
     | '/login'
     | '/provider'
     | '/register'
@@ -254,6 +264,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/admin'
+    | '/delete-account'
     | '/login'
     | '/provider'
     | '/register'
@@ -278,6 +289,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/admin'
+    | '/delete-account'
     | '/login'
     | '/provider'
     | '/register'
@@ -304,6 +316,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
+  DeleteAccountRoute: typeof DeleteAccountRoute
   LoginRoute: typeof LoginRoute
   ProviderRoute: typeof ProviderRouteWithChildren
   RegisterRoute: typeof RegisterRoute
@@ -323,6 +336,13 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/delete-account': {
+      id: '/delete-account'
+      path: '/delete-account'
+      fullPath: '/delete-account'
+      preLoaderRoute: typeof DeleteAccountRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -551,6 +571,7 @@ const ProviderRouteWithChildren = ProviderRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
+  DeleteAccountRoute: DeleteAccountRoute,
   LoginRoute: LoginRoute,
   ProviderRoute: ProviderRouteWithChildren,
   RegisterRoute: RegisterRoute,

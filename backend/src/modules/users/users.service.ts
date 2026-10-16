@@ -2,15 +2,24 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   UnauthorizedException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
+import { randomUUID } from 'crypto';
 import { ErrorCode, UserStatus, UserRole, type Language } from '@softtime/shared';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { SchedulesService } from '../schedules/schedules.service';
+import { RedisService } from '../../common/redis/redis.service';
+import {
+  DELETED_USER_NAME,
+  DELETED_MARKER_TTL_SECONDS,
+  deletedEmail,
+  deletedMarkerKey,
+} from './account-deletion';
 
 const BCRYPT_ROUNDS = 12;
 
@@ -36,6 +45,7 @@ export class UsersService {
     private readonly audit: AuditService,
     private readonly notifications: NotificationsService,
     private readonly schedules: SchedulesService,
+    private readonly redis: RedisService,
   ) {}
 
   // ─── List employees ───────────────────────────────────────────────────────────
@@ -280,23 +290,140 @@ export class UsersService {
       });
     }
 
-    // Audit log before deletion — user record won't exist after
-    await this.audit.log({
-      actorId,
-      action: 'USER_DELETED',
-      entityType: 'User',
-      entityId: id,
-      meta: { previousStatus: user.status, fullName: user.fullName },
+    // Было жёсткое удаление вместе с историей посещаемости. Теперь
+    // анонимизация: посещаемость, заявки и расписание остаются для отчётов.
+    const done = await this.anonymize({
+      id: user.id,
+      role: user.role,
+      companyId: user.companyId,
     });
 
-    await this.prisma.$transaction([
-      this.prisma.deviceToken.deleteMany({ where: { userId: id } }),
-      this.prisma.newsRead.deleteMany({ where: { userId: id } }),
-      this.prisma.absenceRequest.deleteMany({ where: { userId: id } }),
-      this.prisma.employeeSchedule.deleteMany({ where: { userId: id } }),
-      this.prisma.attendance.deleteMany({ where: { userId: id } }),
-      this.prisma.user.delete({ where: { id } }),
+    // done === false — параллельный запрос успел раньше; второй раз не пишем.
+    if (done) {
+      await this.audit.log({
+        actorId,
+        action: 'USER_DELETED',
+        entityType: 'User',
+        entityId: id,
+        // ФИО в журнал больше не пишем (персональные данные).
+        meta: { previousStatus: user.status, role: user.role },
+      });
+    }
+  }
+
+  // ─── Delete own account (App Store 5.1.1(v) / Google Play) ────────────────────
+
+  /**
+   * Самоудаление аккаунта с подтверждением паролем.
+   *
+   * Идемпотентно: если пользователь уже удалён (повторный запрос по ещё
+   * живому access-токену), молча завершаемся.
+   * Неверный пароль — 403 с кодом CURRENT_PASSWORD_INVALID, а не 401: 401
+   * заставил бы клиентский interceptor впустую ротировать refresh-токен.
+   */
+  async deleteMyAccount(userId: string, password: string) {
+    const user = await this.prisma.user.findFirst({
+      where: { id: userId, deletedAt: null } as any,
+    });
+    if (!user) return;
+
+    const matches = await bcrypt.compare(password, user.passwordHash);
+    if (!matches) {
+      throw new ForbiddenException({
+        message: 'Текущий пароль неверен',
+        code: ErrorCode.CURRENT_PASSWORD_INVALID,
+      });
+    }
+
+    const done = await this.anonymize({
+      id: user.id,
+      role: user.role,
+      companyId: user.companyId,
+    });
+
+    if (done) {
+      await this.audit.log({
+        actorId: userId,
+        action: 'ACCOUNT_DELETED_SELF',
+        entityType: 'User',
+        entityId: userId,
+        meta: { previousStatus: user.status, role: user.role },
+      });
+    }
+  }
+
+  /**
+   * Обезличивает пользователя вместо удаления строки.
+   *
+   *  - ФИО, email, пароль, заметка админа и ссылка на аватар затираются;
+   *  - status = DELETED, deletedAt = now (логин и /auth/refresh уже
+   *    отсекают deletedAt != null);
+   *  - токены устройств и отметки прочтения новостей удаляются;
+   *  - посещаемость, заявки и расписание остаются — они нужны работодателю
+   *    для отчётов и теперь показывают обезличенное имя;
+   *  - ФИО убирается из meta ранее записанных событий журнала.
+   *
+   * Возвращает false, если пользователь уже был удалён параллельным
+   * запросом: условие `deletedAt: null` в updateMany делает операцию
+   * безопасной при повторе.
+   */
+  private async anonymize(user: {
+    id: string;
+    role: string;
+    companyId: string | null;
+  }): Promise<boolean> {
+    // Компания не должна остаться без администратора.
+    if (user.role === UserRole.ADMIN && user.companyId) {
+      const otherAdmins = await this.prisma.user.count({
+        where: {
+          companyId: user.companyId,
+          role: UserRole.ADMIN,
+          id: { not: user.id },
+          deletedAt: null,
+          status: { in: [UserStatus.ACTIVE, UserStatus.WARNING] },
+        } as any,
+      });
+      if (otherAdmins === 0) {
+        throw new ConflictException({
+          message:
+            'Вы единственный администратор компании, поэтому не можете удалить аккаунт. Обратитесь в поддержку.',
+          code: ErrorCode.LAST_ADMIN_CANNOT_DELETE,
+        });
+      }
+    }
+
+    const results = await this.prisma.$transaction([
+      this.prisma.user.updateMany({
+        where: { id: user.id, deletedAt: null } as any,
+        data: {
+          fullName: DELETED_USER_NAME,
+          email: deletedEmail(user.id),
+          // Не bcrypt-формат: bcrypt.compare на нём всегда даёт false.
+          passwordHash: `!${randomUUID()}`,
+          status: UserStatus.DELETED,
+          deletedAt: new Date(),
+          adminNote: null,
+          avatarUrl: null,
+        } as any,
+      }),
+      this.prisma.deviceToken.deleteMany({ where: { userId: user.id } }),
+      this.prisma.newsRead.deleteMany({ where: { userId: user.id } }),
+      this.prisma.$executeRaw`
+        UPDATE "AuditLog"
+        SET meta = meta - 'fullName'
+        WHERE "entityType" = 'User' AND "entityId" = ${user.id} AND meta IS NOT NULL
+      `,
     ]);
+
+    const changed = (results[0] as { count: number }).count;
+    if (changed === 0) return false;
+
+    // Старые токены: refresh гасим сразу, access блокирует маркер в StatusGuard.
+    const refreshKeys = await this.redis.keys(`refresh:${user.id}:*`);
+    if (refreshKeys.length) await this.redis.del(...refreshKeys);
+    await this.redis.set(deletedMarkerKey(user.id), '1', DELETED_MARKER_TTL_SECONDS);
+
+    return true;
   }
 
   // ─── Own profile ──────────────────────────────────────────────────────────────

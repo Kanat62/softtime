@@ -42,6 +42,7 @@ const errors: Record<ErrorCodeValue, string> = {
   SUBSCRIPTION_NOT_ACTIVE: 'Подписка компании неактивна',
   ACCOUNT_BLOCKED: 'Аккаунт заблокирован',
   ACCOUNT_PENDING: 'Ожидает подтверждения администратором',
+  ACCOUNT_DELETED: 'Аккаунт удалён',
 
   // ─── Аутентификация ─────────────────────────────────────────────────────
   INVALID_CREDENTIALS: 'Неверный email или пароль',
@@ -70,6 +71,8 @@ const errors: Record<ErrorCodeValue, string> = {
   CURRENT_PASSWORD_REQUIRED: 'currentPassword обязателен для смены пароля',
   CURRENT_PASSWORD_INVALID: 'Текущий пароль неверен',
   NO_FIELDS_TO_UPDATE: 'Нет данных для обновления',
+  LAST_ADMIN_CANNOT_DELETE:
+    'Вы единственный администратор компании, поэтому не можете удалить аккаунт. Обратитесь в поддержку.',
 
   // ─── Компании ───────────────────────────────────────────────────────────
   COMPANY_NOT_FOUND: 'Компания не найдена',

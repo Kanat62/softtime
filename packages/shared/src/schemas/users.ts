@@ -28,6 +28,12 @@ export const updateProfileSchema = z
     path: ['currentPassword'],
   });
 
+/** Удаление своего аккаунта — тело DELETE /users/me (подтверждение паролем) */
+export const deleteAccountSchema = z.object({
+  password: z.string().min(1, 'validation:required.password'),
+});
+
+export type DeleteAccountDto = z.infer<typeof deleteAccountSchema>;
 export type UpdateUserStatusDto = z.infer<typeof updateUserStatusSchema>;
 export type UpdateUserNoteDto = z.infer<typeof updateUserNoteSchema>;
 export type UpdateProfileDto = z.infer<typeof updateProfileSchema>;

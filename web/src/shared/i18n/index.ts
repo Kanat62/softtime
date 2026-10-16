@@ -24,6 +24,7 @@ import ruSubscription from "./locales/ru/subscription.json";
 import ruAuth from "./locales/ru/auth.json";
 import ruDashboard from "./locales/ru/dashboard.json";
 import ruNav from "./locales/ru/nav.json";
+import ruLegal from "./locales/ru/legal.json";
 import enCommon from "./locales/en/common.json";
 import enSettings from "./locales/en/settings.json";
 import enEmployees from "./locales/en/employees.json";
@@ -40,6 +41,7 @@ import enSubscription from "./locales/en/subscription.json";
 import enAuth from "./locales/en/auth.json";
 import enDashboard from "./locales/en/dashboard.json";
 import enNav from "./locales/en/nav.json";
+import enLegal from "./locales/en/legal.json";
 
 import { LANGUAGE_KEY, languageStorage } from "./language-storage";
 
@@ -74,6 +76,7 @@ const resources = {
     auth: ruAuth,
     dashboard: ruDashboard,
     nav: ruNav,
+    legal: ruLegal,
   },
   en: {
     enums: dictionaries.en.enums,
@@ -95,6 +98,7 @@ const resources = {
     auth: enAuth,
     dashboard: enDashboard,
     nav: enNav,
+    legal: enLegal,
   },
 } as const;
 
@@ -112,6 +116,7 @@ i18n
     ns: [
       "common",
       "nav",
+      "legal",
       "settings",
       "auth",
       "dashboard",

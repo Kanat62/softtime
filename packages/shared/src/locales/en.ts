@@ -31,6 +31,7 @@ const errors: ErrorMessages = {
   SUBSCRIPTION_NOT_ACTIVE: 'The company subscription is not active',
   ACCOUNT_BLOCKED: 'Account is blocked',
   ACCOUNT_PENDING: 'Awaiting administrator approval',
+  ACCOUNT_DELETED: 'Account deleted',
 
   // ─── Authentication ─────────────────────────────────────────────────────
   INVALID_CREDENTIALS: 'Invalid email or password',
@@ -59,6 +60,8 @@ const errors: ErrorMessages = {
   CURRENT_PASSWORD_REQUIRED: 'currentPassword is required to change the password',
   CURRENT_PASSWORD_INVALID: 'Current password is incorrect',
   NO_FIELDS_TO_UPDATE: 'No data to update',
+  LAST_ADMIN_CANNOT_DELETE:
+    'You are the only administrator of the company, so you cannot delete your account. Please contact support.',
 
   // ─── Companies ──────────────────────────────────────────────────────────
   COMPANY_NOT_FOUND: 'Company not found',

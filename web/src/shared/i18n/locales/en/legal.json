@@ -1,0 +1,34 @@
+{
+  "deleteAccount": {
+    "title": "Delete your SoftTime account",
+    "intro": "This page explains how to delete your account in the SoftTime app and what happens to your data.",
+    "stepsTitle": "How to delete your account in the app",
+    "steps": [
+      "Open the SoftTime app and sign in.",
+      "Go to the \"Profile\" tab.",
+      "Tap \"Delete account\".",
+      "Enter your password and confirm the deletion."
+    ],
+    "erasedTitle": "What is deleted",
+    "erased": [
+      "Your name, email address and password.",
+      "Your profile photo link and any administrator note about you.",
+      "Push notification tokens of your devices.",
+      "News read receipts."
+    ],
+    "keptTitle": "What is kept in anonymized form",
+    "keptIntro": "These records are needed by your company for working-time accounting and reports. They remain, but are no longer linked to your name or email — they are shown as \"Deleted user\" instead.",
+    "kept": [
+      "Check-in and check-out records (attendance).",
+      "Absence requests and their statuses.",
+      "Work schedule."
+    ],
+    "afterTitle": "After deletion",
+    "after": "A deleted account cannot be signed in to or restored. Your email address is released and you can register again.",
+    "adminTitle": "For company administrators",
+    "admin": "The only administrator of a company cannot delete their account from the app, so the company is not left without a manager. In that case, write to us at the address below.",
+    "contactTitle": "Can't sign in, or need help?",
+    "contact": "Write to us from the email address you registered with and we will delete the account manually:",
+    "language": "Language"
+  }
+}
